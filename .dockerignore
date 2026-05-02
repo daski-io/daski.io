@@ -1,0 +1,8 @@
+node_modules
+dist
+_design_reference
+.git
+.gitignore
+.claude
+*.local
+.DS_Store

@@ -1,0 +1,227 @@
+/* =====================================================================
+   Daski Design System: Colors, Type, Spacing, Radii, Shadows
+   Single source of truth. Import once at the top of any HTML surface.
+   ===================================================================== */
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap");
+
+:root {
+  /* Brand */
+  --mint-50:  #e8faf3;
+  --mint-100: #c9f3e3;
+  --mint-200: #95e6c9;
+  --mint-300: #5dd6ad;
+  --mint-400: #34d3b1;
+  --mint-500: #1cba99;
+  --mint-600: #14997d;
+  --mint-700: #107562;
+  --mint-800: #0d5447;
+  --mint-900: #0a3a32;
+
+  --apricot-50:  #fdf3e9;
+  --apricot-100: #fae0c8;
+  --apricot-200: #f5c498;
+  --apricot-300: #f0a878;
+  --apricot-400: #e88a52;
+  --apricot-500: #d36e34;
+  --apricot-600: #ad5524;
+  --apricot-700: #84401b;
+
+  /* Neutrals */
+  --cream-50:  #fbf8f3;
+  --cream-100: #f5efe5;
+  --paper:     #ffffff;
+  --ash-100:   #ece6da;
+  --ash-200:   #d8d0c1;
+  --stone-300: #b8afa0;
+  --stone-400: #8d8576;
+  --slate-500: #5e564a;
+  --slate-600: #3f392e;
+  --ink-700:   #2a251c;
+  --ink-800:   #1a1610;
+  --void-900:  #0d0b07;
+  --void-950:  #08070a;
+
+  /* Dark-mode protocol surfaces */
+  --pro-bg:        #0a0a0f;
+  --pro-surface:   #12121a;
+  --pro-surface2:  #1a1a26;
+  --pro-border:    #2a2a3a;
+  --pro-border-hi: #4a4a6a;
+  --pro-text:      #e0e0e8;
+  --pro-text-dim:  #7a7a8e;
+
+  /* Semantic */
+  --success:       var(--mint-500);
+  --success-tint:  var(--mint-50);
+  --success-border:var(--mint-200);
+  --warning:       #d4961f;
+  --warning-tint:  #fcf2dc;
+  --warning-border:#f0d599;
+  --danger:        #d94560;
+  --danger-tint:   #fde8ec;
+  --danger-border: #f4b4be;
+  --info:          #3b82d4;
+  --info-tint:     #e6f0fb;
+  --info-border:   #b6d3f2;
+
+  /* Roles */
+  --bg-app:        var(--cream-50);
+  --bg-surface:    var(--paper);
+  --bg-surface-2:  var(--cream-100);
+  --bg-inverse:    var(--ink-800);
+
+  --fg-1:          var(--ink-800);
+  --fg-2:          var(--ink-700);
+  --fg-3:          var(--slate-500);
+  --fg-4:          var(--stone-400);
+  --fg-on-accent:  var(--cream-50);
+  --fg-on-inverse: var(--cream-50);
+
+  --border-1:      rgba(38, 28, 18, 0.10);
+  --border-2:      rgba(38, 28, 18, 0.16);
+  --border-strong: rgba(38, 28, 18, 0.32);
+
+  --accent:        var(--mint-500);
+  --accent-hover:  var(--mint-600);
+  --accent-tint:   var(--mint-50);
+
+  --shadow-card:   0 0 0 1px rgba(38,28,18,0.04);
+  --scrim:         rgba(13, 11, 7, 0.4);
+}
+
+[data-theme="dark"] {
+  --bg-app:        var(--pro-bg);
+  --bg-surface:    var(--pro-surface);
+  --bg-surface-2:  var(--pro-surface2);
+  --paper:         var(--pro-surface);
+  --cream-50:      var(--pro-bg);
+  --cream-100:     var(--pro-surface2);
+
+  --fg-1:          var(--pro-text);
+  --fg-2:          var(--pro-text);
+  --fg-3:          var(--pro-text-dim);
+  --fg-4:          #5a5a6e;
+  --ink-800:       var(--pro-text);
+  --ink-700:       var(--pro-text);
+  --slate-500:     var(--pro-text-dim);
+
+  --border-1:      var(--pro-border);
+  --border-2:      var(--pro-border-hi);
+  --border-strong: #6a6a8a;
+
+  --accent:        var(--mint-400);
+
+  --success-tint:  rgba(28, 186, 153, 0.12);
+  --success-border:#1cba99;
+  --warning-tint:  rgba(212, 150, 31, 0.14);
+  --warning-border:#8a6314;
+  --danger-tint:   rgba(217, 69, 96, 0.14);
+  --danger-border: #9c2e44;
+  --info-tint:     rgba(59, 130, 212, 0.14);
+  --info-border:   #1f5aa1;
+
+  --shadow-card:   0 0 0 1px rgba(255,255,255,0.04);
+  --scrim:         rgba(0, 0, 0, 0.6);
+}
+
+:root {
+  --font-sans:    "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono:    "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --font-display: var(--font-sans);
+
+  --fs-xs:   12px;
+  --fs-sm:   13px;
+  --fs-base: 15px;
+  --fs-md:   16px;
+  --fs-lg:   18px;
+  --fs-xl:   22px;
+  --fs-2xl:  28px;
+  --fs-3xl:  36px;
+  --fs-4xl:  48px;
+  --fs-5xl:  64px;
+  --fs-6xl:  88px;
+  --fs-display: 144px;
+
+  --lh-tight:  1.12;
+  --lh-snug:   1.28;
+  --lh-normal: 1.5;
+  --lh-relaxed:1.65;
+
+  --tracking-tight:  -0.02em;
+  --tracking-normal: 0;
+  --tracking-wide:    0.04em;
+  --tracking-mono:    0.01em;
+
+  --space-0:  0;
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  24px;
+  --space-6:  32px;
+  --space-7:  40px;
+  --space-8:  48px;
+  --space-9:  64px;
+  --space-10: 80px;
+  --space-11: 96px;
+  --space-12: 128px;
+
+  --radius-1:    4px;
+  --radius-2:    8px;
+  --radius-3:    12px;
+  --radius-4:    16px;
+  --radius-pill: 999px;
+
+  --shadow-1: 0 0 0 1px rgba(38,28,18,0.06);
+  --shadow-2: 0 1px 2px rgba(38,28,18,0.06), 0 1px 1px rgba(38,28,18,0.04);
+  --shadow-3: 0 4px 16px rgba(38,28,18,0.08), 0 1px 2px rgba(38,28,18,0.05);
+  --shadow-4: 0 20px 48px rgba(38,28,18,0.14), 0 4px 12px rgba(38,28,18,0.08);
+  --shadow-focus: 0 0 0 2px var(--bg-app), 0 0 0 4px var(--mint-400);
+  --shadow-inset-focus: inset 0 0 0 1px var(--mint-500);
+
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+  --dur-fast: 120ms;
+  --dur:      180ms;
+  --dur-slow: 280ms;
+  --dur-page: 420ms;
+}
+
+html, body {
+  background: var(--bg-app);
+  color: var(--fg-2);
+  font-family: var(--font-sans);
+  font-size: var(--fs-md);
+  line-height: var(--lh-normal);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-sans);
+  color: var(--fg-1);
+  letter-spacing: var(--tracking-tight);
+  line-height: var(--lh-tight);
+  font-weight: 600;
+  margin: 0;
+}
+
+p { margin: 0 0 var(--space-3) 0; color: var(--fg-2); }
+.text-dim { color: var(--fg-3); }
+.text-muted { color: var(--fg-4); }
+
+a {
+  color: var(--mint-600);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color var(--dur) var(--ease);
+}
+a:hover { border-bottom-color: var(--mint-600); }
+
+code, pre, kbd, samp, .mono {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  letter-spacing: var(--tracking-mono);
+}
+
+::selection { background: var(--mint-200); color: var(--ink-800); }

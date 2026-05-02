@@ -1,0 +1,123 @@
+/* Daski sandbox.daski.io: app styles (dark protocol-console default) */
+@import "./design-system.css";
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  background: var(--bg-app);
+  color: var(--fg-2);
+  font-family: var(--font-sans);
+}
+
+html[data-theme="dark"], body[data-theme="dark"] { color-scheme: dark; }
+
+a { color: var(--mint-400); }
+a:hover { border-bottom-color: var(--mint-400); }
+
+button { font-family: inherit; }
+
+/* Subtle dot grid pattern used as a backdrop. */
+.dot-grid {
+  background-image: radial-gradient(circle, rgba(228,228,238,0.07) 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+
+/* Animations */
+@keyframes dk-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+@keyframes dk-fadein { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@keyframes dk-blink { 50% { opacity: 0; } }
+@keyframes dk-marquee-up { from { transform: translateY(0); } to { transform: translateY(-50%); } }
+@keyframes dk-progress { from { width: 0%; } to { width: 100%; } }
+@keyframes dk-spin { to { transform: rotate(360deg); } }
+@keyframes dk-ticker { 0% { transform: translateY(8px); opacity: 0; } 12%, 88% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-8px); opacity: 0; } }
+
+.fadein { animation: dk-fadein 240ms cubic-bezier(0.2,0,0,1) both; }
+
+/* Scrollbars */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: var(--pro-border); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--pro-border-hi); }
+::-webkit-scrollbar-track { background: transparent; }
+
+pre, code { background: transparent; padding: 0; color: inherit; }
+
+.dk-btn {
+  transition: transform 80ms var(--ease), background 180ms var(--ease),
+              border-color 180ms var(--ease), color 180ms var(--ease),
+              box-shadow 180ms var(--ease);
+}
+.dk-btn:hover { filter: brightness(1.06); }
+.dk-btn:active { transform: scale(0.98); }
+
+button:focus-visible, a:focus-visible, input:focus-visible {
+  outline: 2px solid var(--mint-400);
+  outline-offset: 2px;
+}
+
+.term {
+  background: #06070b;
+  border: 1px solid var(--pro-border);
+  border-radius: var(--radius-3);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: #cfcfdb;
+  overflow: hidden;
+}
+.term-bar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px; border-bottom: 1px solid var(--pro-border);
+  background: linear-gradient(#0c0d13, #08090f);
+  font-family: var(--font-mono); font-size: 11px; color: var(--pro-text-dim);
+  letter-spacing: 0.06em; text-transform: uppercase;
+}
+.term-bar .dot { width: 10px; height: 10px; border-radius: 50%; background: #2a2a3a; }
+.term-body { padding: 16px 18px; line-height: 1.6; }
+
+.mint { color: var(--mint-400); }
+.dim { color: var(--pro-text-dim); }
+.amber { color: #e7b34a; }
+.coral { color: #ef5a6b; }
+.sky { color: #6aa9ee; }
+.ink { color: #cfcfdb; }
+.indent { padding-left: 1.5em; }
+
+.dk-card {
+  background: var(--pro-surface);
+  border: 1px solid var(--pro-border);
+  border-radius: 14px;
+  transition: border-color 180ms var(--ease), transform 180ms var(--ease), box-shadow 180ms var(--ease);
+}
+.dk-card.hoverable:hover { border-color: var(--pro-border-hi); transform: translateY(-1px); }
+
+.nav-active { background: var(--pro-surface); color: var(--pro-text); }
+
+.cursor::after {
+  content: "_"; color: var(--mint-400); margin-left: 2px;
+  animation: dk-blink 1.1s steps(1) infinite;
+}
+
+::selection { background: var(--mint-700); color: var(--cream-50); }
+
+.row { display: flex; align-items: center; }
+.col { display: flex; flex-direction: column; }
+.gap-1 { gap: 4px; } .gap-2 { gap: 8px; } .gap-3 { gap: 12px; } .gap-4 { gap: 16px; }
+.gap-5 { gap: 24px; } .gap-6 { gap: 32px; } .gap-8 { gap: 48px; }
+
+.mono-tag {
+  font-family: var(--font-mono); font-size: 11px;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--pro-text-dim);
+}
+
+/* Responsive containers */
+@media (max-width: 980px) {
+  .grid-3 { grid-template-columns: 1fr 1fr !important; }
+  .grid-2 { grid-template-columns: 1fr !important; }
+  .demo-grid { grid-template-columns: 1fr !important; }
+}
+@media (max-width: 720px) {
+  .grid-3 { grid-template-columns: 1fr !important; }
+  h1.hero-headline { font-size: 44px !important; }
+  .hide-mobile { display: none !important; }
+}

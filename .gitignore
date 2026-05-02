@@ -1,0 +1,17 @@
+node_modules
+dist
+dist-ssr
+*.tsbuildinfo
+.env
+.env.local
+*.local
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+_design_reference
