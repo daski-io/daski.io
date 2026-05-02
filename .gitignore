@@ -15,3 +15,4 @@ dist-ssr
 *.sln
 *.sw?
 _design_reference
+.claude
