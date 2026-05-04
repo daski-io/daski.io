@@ -6,14 +6,26 @@
 
 export const GATEWAY_URL = (import.meta.env.VITE_GATEWAY_URL as string | undefined) ?? 'https://sandbox-gateway.daski.io';
 
+export interface PublicSkillPricingModel {
+  kind: string;
+  source: string | null;
+  hint: string | null;
+}
+
 export interface PublicSkill {
   id: string;
   name: string;
   description: string | null;
   basePrice: string | null;
   pricingModel: string | null;
+  pricingModelDetail?: PublicSkillPricingModel | null;
   variable: boolean;
   paymentRequired: boolean;
+  /** Optional — gateway public REST started returning these in 2026-05. */
+  requiredFields?: string[] | null;
+  requiresAssetOwnership?: boolean;
+  requiresCapability?: boolean;
+  assetType?: string | null;
 }
 
 export interface PublicServicePricing {

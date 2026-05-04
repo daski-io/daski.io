@@ -14,6 +14,7 @@ import {
   shortAddress,
   shortBuyer,
   timeAgo,
+  type PublicSkill,
   type ServiceDetail,
 } from '../lib/api';
 
@@ -326,14 +327,50 @@ export function ServiceDetailPage() {
                 gridTemplateColumns: '1.2fr 2fr 1fr 1fr',
                 padding: '16px 20px',
                 gap: 16,
-                alignItems: 'center',
+                alignItems: 'start',
                 color: 'var(--pro-text)',
                 borderBottom: i < service.skills.length - 1 ? '1px solid var(--pro-border)' : 'none',
               }}
             >
-              <Mono mint>{sk.id}</Mono>
-              <span style={{ fontSize: 13, color: 'var(--pro-text-dim)' }}>{sk.description ?? '-'}</span>
-              <Mono>{sk.basePrice ? `${sk.basePrice} USDC` : sk.variable ? 'live' : '-'}</Mono>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <Mono mint>{sk.id}</Mono>
+                <SkillTags skill={sk} />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <span style={{ fontSize: 13, color: 'var(--pro-text-dim)' }}>
+                  {sk.description ?? '-'}
+                </span>
+                {sk.requiredFields && sk.requiredFields.length > 0 && (
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: 11,
+                      color: 'var(--pro-text-dim)',
+                      letterSpacing: '0.02em',
+                      lineHeight: 1.45,
+                    }}
+                  >
+                    fields: {sk.requiredFields.join(', ')}
+                  </span>
+                )}
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <Mono>{sk.basePrice ? `${sk.basePrice} USDC` : sk.variable ? 'live' : '-'}</Mono>
+                {sk.pricingModelDetail?.hint && (
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: 11,
+                      color: 'var(--pro-text-dim)',
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    {sk.pricingModelDetail.source
+                      ? `via ${sk.pricingModelDetail.source}`
+                      : sk.pricingModelDetail.kind}
+                  </span>
+                )}
+              </div>
               <Mono dim>{sk.paymentRequired ? 'yes' : 'free'}</Mono>
             </div>
           ))}
@@ -463,6 +500,39 @@ export function ServiceDetailPage() {
           </div>
         </div>
       </Section>
+    </div>
+  );
+}
+
+function SkillTags({ skill }: { skill: PublicSkill }) {
+  const tags: { label: string; tone: 'warn' | 'mint' | 'dim' }[] = [];
+  if (skill.requiresCapability) tags.push({ label: 'capability', tone: 'warn' });
+  if (skill.requiresAssetOwnership) tags.push({ label: 'asset-gated', tone: 'dim' });
+  if (skill.assetType) tags.push({ label: skill.assetType, tone: 'dim' });
+  if (tags.length === 0) return null;
+  return (
+    <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+      {tags.map((t) => (
+        <span
+          key={t.label}
+          style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: 10,
+            padding: '2px 6px',
+            borderRadius: 4,
+            border: '1px solid var(--pro-border)',
+            color:
+              t.tone === 'warn'
+                ? '#f0a878'
+                : t.tone === 'mint'
+                  ? 'var(--mint-400)'
+                  : 'var(--pro-text-dim)',
+            letterSpacing: '0.04em',
+          }}
+        >
+          {t.label}
+        </span>
+      ))}
     </div>
   );
 }
