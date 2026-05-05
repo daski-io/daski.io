@@ -78,22 +78,6 @@ export function OpenStandards() {
                 {PROTOCOLS[open].desc}
               </div>
             </div>
-            <a
-              href="#"
-              style={{
-                color: 'var(--mint-400)',
-                fontSize: 11,
-                borderBottom: 'none',
-                fontFamily: 'var(--font-mono)',
-                letterSpacing: '0.04em',
-                textTransform: 'uppercase',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 4,
-              }}
-            >
-              spec <Icon name="external" size={11} />
-            </a>
           </div>
         )}
       </div>
