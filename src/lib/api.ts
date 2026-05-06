@@ -46,6 +46,14 @@ export interface PublicService {
   serviceLifecycle: string | null;
   turnaroundEstimate: string | null;
   providerA2AUrl: string | null;
+  /**
+   * Provider-level identity from the ERC-8004 registration file. Distinct
+   * from `name` (the service offering). Both come from the gateway's
+   * /public/v1/services/:agentId response. May be null if the provider
+   * exposes a flat agent card without registration-level metadata.
+   */
+  providerName: string | null;
+  providerDescription: string | null;
   pricing: PublicServicePricing;
   skills: PublicSkill[];
 }

@@ -11,7 +11,6 @@ import {
   basescanTx,
   categoryToIcon,
   getServiceDetail,
-  shortAddress,
   shortBuyer,
   timeAgo,
   type PublicSkill,
@@ -214,31 +213,35 @@ export function ServiceDetailPage() {
             }}
           >
             <div style={{ flex: 1, minWidth: 280 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
-                <h3
+              {service.providerName && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+                  <h3
+                    style={{
+                      fontSize: 22,
+                      fontWeight: 600,
+                      margin: 0,
+                      color: 'var(--pro-text)',
+                      letterSpacing: '-0.015em',
+                    }}
+                  >
+                    {service.providerName}
+                  </h3>
+                  <Pill tone="success">verified</Pill>
+                </div>
+              )}
+              {service.providerDescription && (
+                <p
                   style={{
-                    fontSize: 22,
-                    fontWeight: 600,
-                    margin: 0,
-                    color: 'var(--pro-text)',
-                    letterSpacing: '-0.015em',
+                    color: 'var(--pro-text-dim)',
+                    fontSize: 14,
+                    lineHeight: 1.55,
+                    margin: '0 0 14px',
+                    fontStyle: 'italic',
                   }}
                 >
-                  {providerLabel(service.agentURI)}
-                </h3>
-                <Pill tone="success">verified</Pill>
-              </div>
-              <p
-                style={{
-                  color: 'var(--pro-text-dim)',
-                  fontSize: 14,
-                  lineHeight: 1.55,
-                  margin: '0 0 14px',
-                  fontStyle: 'italic',
-                }}
-              >
-                "Independent provider serving the AI agent economy."
-              </p>
+                  {service.providerDescription}
+                </p>
+              )}
               <div
                 style={{
                   display: 'flex',
@@ -649,15 +652,4 @@ function priceRangeFor(s: ServiceDetail): string {
   }
   if (s.pricing.basePrice) return `${Number(s.pricing.basePrice).toFixed(2)} USDC`;
   return 'live';
-}
-
-function providerLabel(uri: string): string {
-  try {
-    const u = new URL(uri);
-    const host = u.hostname.replace(/^sandbox-provider\./, '').replace(/^www\./, '');
-    const label = host.split('.')[0];
-    return label.charAt(0).toUpperCase() + label.slice(1) + ' Group';
-  } catch {
-    return shortAddress(uri);
-  }
 }
