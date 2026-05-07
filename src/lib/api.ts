@@ -83,8 +83,28 @@ export interface PublicStats {
   };
 }
 
+/**
+ * Provider reputation derived from on-chain ReputationStorage counters.
+ * Rates are 0..1 floats, or null when there's no denominator yet — null
+ * means "no transaction history" and the UI should render the empty state
+ * rather than "0%". The whole `reputation` field is null when the gateway
+ * has no ReputationStorage configured (e.g. local dev without the contract
+ * deployed).
+ */
+export interface PublicServiceReputation {
+  totalTransactions: number;
+  completionRate: number | null;
+  buyerSatisfactionRate: number | null;
+  completedCount: number;
+  failedCount: number;
+  canceledCount: number;
+  confirmedCount: number;
+  notConfirmedCount: number;
+}
+
 export interface ServiceDetail extends PublicService {
   recentPurchases: PublicActivityRow[];
+  reputation: PublicServiceReputation | null;
 }
 
 async function fetchJson<T>(path: string, signal?: AbortSignal): Promise<T> {

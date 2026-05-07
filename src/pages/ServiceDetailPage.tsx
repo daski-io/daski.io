@@ -13,6 +13,7 @@ import {
   getServiceDetail,
   shortBuyer,
   timeAgo,
+  type PublicServiceReputation,
   type PublicSkill,
   type ServiceDetail,
 } from '../lib/api';
@@ -198,6 +199,11 @@ export function ServiceDetailPage() {
             </div>
           ))}
         </div>
+      </Section>
+
+      <Section pad="32px 32px 0">
+        <SectionHead kicker="trust signals" title={null} />
+        <ReputationBlock reputation={service.reputation} />
       </Section>
 
       <Section pad="24px 32px 0">
@@ -503,6 +509,139 @@ export function ServiceDetailPage() {
           </div>
         </div>
       </Section>
+    </div>
+  );
+}
+
+function ReputationBlock({
+  reputation,
+}: {
+  reputation: PublicServiceReputation | null;
+}) {
+  // Three states:
+  //   1. null — gateway has no ReputationStorage configured. The contract
+  //      isn't deployed in this environment; show nothing rather than a
+  //      misleading "0 transactions" tile.
+  //   2. configured but no activity — render the empty-state hint so the
+  //      whitepaper's "reputation is the recourse" framing makes sense.
+  //   3. has activity — derived rates inline.
+  if (!reputation) return null;
+
+  const empty = reputation.totalTransactions === 0;
+  if (empty) {
+    return (
+      <div
+        style={{
+          marginTop: -8,
+          border: '1px solid var(--pro-border)',
+          borderRadius: 12,
+          background: 'var(--pro-surface)',
+          padding: '24px',
+          color: 'var(--pro-text-dim)',
+          fontSize: 14,
+          lineHeight: 1.55,
+        }}
+      >
+        <Mono
+          dim
+          style={{
+            display: 'block',
+            fontSize: 11,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            marginBottom: 8,
+          }}
+        >
+          no transaction history yet
+        </Mono>
+        Provider reputation is computed from on-chain outcome attestations and
+        buyer delivery confirmations. Numbers will appear here after the first
+        completed task.
+      </div>
+    );
+  }
+
+  const tiles: { label: string; value: string; sub: string | null; mint?: boolean }[] = [
+    {
+      label: 'Transactions',
+      value: reputation.totalTransactions.toString(),
+      sub: reputation.failedCount + reputation.canceledCount > 0
+        ? `${reputation.failedCount} failed · ${reputation.canceledCount} canceled`
+        : 'all completed',
+    },
+    {
+      label: 'Completion rate',
+      value:
+        reputation.completionRate !== null
+          ? `${(reputation.completionRate * 100).toFixed(0)}%`
+          : '–',
+      sub: `${reputation.completedCount} of ${reputation.totalTransactions}`,
+      mint: true,
+    },
+    {
+      label: 'Buyer-confirmed',
+      value:
+        reputation.buyerSatisfactionRate !== null
+          ? `${(reputation.buyerSatisfactionRate * 100).toFixed(0)}%`
+          : '–',
+      sub:
+        reputation.buyerSatisfactionRate !== null
+          ? `${reputation.confirmedCount} of ${
+              reputation.confirmedCount + reputation.notConfirmedCount
+            }`
+          : 'awaiting confirmations',
+      mint: true,
+    },
+  ];
+
+  return (
+    <div
+      className="grid-2"
+      style={{
+        marginTop: -8,
+        display: 'grid',
+        gridTemplateColumns: 'repeat(3, 1fr)',
+        background: 'var(--pro-surface)',
+        border: '1px solid var(--pro-border)',
+        borderRadius: 12,
+        overflow: 'hidden',
+      }}
+    >
+      {tiles.map((t, i) => (
+        <div
+          key={t.label}
+          style={{
+            padding: '20px 24px',
+            borderRight: i < tiles.length - 1 ? '1px solid var(--pro-border)' : 'none',
+          }}
+        >
+          <Caption style={{ marginBottom: 10 }}>{t.label}</Caption>
+          <div
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: 22,
+              fontWeight: 600,
+              color: t.mint ? 'var(--mint-400)' : 'var(--pro-text)',
+              letterSpacing: '-0.01em',
+            }}
+          >
+            {t.value}
+          </div>
+          {t.sub && (
+            <div
+              style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: 11,
+                color: 'var(--pro-text-dim)',
+                letterSpacing: '0.02em',
+                marginTop: 4,
+              }}
+            >
+              {t.sub}
+            </div>
+          )}
+        </div>
+      ))}
     </div>
   );
 }
