@@ -8,19 +8,24 @@ import { Icon, type IconName } from '../components/ui/Icon';
 import { Addr } from '../components/ui/Addr';
 import {
   basescanAddress,
+  basescanNft,
   basescanTx,
   categoryToIcon,
   getServiceDetail,
+  getStats,
   shortBuyer,
   timeAgo,
+  type PublicServiceLevelReputation,
   type PublicServiceReputation,
   type PublicSkill,
+  type PublicStats,
   type ServiceDetail,
 } from '../lib/api';
 
 export function ServiceDetailPage() {
   const { agentId } = useParams<{ agentId: string }>();
   const [service, setService] = useState<ServiceDetail | null>(null);
+  const [stats, setStats] = useState<PublicStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,9 +34,13 @@ export function ServiceDetailPage() {
     const ctrl = new AbortController();
     setLoading(true);
     setError(null);
-    getServiceDetail(agentId, ctrl.signal)
-      .then((s) => {
+    // Stats are fetched in parallel so the on-chain identity panel can
+    // build Basescan links to the IdentityRegistry NFT and the
+    // ServiceRegistry row without a second waterfall.
+    Promise.all([getServiceDetail(agentId, ctrl.signal), getStats(ctrl.signal)])
+      .then(([s, st]) => {
         setService(s);
+        setStats(st);
         setLoading(false);
       })
       .catch((e) => {
@@ -62,7 +71,7 @@ export function ServiceDetailPage() {
   }
 
   const m = categoryToIcon(service.category);
-  const stats: { label: string; value: string; mint?: boolean }[] = [
+  const headerTiles: { label: string; value: string; mint?: boolean }[] = [
     {
       label: 'Price range',
       value: priceRangeFor(service),
@@ -176,12 +185,12 @@ export function ServiceDetailPage() {
             overflow: 'hidden',
           }}
         >
-          {stats.map((s, i) => (
+          {headerTiles.map((s, i) => (
             <div
               key={s.label}
               style={{
                 padding: '20px 24px',
-                borderRight: i < stats.length - 1 ? '1px solid var(--pro-border)' : 'none',
+                borderRight: i < headerTiles.length - 1 ? '1px solid var(--pro-border)' : 'none',
               }}
             >
               <Caption style={{ marginBottom: 10 }}>{s.label}</Caption>
@@ -202,9 +211,16 @@ export function ServiceDetailPage() {
       </Section>
 
       <Section pad="32px 32px 0">
-        <SectionHead kicker="trust signals" title={null} />
+        <SectionHead kicker="reputation · provider · all activity" title={null} />
         <ReputationBlock reputation={service.reputation} />
       </Section>
+
+      {service.serviceReputation && (
+        <Section pad="20px 32px 0">
+          <SectionHead kicker="reputation · this service" title={null} />
+          <ServiceReputationBlock reputation={service.serviceReputation} />
+        </Section>
+      )}
 
       <Section pad="24px 32px 0">
         <SectionHead kicker="provided by" title={null} />
@@ -296,6 +312,11 @@ export function ServiceDetailPage() {
             </div>
           </div>
         </div>
+      </Section>
+
+      <Section pad="24px 32px 0">
+        <SectionHead kicker="on-chain identity" title={null} />
+        <OnChainIdentityBlock service={service} stats={stats} />
       </Section>
 
       <Section pad="40px 32px 0">
@@ -644,6 +665,243 @@ function ReputationBlock({
       ))}
     </div>
   );
+}
+
+function ServiceReputationBlock({
+  reputation,
+}: {
+  reputation: PublicServiceLevelReputation;
+}) {
+  const empty = reputation.totalTransactions === 0;
+  if (empty) {
+    return (
+      <div
+        style={{
+          marginTop: -8,
+          border: '1px solid var(--pro-border)',
+          borderRadius: 12,
+          background: 'var(--pro-surface)',
+          padding: '24px',
+          color: 'var(--pro-text-dim)',
+          fontSize: 14,
+          lineHeight: 1.55,
+        }}
+      >
+        <Mono
+          dim
+          style={{
+            display: 'block',
+            fontSize: 11,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            marginBottom: 8,
+          }}
+        >
+          serviceId · {shortHash(reputation.serviceId)} · no activity yet
+        </Mono>
+        Counters scope to a single row in <Mono mint>ServiceRegistry</Mono>.
+        Identical to provider stats when the provider lists only one service;
+        diverges as soon as they list multiple.
+      </div>
+    );
+  }
+
+  const tiles: { label: string; value: string; sub: string | null; mint?: boolean }[] = [
+    {
+      label: 'Service transactions',
+      value: reputation.totalTransactions.toString(),
+      sub:
+        reputation.failedCount + reputation.canceledCount > 0
+          ? `${reputation.failedCount} failed · ${reputation.canceledCount} canceled`
+          : 'all completed',
+    },
+    {
+      label: 'Completion rate',
+      value:
+        reputation.completionRate !== null
+          ? `${(reputation.completionRate * 100).toFixed(0)}%`
+          : '–',
+      sub: `${reputation.completedCount} of ${reputation.totalTransactions}`,
+      mint: true,
+    },
+    {
+      label: 'Refunded',
+      value: `${reputation.totalRefundedUsdc} USDC`,
+      sub: `serviceId ${shortHash(reputation.serviceId)}`,
+    },
+  ];
+
+  return (
+    <div
+      className="grid-2"
+      style={{
+        marginTop: -8,
+        display: 'grid',
+        gridTemplateColumns: 'repeat(3, 1fr)',
+        background: 'var(--pro-surface)',
+        border: '1px solid var(--pro-border)',
+        borderRadius: 12,
+        overflow: 'hidden',
+      }}
+    >
+      {tiles.map((t, i) => (
+        <div
+          key={t.label}
+          style={{
+            padding: '20px 24px',
+            borderRight: i < tiles.length - 1 ? '1px solid var(--pro-border)' : 'none',
+          }}
+        >
+          <Caption style={{ marginBottom: 10 }}>{t.label}</Caption>
+          <div
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: 22,
+              fontWeight: 600,
+              color: t.mint ? 'var(--mint-400)' : 'var(--pro-text)',
+              letterSpacing: '-0.01em',
+            }}
+          >
+            {t.value}
+          </div>
+          {t.sub && (
+            <div
+              style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: 11,
+                color: 'var(--pro-text-dim)',
+                letterSpacing: '0.02em',
+                marginTop: 4,
+              }}
+            >
+              {t.sub}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function OnChainIdentityBlock({
+  service,
+  stats,
+}: {
+  service: ServiceDetail;
+  stats: PublicStats | null;
+}) {
+  const identityRegistry = stats?.contracts.identityRegistry ?? null;
+  const serviceRegistry = stats?.contracts.serviceRegistry ?? null;
+
+  const rows: {
+    label: string;
+    value: string;
+    href: string | null;
+    hint: string | null;
+  }[] = [];
+
+  rows.push({
+    label: 'Provider · ERC-8004 NFT',
+    value: `agent#${service.agentId}`,
+    href: identityRegistry ? basescanNft(identityRegistry, service.agentId) : null,
+    hint: identityRegistry
+      ? `IdentityRegistry · ${shortHash(identityRegistry)}`
+      : 'IdentityRegistry address unavailable',
+  });
+
+  // ServiceRegistry doesn't expose per-row Basescan URLs (it's a mapping
+  // keyed by serviceId), so the link lands on the contract page and the
+  // serviceId hash is shown alongside for cross-referencing on-chain logs.
+  if (service.serviceId) {
+    rows.push({
+      label: 'Service · ServiceRegistry row',
+      value: shortHash(service.serviceId),
+      href: serviceRegistry ? basescanAddress(serviceRegistry) : null,
+      hint:
+        service.serviceSlug && service.serviceVersion
+          ? `slug=${service.serviceSlug} · version=${service.serviceVersion}`
+          : null,
+    });
+  }
+
+  return (
+    <div
+      style={{
+        marginTop: -8,
+        border: '1px solid var(--pro-border)',
+        borderRadius: 12,
+        overflow: 'hidden',
+        background: 'var(--pro-surface)',
+      }}
+    >
+      {rows.map((r, i) => (
+        <div
+          key={r.label}
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '260px 1fr 130px',
+            padding: '16px 22px',
+            gap: 16,
+            alignItems: 'center',
+            color: 'var(--pro-text)',
+            borderBottom: i < rows.length - 1 ? '1px solid var(--pro-border)' : 'none',
+          }}
+        >
+          <div>
+            <Caption style={{ marginBottom: 4 }}>{r.label}</Caption>
+            {r.hint && (
+              <Mono dim style={{ fontSize: 11, letterSpacing: '0.02em' }}>
+                {r.hint}
+              </Mono>
+            )}
+          </div>
+          <code
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: 13,
+              color: 'var(--mint-400)',
+              background: 'transparent',
+              padding: 0,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {r.value}
+          </code>
+          {r.href ? (
+            <a
+              href={r.href}
+              target="_blank"
+              rel="noreferrer"
+              style={{
+                color: 'var(--pro-text-dim)',
+                fontSize: 11,
+                borderBottom: 'none',
+                fontFamily: 'var(--font-mono)',
+                letterSpacing: '0.04em',
+                textTransform: 'uppercase',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                justifySelf: 'end',
+              }}
+            >
+              basescan <Icon name="external" size={11} />
+            </a>
+          ) : (
+            <span />
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function shortHash(hex: string): string {
+  if (!hex || !hex.startsWith('0x')) return hex;
+  if (hex.length <= 14) return hex;
+  return `${hex.slice(0, 10)}…${hex.slice(-6)}`;
 }
 
 function SkillTags({ skill }: { skill: PublicSkill }) {

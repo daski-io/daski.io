@@ -365,8 +365,16 @@ function ServiceCard({ service }: { service: PublicService }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0, flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
               <span style={{ color: 'var(--pro-text-dim)' }}>by</span>
-              <span style={{ color: 'var(--pro-text)', fontWeight: 500 }}>
-                {providerNameFromUri(service.agentURI) ?? 'Provider'}
+              <span
+                style={{
+                  color: 'var(--pro-text)',
+                  fontWeight: 500,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {service.providerName ?? providerNameFromUri(service.agentURI) ?? 'Provider'}
               </span>
               <Icon name="check" size={12} color="var(--mint-400)" strokeWidth={2.6} />
             </div>

@@ -369,13 +369,22 @@ function BigStat({
 
 function contractRows(stats: PublicStats | null) {
   const c = stats?.contracts;
-  return [
+  const rows: { name: string; addr: string }[] = [
     { name: 'PaymentRouter', addr: c?.paymentRouter ?? '0x…' },
-    { name: 'ProviderRegistry', addr: c?.providerRegistry ?? '0x…' },
     { name: 'IdentityRegistry', addr: c?.identityRegistry ?? '0x…' },
+    { name: 'ProviderRegistry', addr: c?.providerRegistry ?? '0x…' },
+  ];
+  // ServiceRegistry came in with the 2026-05 service-identity refactor;
+  // older gateway builds don't return the field at all. Render the row
+  // only when present so this view degrades cleanly against either.
+  if (c?.serviceRegistry) {
+    rows.push({ name: 'ServiceRegistry', addr: c.serviceRegistry });
+  }
+  rows.push(
     { name: 'x402 Adapter', addr: c?.x402Adapter ?? '0x…' },
     { name: 'USDC (Base Sepolia)', addr: c?.usdc ?? '0x036cbd53842c5426634e7929541ec2318f3dcf7e' },
-  ];
+  );
+  return rows;
 }
 
 function networkLabel(network: string): string {

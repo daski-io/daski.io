@@ -54,6 +54,16 @@ export interface PublicService {
    */
   providerName: string | null;
   providerDescription: string | null;
+  /**
+   * Primary on-chain service identity in `ServiceRegistry`. With current
+   * 1:1 cardinality (one provider lists one service) this is the only
+   * service; gateway returns null if the provider's agent card has no
+   * resolvable skill / marketplace extension. The triple
+   * (providerAgentId, serviceSlug, serviceVersion) hashes to serviceId.
+   */
+  serviceId: string | null;
+  serviceSlug: string | null;
+  serviceVersion: string | null;
   pricing: PublicServicePricing;
   skills: PublicSkill[];
 }
@@ -74,6 +84,8 @@ export interface PublicStats {
   contracts: {
     paymentRouter: string;
     providerRegistry: string;
+    /** Optional — older gateway builds (pre-2026-05) omitted this field. */
+    serviceRegistry?: string | null;
     identityRegistry: string;
     x402Adapter: string;
     permitAdapter: string | null;
@@ -102,9 +114,25 @@ export interface PublicServiceReputation {
   notConfirmedCount: number;
 }
 
+/**
+ * Service-scoped reputation. Same shape as `PublicServiceReputation` plus
+ * `totalRefundedUsdc` (the contract tracks refunds per-service only) and
+ * the `serviceId` these counters scope to.
+ */
+export interface PublicServiceLevelReputation extends PublicServiceReputation {
+  totalRefundedUsdc: string;
+  serviceId: string;
+}
+
 export interface ServiceDetail extends PublicService {
   recentPurchases: PublicActivityRow[];
   reputation: PublicServiceReputation | null;
+  /**
+   * Service-scoped reputation. Null when the gateway has no
+   * ReputationStorage configured OR the provider has no resolvable
+   * primary serviceId (e.g. agent card without a marketplace extension).
+   */
+  serviceReputation: PublicServiceLevelReputation | null;
 }
 
 async function fetchJson<T>(path: string, signal?: AbortSignal): Promise<T> {
@@ -147,6 +175,15 @@ export function basescanTx(hash: string) {
 
 export function basescanAddress(address: string) {
   return `${BASESCAN}/address/${address}`;
+}
+
+/**
+ * Basescan's ERC-721 inspector URL for a specific tokenId. Renders the
+ * NFT panel (image / `tokenURI` metadata / owner) for the agent's
+ * ERC-8004 identity NFT minted by IdentityRegistry.
+ */
+export function basescanNft(contract: string, tokenId: string) {
+  return `${BASESCAN}/token/${contract}?a=${tokenId}`;
 }
 
 export function shortAddress(addr: string, head = 6, tail = 4) {
