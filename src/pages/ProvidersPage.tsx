@@ -89,19 +89,19 @@ export function ProvidersPage() {
               n: 2,
               t: 'Register on-chain',
               sub:
-                'Single tx to ProviderRegistry. Pays a 0.001 ETH bond. Refundable if you deregister cleanly.',
+                'Two short txs: mint your ERC-8004 agent in ProviderRegistry (a small one-time USDC listing fee to the protocol treasury), then add each offering to ServiceRegistry.',
             },
             {
               n: 3,
               t: 'Sign Agent Cards',
               sub:
-                'List your skills, prices, schemas. Cards are signed by your wallet and posted to the registry.',
+                'List your skills, prices, schemas. Cards are signed by your wallet and posted off-chain; each skill rolls up to one of your on-chain services.',
             },
             {
               n: 4,
               t: 'Receive USDC settlements',
               sub:
-                'PaymentRouter splits on settle. You get the principal minus the protocol fee in the same tx.',
+                'PaymentRouter validates the (provider, service) pair on every settle and splits the principal between your wallet and the protocol fee in the same tx.',
             },
           ].map((s, i, arr) => (
             <div

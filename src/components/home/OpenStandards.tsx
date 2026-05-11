@@ -30,12 +30,12 @@ const PROTOCOLS: Record<ProtocolKey, Protocol> = {
   register: {
     title: 'Provider registration · Agent Card',
     desc:
-      'Providers register with the gateway by publishing an Agent Card URI on-chain via ProviderRegistry. The gateway fetches and caches the card, health-probes the provider, and serves it to buyers during discovery.',
+      'Providers register their agent in ProviderRegistry and each marketable offering in ServiceRegistry, then publish a signed Agent Card URI on-chain. The gateway fetches and caches the card, health-probes the provider, and serves it to buyers during discovery.',
   },
   erc8004: {
     title: 'ERC-8004 · Identity',
     desc:
-      'On-chain identity for every actor. Buyers, gateway, and providers all carry verifiable identities. No central account system.',
+      'On-chain identity for every actor — buyer, gateway, provider — as an ERC-8004 NFT. Services are a separate on-chain entity in ServiceRegistry, keyed to the provider that owns them. No central account system.',
   },
 };
 
