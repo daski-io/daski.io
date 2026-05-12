@@ -70,16 +70,12 @@ export function Footer() {
       }}
     >
       <div
+        className="dk-footer-grid"
         style={{
           maxWidth: 1280,
           margin: '0 auto',
           padding: '48px 32px 28px',
-          display: 'grid',
-          gridTemplateColumns: '2fr 1fr 1fr 1fr',
-          gap: 48,
-          alignItems: 'flex-start',
         }}
-        className="grid-3"
       >
         <div>
           <Logo size={20} />

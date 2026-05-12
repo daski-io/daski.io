@@ -2,10 +2,6 @@ import { Link, NavLink, useLocation } from 'react-router-dom';
 import { Logo } from './ui/Logo';
 import { Icon } from './ui/Icon';
 
-interface HeaderProps {
-  blockNumber?: string | null;
-}
-
 interface NavItem {
   to: string;
   label: string;
@@ -52,7 +48,7 @@ function NetworkBadge() {
   );
 }
 
-export function Header({ blockNumber: _blockNumber }: HeaderProps) {
+export function Header() {
   const location = useLocation();
   return (
     <header

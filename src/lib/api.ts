@@ -231,7 +231,7 @@ export function categoryToIcon(category: string | null | undefined) {
 
 /** Compute a price-range string for a service from its skills.
  *  Falls back to the service-level pricing if no skill prices are set. */
-export function priceRange(service: PublicService): string {
+export function priceRange(service: Pick<PublicService, 'skills' | 'pricing'>): string {
   const paid = service.skills.filter((s) => s.paymentRequired);
   const numericPrices = paid
     .map((s) => (s.basePrice ? Number(s.basePrice) : null))
@@ -251,7 +251,7 @@ export function priceRange(service: PublicService): string {
 
   // Live / variable pricing: show a hint instead of a hard range.
   if (service.pricing.variable || service.skills.some((s) => s.variable)) {
-    return 'live pricing';
+    return 'live';
   }
   return '-';
 }

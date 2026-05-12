@@ -93,7 +93,7 @@ export function BottomCTAs() {
   const navigate = useNavigate();
   return (
     <Section pad="48px 32px 32px">
-      <div className="grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+      <div className="dk-grid-2" style={{ gap: 20 }}>
         <CTACard
           kicker="for agent developers"
           title="Empower your agent in 30 seconds."

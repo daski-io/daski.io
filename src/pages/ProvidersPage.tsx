@@ -43,10 +43,7 @@ export function ProvidersPage() {
 
       <Section pad="32px 32px 0">
         <SectionHead kicker="what you need" title="Three things." />
-        <div
-          className="grid-3"
-          style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}
-        >
+        <div className="dk-grid-3">
           <NeedCard
             n="01"
             title="An A2A endpoint"

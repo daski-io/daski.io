@@ -13,6 +13,7 @@ import {
   categoryToIcon,
   getServiceDetail,
   getStats,
+  priceRange,
   shortBuyer,
   timeAgo,
   type PublicServiceLevelReputation,
@@ -34,9 +35,8 @@ export function ServiceDetailPage() {
     const ctrl = new AbortController();
     setLoading(true);
     setError(null);
-    // Stats are fetched in parallel so the on-chain identity panel can
-    // build Basescan links to the IdentityRegistry NFT and the
-    // ServiceRegistry row without a second waterfall.
+    // Stats fetched in parallel so the on-chain identity links to
+    // IdentityRegistry / ServiceRegistry don't need a second waterfall.
     Promise.all([getServiceDetail(agentId, ctrl.signal), getStats(ctrl.signal)])
       .then(([s, st]) => {
         setService(s);
@@ -71,24 +71,16 @@ export function ServiceDetailPage() {
   }
 
   const m = categoryToIcon(service.category);
-  const headerTiles: { label: string; value: string; mint?: boolean }[] = [
-    {
-      label: 'Price range',
-      value: priceRangeFor(service),
-      mint: true,
-    },
-    {
-      label: 'Avg completion',
-      value: service.turnaroundEstimate ?? '-',
-    },
-    {
-      label: 'Total purchases',
-      value: service.recentPurchases.length.toString(),
-    },
-    {
-      label: 'Active skills',
-      value: service.skills.length.toString(),
-    },
+  const totalPaid =
+    service.serviceReputation?.totalTransactions ??
+    service.reputation?.totalTransactions ??
+    null;
+
+  const headerTiles: StatTile[] = [
+    { label: 'Price range', value: priceRange(service), mint: true },
+    { label: 'Avg completion', value: service.turnaroundEstimate ?? '-' },
+    { label: 'Total purchases', value: totalPaid !== null ? totalPaid.toString() : '–' },
+    { label: 'Active skills', value: service.skills.length.toString() },
   ];
 
   return (
@@ -143,19 +135,7 @@ export function ServiceDetailPage() {
             .filter((s) => s.paymentRequired)
             .slice(0, 6)
             .map((c) => (
-              <span
-                key={c.id}
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 12,
-                  padding: '4px 10px',
-                  borderRadius: 6,
-                  background: 'var(--pro-surface2)',
-                  color: 'var(--pro-text)',
-                  border: '1px solid var(--pro-border)',
-                  letterSpacing: '0.02em',
-                }}
-              >
+              <span key={c.id} className="dk-skill-chip">
                 {c.id}
               </span>
             ))}
@@ -173,346 +153,37 @@ export function ServiceDetailPage() {
             'A real service offered to AI agents on the Daski marketplace. The agent pays in USDC on Base, the provider fulfils via A2A, and a verified completion lands on-chain.'}
         </p>
 
-        <div
-          className="grid-2"
-          style={{
-            marginTop: 28,
-            display: 'grid',
-            gridTemplateColumns: 'repeat(4, 1fr)',
-            background: 'var(--pro-surface)',
-            border: '1px solid var(--pro-border)',
-            borderRadius: 12,
-            overflow: 'hidden',
-          }}
-        >
-          {headerTiles.map((s, i) => (
-            <div
-              key={s.label}
-              style={{
-                padding: '20px 24px',
-                borderRight: i < headerTiles.length - 1 ? '1px solid var(--pro-border)' : 'none',
-              }}
-            >
-              <Caption style={{ marginBottom: 10 }}>{s.label}</Caption>
-              <div
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 22,
-                  fontWeight: 600,
-                  color: s.mint ? 'var(--mint-400)' : 'var(--pro-text)',
-                  letterSpacing: '-0.01em',
-                }}
-              >
-                {s.value}
-              </div>
-            </div>
-          ))}
-        </div>
+        <ServiceBox
+          headerTiles={headerTiles}
+          serviceReputation={service.serviceReputation}
+          serviceId={service.serviceId}
+          serviceSlug={service.serviceSlug}
+          serviceVersion={service.serviceVersion}
+          serviceRegistry={stats?.contracts.serviceRegistry ?? null}
+        />
       </Section>
 
-      <Section pad="32px 32px 0">
-        <SectionHead kicker="reputation · provider · all activity" title={null} />
-        <ReputationBlock reputation={service.reputation} />
-      </Section>
-
-      {service.serviceReputation && (
-        <Section pad="20px 32px 0">
-          <SectionHead kicker="reputation · this service" title={null} />
-          <ServiceReputationBlock reputation={service.serviceReputation} />
-        </Section>
-      )}
-
-      <Section pad="24px 32px 0">
+      <Section pad="0 32px 0">
         <SectionHead kicker="provided by" title={null} />
-        <div className="dk-card" style={{ padding: 24, marginTop: -8 }}>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'flex-start',
-              justifyContent: 'space-between',
-              gap: 24,
-              flexWrap: 'wrap',
-            }}
-          >
-            <div style={{ flex: 1, minWidth: 280 }}>
-              {service.providerName && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
-                  <h3
-                    style={{
-                      fontSize: 22,
-                      fontWeight: 600,
-                      margin: 0,
-                      color: 'var(--pro-text)',
-                      letterSpacing: '-0.015em',
-                    }}
-                  >
-                    {service.providerName}
-                  </h3>
-                  <Pill tone="success">verified</Pill>
-                </div>
-              )}
-              {service.providerDescription && (
-                <p
-                  style={{
-                    color: 'var(--pro-text-dim)',
-                    fontSize: 14,
-                    lineHeight: 1.55,
-                    margin: '0 0 14px',
-                    fontStyle: 'italic',
-                  }}
-                >
-                  {service.providerDescription}
-                </p>
-              )}
-              <div
-                style={{
-                  display: 'flex',
-                  gap: 16,
-                  flexWrap: 'wrap',
-                  alignItems: 'center',
-                  fontSize: 13,
-                }}
-              >
-                {service.providerA2AUrl && (
-                  <a
-                    href={service.providerA2AUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{
-                      color: 'var(--mint-400)',
-                      display: 'inline-flex',
-                      gap: 6,
-                      alignItems: 'center',
-                      borderBottom: 'none',
-                    }}
-                  >
-                    <Icon name="external" size={13} /> A2A endpoint
-                  </a>
-                )}
-                <span style={{ color: 'var(--pro-border-hi)' }}>·</span>
-                <a
-                  href={service.agentURI}
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{
-                    color: 'var(--mint-400)',
-                    display: 'inline-flex',
-                    gap: 6,
-                    alignItems: 'center',
-                    borderBottom: 'none',
-                  }}
-                >
-                  Agent Card
-                </a>
-                <span style={{ color: 'var(--pro-border-hi)' }}>·</span>
-                <Addr link={basescanAddress(service.providerAddress)} style={{ fontSize: 12 }}>
-                  {service.providerAddress}
-                </Addr>
-              </div>
-            </div>
-          </div>
-        </div>
-      </Section>
-
-      <Section pad="24px 32px 0">
-        <SectionHead kicker="on-chain identity" title={null} />
-        <OnChainIdentityBlock service={service} stats={stats} />
+        <ProvidedByBox
+          service={service}
+          identityRegistry={stats?.contracts.identityRegistry ?? null}
+        />
       </Section>
 
       <Section pad="40px 32px 0">
         <SectionHead kicker="skills offered" title="Under this service." />
-        <div
-          style={{
-            border: '1px solid var(--pro-border)',
-            borderRadius: 12,
-            overflow: 'hidden',
-            background: 'var(--pro-surface)',
-          }}
-        >
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '1.2fr 2fr 1fr 1fr',
-              padding: '12px 20px',
-              gap: 16,
-              borderBottom: '1px solid var(--pro-border)',
-              background: 'var(--pro-bg)',
-              fontFamily: 'var(--font-mono)',
-              fontSize: 10,
-              color: 'var(--pro-text-dim)',
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-            }}
-          >
-            <span>Skill</span>
-            <span>Description</span>
-            <span>Price</span>
-            <span>Paid</span>
-          </div>
-          {service.skills.map((sk, i) => (
-            <div
-              key={sk.id}
-              style={{
-                display: 'grid',
-                gridTemplateColumns: '1.2fr 2fr 1fr 1fr',
-                padding: '16px 20px',
-                gap: 16,
-                alignItems: 'start',
-                color: 'var(--pro-text)',
-                borderBottom: i < service.skills.length - 1 ? '1px solid var(--pro-border)' : 'none',
-              }}
-            >
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <Mono mint>{sk.id}</Mono>
-                <SkillTags skill={sk} />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <span style={{ fontSize: 13, color: 'var(--pro-text-dim)' }}>
-                  {sk.description ?? '-'}
-                </span>
-                {sk.requiredFields && sk.requiredFields.length > 0 && (
-                  <span
-                    style={{
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: 11,
-                      color: 'var(--pro-text-dim)',
-                      letterSpacing: '0.02em',
-                      lineHeight: 1.45,
-                    }}
-                  >
-                    fields: {sk.requiredFields.join(', ')}
-                  </span>
-                )}
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <Mono>{sk.basePrice ? `${sk.basePrice} USDC` : sk.variable ? 'live' : '-'}</Mono>
-                {sk.pricingModelDetail?.hint && (
-                  <span
-                    style={{
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: 11,
-                      color: 'var(--pro-text-dim)',
-                      lineHeight: 1.4,
-                    }}
-                  >
-                    {sk.pricingModelDetail.source
-                      ? `via ${sk.pricingModelDetail.source}`
-                      : sk.pricingModelDetail.kind}
-                  </span>
-                )}
-              </div>
-              <Mono dim>{sk.paymentRequired ? 'yes' : 'free'}</Mono>
-            </div>
-          ))}
-        </div>
+        <SkillsTable skills={service.skills} />
       </Section>
 
       <Section pad="40px 32px 0">
         <SectionHead kicker="recent purchases of this service" title={null} />
-        {service.recentPurchases.length === 0 ? (
-          <div
-            style={{
-              border: '1px solid var(--pro-border)',
-              borderRadius: 12,
-              background: 'var(--pro-surface)',
-              padding: '28px',
-              textAlign: 'center',
-              color: 'var(--pro-text-dim)',
-              fontSize: 14,
-              lineHeight: 1.6,
-            }}
-          >
-            <Mono
-              dim
-              style={{
-                display: 'block',
-                fontSize: 11,
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase',
-                marginBottom: 8,
-              }}
-            >
-              0 purchases · last 24h
-            </Mono>
-            More instance-level activity will appear here as agents start using this service.
-          </div>
-        ) : (
-          <div
-            style={{
-              border: '1px solid var(--pro-border)',
-              borderRadius: 12,
-              overflow: 'hidden',
-              background: 'var(--pro-surface)',
-              fontFamily: 'var(--font-mono)',
-              fontSize: 12,
-            }}
-          >
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: '170px 1.4fr 100px 1fr 80px',
-                padding: '10px 16px',
-                gap: 16,
-                borderBottom: '1px solid var(--pro-border)',
-                background: 'var(--pro-bg)',
-                color: 'var(--pro-text-dim)',
-                fontSize: 10,
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase',
-              }}
-            >
-              <span>Agent</span>
-              <span>Skill</span>
-              <span>Paid</span>
-              <span>When</span>
-              <span>Receipt</span>
-            </div>
-            {service.recentPurchases.map((r) => (
-              <div
-                key={r.txHash}
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: '170px 1.4fr 100px 1fr 80px',
-                  padding: '12px 16px',
-                  gap: 16,
-                  borderBottom: '1px solid var(--pro-border)',
-                  alignItems: 'center',
-                  color: 'var(--pro-text)',
-                }}
-              >
-                <Mono>{shortBuyer(r.buyerAgentId)}</Mono>
-                <Mono mint>{r.skillId ?? '-'}</Mono>
-                <span style={{ color: 'var(--mint-400)' }}>
-                  {r.amount} <span style={{ color: 'var(--pro-text-dim)' }}>USDC</span>
-                </span>
-                <span style={{ color: 'var(--pro-text-dim)' }}>{timeAgo(r.timestamp)}</span>
-                <a
-                  href={basescanTx(r.txHash)}
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{
-                    color: 'var(--mint-400)',
-                    fontSize: 11,
-                    borderBottom: 'none',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 4,
-                  }}
-                >
-                  tx <Icon name="external" size={11} />
-                </a>
-              </div>
-            ))}
-          </div>
-        )}
+        <RecentPurchases purchases={service.recentPurchases} />
       </Section>
 
       <Section pad="40px 32px 0">
         <SectionHead kicker="how to use this service from your agent" title={null} />
-        <div
-          className="grid-2"
-          style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}
-        >
+        <div className="dk-grid-2" style={{ gap: 20 }}>
           <div className="dk-card" style={{ padding: 22 }}>
             <Caption style={{ marginBottom: 12 }}>step 1 · install</Caption>
             <CommandLine cmd="claude mcp add daski https://sandbox-gateway.daski.io/mcp" />
@@ -534,157 +205,412 @@ export function ServiceDetailPage() {
   );
 }
 
-function ReputationBlock({
-  reputation,
-}: {
-  reputation: PublicServiceReputation | null;
-}) {
-  // Three states:
-  //   1. null — gateway has no ReputationStorage configured. The contract
-  //      isn't deployed in this environment; show nothing rather than a
-  //      misleading "0 transactions" tile.
-  //   2. configured but no activity — render the empty-state hint so the
-  //      whitepaper's "reputation is the recourse" framing makes sense.
-  //   3. has activity — derived rates inline.
-  if (!reputation) return null;
+interface StatTile {
+  label: string;
+  value: string;
+  sub?: string | null;
+  mint?: boolean;
+}
 
-  const empty = reputation.totalTransactions === 0;
-  if (empty) {
-    return (
-      <div
-        style={{
-          marginTop: -8,
-          border: '1px solid var(--pro-border)',
-          borderRadius: 12,
-          background: 'var(--pro-surface)',
-          padding: '24px',
-          color: 'var(--pro-text-dim)',
-          fontSize: 14,
-          lineHeight: 1.55,
-        }}
-      >
-        <Mono
-          dim
+function StatTileRow({ tiles }: { tiles: StatTile[] }) {
+  return (
+    <div className={`dk-stat-row dk-stat-cols-${tiles.length}`}>
+      {tiles.map((t, i) => (
+        <div
+          key={t.label}
+          className="dk-stat-tile"
           style={{
-            display: 'block',
-            fontSize: 11,
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase',
-            marginBottom: 8,
+            borderRight: i < tiles.length - 1 ? '1px solid var(--pro-border)' : 'none',
           }}
         >
-          no transaction history yet
-        </Mono>
-        Provider reputation is computed from on-chain outcome attestations and
-        buyer delivery confirmations. Numbers will appear here after the first
-        completed task.
-      </div>
-    );
-  }
+          <Caption style={{ marginBottom: 10 }}>{t.label}</Caption>
+          <div
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: 22,
+              fontWeight: 600,
+              color: t.mint ? 'var(--mint-400)' : 'var(--pro-text)',
+              letterSpacing: '-0.01em',
+            }}
+          >
+            {t.value}
+          </div>
+          {t.sub && (
+            <div
+              style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: 11,
+                color: 'var(--pro-text-dim)',
+                letterSpacing: '0.02em',
+                marginTop: 4,
+              }}
+            >
+              {t.sub}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
 
-  const tiles: { label: string; value: string; sub: string | null; mint?: boolean }[] = [
+function ServiceBox({
+  headerTiles,
+  serviceReputation,
+  serviceId,
+  serviceSlug,
+  serviceVersion,
+  serviceRegistry,
+}: {
+  headerTiles: StatTile[];
+  serviceReputation: PublicServiceLevelReputation | null;
+  serviceId: string | null;
+  serviceSlug: string | null;
+  serviceVersion: string | null;
+  serviceRegistry: string | null;
+}) {
+  return (
+    <div className="dk-box" style={{ marginTop: 28 }}>
+      <StatTileRow tiles={headerTiles} />
+
+      {serviceReputation && (
+        <>
+          <div className="dk-box-divider">
+            <Caption>reputation · this service</Caption>
+          </div>
+          <StatTileRow tiles={serviceReputationTiles(serviceReputation)} />
+        </>
+      )}
+
+      {serviceId && (
+        <>
+          <div className="dk-box-divider">
+            <Caption>on-chain · serviceRegistry</Caption>
+          </div>
+          <OnChainRow
+            label="ServiceRegistry row"
+            value={shortHash(serviceId)}
+            href={serviceRegistry ? basescanAddress(serviceRegistry) : null}
+            hint={
+              serviceSlug && serviceVersion
+                ? `slug=${serviceSlug} · version=${serviceVersion}`
+                : 'mapping keyed by serviceId'
+            }
+          />
+        </>
+      )}
+    </div>
+  );
+}
+
+function serviceReputationTiles(rep: PublicServiceLevelReputation): StatTile[] {
+  if (rep.totalTransactions === 0) {
+    return [
+      {
+        label: 'Service transactions',
+        value: '0',
+        sub: `serviceId ${shortHash(rep.serviceId)} · no activity yet`,
+      },
+    ];
+  }
+  return [
     {
-      label: 'Transactions',
-      value: reputation.totalTransactions.toString(),
-      sub: reputation.failedCount + reputation.canceledCount > 0
-        ? `${reputation.failedCount} failed · ${reputation.canceledCount} canceled`
-        : 'all completed',
+      label: 'Service transactions',
+      value: rep.totalTransactions.toString(),
+      sub:
+        rep.failedCount + rep.canceledCount > 0
+          ? `${rep.failedCount} failed · ${rep.canceledCount} canceled`
+          : 'all completed',
     },
     {
       label: 'Completion rate',
-      value:
-        reputation.completionRate !== null
-          ? `${(reputation.completionRate * 100).toFixed(0)}%`
-          : '–',
-      sub: `${reputation.completedCount} of ${reputation.totalTransactions}`,
+      value: rep.completionRate !== null ? `${(rep.completionRate * 100).toFixed(0)}%` : '–',
+      sub: `${rep.completedCount} of ${rep.totalTransactions}`,
+      mint: true,
+    },
+    {
+      label: 'Refunded',
+      value: `${rep.totalRefundedUsdc} USDC`,
+      sub: `serviceId ${shortHash(rep.serviceId)}`,
+    },
+  ];
+}
+
+function ProvidedByBox({
+  service,
+  identityRegistry,
+}: {
+  service: ServiceDetail;
+  identityRegistry: string | null;
+}) {
+  return (
+    <div className="dk-box" style={{ marginTop: -8 }}>
+      <div style={{ padding: 24 }}>
+        {service.providerName && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+            <h3
+              style={{
+                fontSize: 22,
+                fontWeight: 600,
+                margin: 0,
+                color: 'var(--pro-text)',
+                letterSpacing: '-0.015em',
+              }}
+            >
+              {service.providerName}
+            </h3>
+            <Pill>verified</Pill>
+          </div>
+        )}
+        {service.providerDescription && (
+          <p
+            style={{
+              color: 'var(--pro-text-dim)',
+              fontSize: 14,
+              lineHeight: 1.55,
+              margin: '0 0 14px',
+              fontStyle: 'italic',
+            }}
+          >
+            {service.providerDescription}
+          </p>
+        )}
+        <div
+          style={{
+            display: 'flex',
+            gap: 16,
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            fontSize: 13,
+          }}
+        >
+          {service.providerA2AUrl && (
+            <a
+              href={service.providerA2AUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="dk-link-mint"
+            >
+              <Icon name="external" size={13} /> A2A endpoint
+            </a>
+          )}
+          {service.providerA2AUrl && <span style={{ color: 'var(--pro-border-hi)' }}>·</span>}
+          <a
+            href={service.agentURI}
+            target="_blank"
+            rel="noreferrer"
+            className="dk-link-mint"
+          >
+            Agent Card
+          </a>
+          <span style={{ color: 'var(--pro-border-hi)' }}>·</span>
+          <Addr link={basescanAddress(service.providerAddress)} style={{ fontSize: 12 }}>
+            {service.providerAddress}
+          </Addr>
+        </div>
+      </div>
+
+      {service.reputation && (
+        <>
+          <div className="dk-box-divider">
+            <Caption>reputation · provider · all activity</Caption>
+          </div>
+          <StatTileRow tiles={providerReputationTiles(service.reputation)} />
+        </>
+      )}
+
+      <div className="dk-box-divider">
+        <Caption>on-chain · identityRegistry</Caption>
+      </div>
+      <OnChainRow
+        label="Provider · ERC-8004 NFT"
+        value={`agent#${service.agentId}`}
+        href={identityRegistry ? basescanNft(identityRegistry, service.agentId) : null}
+        hint={
+          identityRegistry
+            ? `IdentityRegistry · ${shortHash(identityRegistry)}`
+            : 'IdentityRegistry address unavailable'
+        }
+      />
+    </div>
+  );
+}
+
+function providerReputationTiles(rep: PublicServiceReputation): StatTile[] {
+  if (rep.totalTransactions === 0) {
+    return [
+      {
+        label: 'Transactions',
+        value: '0',
+        sub: 'awaiting first completed task',
+      },
+    ];
+  }
+  return [
+    {
+      label: 'Transactions',
+      value: rep.totalTransactions.toString(),
+      sub:
+        rep.failedCount + rep.canceledCount > 0
+          ? `${rep.failedCount} failed · ${rep.canceledCount} canceled`
+          : 'all completed',
+    },
+    {
+      label: 'Completion rate',
+      value: rep.completionRate !== null ? `${(rep.completionRate * 100).toFixed(0)}%` : '–',
+      sub: `${rep.completedCount} of ${rep.totalTransactions}`,
       mint: true,
     },
     {
       label: 'Buyer-confirmed',
       value:
-        reputation.buyerSatisfactionRate !== null
-          ? `${(reputation.buyerSatisfactionRate * 100).toFixed(0)}%`
+        rep.buyerSatisfactionRate !== null
+          ? `${(rep.buyerSatisfactionRate * 100).toFixed(0)}%`
           : '–',
       sub:
-        reputation.buyerSatisfactionRate !== null
-          ? `${reputation.confirmedCount} of ${
-              reputation.confirmedCount + reputation.notConfirmedCount
-            }`
+        rep.buyerSatisfactionRate !== null
+          ? `${rep.confirmedCount} of ${rep.confirmedCount + rep.notConfirmedCount}`
           : 'awaiting confirmations',
       mint: true,
     },
   ];
+}
 
+function OnChainRow({
+  label,
+  value,
+  href,
+  hint,
+}: {
+  label: string;
+  value: string;
+  href: string | null;
+  hint: string | null;
+}) {
   return (
-    <div
-      className="grid-2"
-      style={{
-        marginTop: -8,
-        display: 'grid',
-        gridTemplateColumns: 'repeat(3, 1fr)',
-        background: 'var(--pro-surface)',
-        border: '1px solid var(--pro-border)',
-        borderRadius: 12,
-        overflow: 'hidden',
-      }}
-    >
-      {tiles.map((t, i) => (
+    <div className="dk-onchain-row">
+      <div>
+        <Caption style={{ marginBottom: 4 }}>{label}</Caption>
+        {hint && (
+          <Mono dim style={{ fontSize: 11, letterSpacing: '0.02em' }}>
+            {hint}
+          </Mono>
+        )}
+      </div>
+      <code
+        style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: 13,
+          color: 'var(--mint-400)',
+          background: 'transparent',
+          padding: 0,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {value}
+      </code>
+      {href ? (
+        <a
+          href={href}
+          target="_blank"
+          rel="noreferrer"
+          className="dk-basescan-link"
+        >
+          basescan <Icon name="external" size={11} />
+        </a>
+      ) : (
+        <span />
+      )}
+    </div>
+  );
+}
+
+function SkillsTable({ skills }: { skills: PublicSkill[] }) {
+  return (
+    <div className="dk-table">
+      <div className="dk-table-head dk-skills-row">
+        <span>Skill</span>
+        <span>Description</span>
+        <span>Price</span>
+        <span>Paid</span>
+      </div>
+      {skills.map((sk, i) => (
         <div
-          key={t.label}
+          key={sk.id}
+          className="dk-skills-row"
           style={{
-            padding: '20px 24px',
-            borderRight: i < tiles.length - 1 ? '1px solid var(--pro-border)' : 'none',
+            padding: '16px 20px',
+            gap: 16,
+            alignItems: 'start',
+            color: 'var(--pro-text)',
+            borderBottom: i < skills.length - 1 ? '1px solid var(--pro-border)' : 'none',
           }}
         >
-          <Caption style={{ marginBottom: 10 }}>{t.label}</Caption>
-          <div
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 22,
-              fontWeight: 600,
-              color: t.mint ? 'var(--mint-400)' : 'var(--pro-text)',
-              letterSpacing: '-0.01em',
-            }}
-          >
-            {t.value}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <Mono mint>{sk.id}</Mono>
+            <SkillTags skill={sk} />
           </div>
-          {t.sub && (
-            <div
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: 11,
-                color: 'var(--pro-text-dim)',
-                letterSpacing: '0.02em',
-                marginTop: 4,
-              }}
-            >
-              {t.sub}
-            </div>
-          )}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <span style={{ fontSize: 13, color: 'var(--pro-text-dim)' }}>
+              {sk.description ?? '-'}
+            </span>
+            {sk.requiredFields && sk.requiredFields.length > 0 && (
+              <span
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 11,
+                  color: 'var(--pro-text-dim)',
+                  letterSpacing: '0.02em',
+                  lineHeight: 1.45,
+                }}
+              >
+                fields: {sk.requiredFields.join(', ')}
+              </span>
+            )}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <Mono>{sk.basePrice ? `${sk.basePrice} USDC` : sk.variable ? 'live' : '-'}</Mono>
+            {sk.pricingModelDetail?.hint && (
+              <span
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 11,
+                  color: 'var(--pro-text-dim)',
+                  lineHeight: 1.4,
+                }}
+              >
+                {sk.pricingModelDetail.source
+                  ? `via ${sk.pricingModelDetail.source}`
+                  : sk.pricingModelDetail.kind}
+              </span>
+            )}
+          </div>
+          <Mono dim>{sk.paymentRequired ? 'yes' : 'free'}</Mono>
         </div>
       ))}
     </div>
   );
 }
 
-function ServiceReputationBlock({
-  reputation,
+function RecentPurchases({
+  purchases,
 }: {
-  reputation: PublicServiceLevelReputation;
+  purchases: ServiceDetail['recentPurchases'];
 }) {
-  const empty = reputation.totalTransactions === 0;
-  if (empty) {
+  if (purchases.length === 0) {
     return (
       <div
         style={{
-          marginTop: -8,
           border: '1px solid var(--pro-border)',
           borderRadius: 12,
           background: 'var(--pro-surface)',
-          padding: '24px',
+          padding: '28px',
+          textAlign: 'center',
           color: 'var(--pro-text-dim)',
           fontSize: 14,
-          lineHeight: 1.55,
+          lineHeight: 1.6,
         }}
       >
         <Mono
@@ -697,201 +623,42 @@ function ServiceReputationBlock({
             marginBottom: 8,
           }}
         >
-          serviceId · {shortHash(reputation.serviceId)} · no activity yet
+          0 purchases · last 24h
         </Mono>
-        Counters scope to a single row in <Mono mint>ServiceRegistry</Mono>.
-        Identical to provider stats when the provider lists only one service;
-        diverges as soon as they list multiple.
+        More instance-level activity will appear here as agents start using this service.
       </div>
     );
   }
-
-  const tiles: { label: string; value: string; sub: string | null; mint?: boolean }[] = [
-    {
-      label: 'Service transactions',
-      value: reputation.totalTransactions.toString(),
-      sub:
-        reputation.failedCount + reputation.canceledCount > 0
-          ? `${reputation.failedCount} failed · ${reputation.canceledCount} canceled`
-          : 'all completed',
-    },
-    {
-      label: 'Completion rate',
-      value:
-        reputation.completionRate !== null
-          ? `${(reputation.completionRate * 100).toFixed(0)}%`
-          : '–',
-      sub: `${reputation.completedCount} of ${reputation.totalTransactions}`,
-      mint: true,
-    },
-    {
-      label: 'Refunded',
-      value: `${reputation.totalRefundedUsdc} USDC`,
-      sub: `serviceId ${shortHash(reputation.serviceId)}`,
-    },
-  ];
-
   return (
-    <div
-      className="grid-2"
-      style={{
-        marginTop: -8,
-        display: 'grid',
-        gridTemplateColumns: 'repeat(3, 1fr)',
-        background: 'var(--pro-surface)',
-        border: '1px solid var(--pro-border)',
-        borderRadius: 12,
-        overflow: 'hidden',
-      }}
-    >
-      {tiles.map((t, i) => (
+    <div className="dk-table" style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>
+      <div className="dk-table-head dk-recent-row">
+        <span>Agent</span>
+        <span>Skill</span>
+        <span>Paid</span>
+        <span>When</span>
+        <span>Receipt</span>
+      </div>
+      {purchases.map((r) => (
         <div
-          key={t.label}
+          key={r.txHash}
+          className="dk-recent-row"
           style={{
-            padding: '20px 24px',
-            borderRight: i < tiles.length - 1 ? '1px solid var(--pro-border)' : 'none',
-          }}
-        >
-          <Caption style={{ marginBottom: 10 }}>{t.label}</Caption>
-          <div
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 22,
-              fontWeight: 600,
-              color: t.mint ? 'var(--mint-400)' : 'var(--pro-text)',
-              letterSpacing: '-0.01em',
-            }}
-          >
-            {t.value}
-          </div>
-          {t.sub && (
-            <div
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: 11,
-                color: 'var(--pro-text-dim)',
-                letterSpacing: '0.02em',
-                marginTop: 4,
-              }}
-            >
-              {t.sub}
-            </div>
-          )}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function OnChainIdentityBlock({
-  service,
-  stats,
-}: {
-  service: ServiceDetail;
-  stats: PublicStats | null;
-}) {
-  const identityRegistry = stats?.contracts.identityRegistry ?? null;
-  const serviceRegistry = stats?.contracts.serviceRegistry ?? null;
-
-  const rows: {
-    label: string;
-    value: string;
-    href: string | null;
-    hint: string | null;
-  }[] = [];
-
-  rows.push({
-    label: 'Provider · ERC-8004 NFT',
-    value: `agent#${service.agentId}`,
-    href: identityRegistry ? basescanNft(identityRegistry, service.agentId) : null,
-    hint: identityRegistry
-      ? `IdentityRegistry · ${shortHash(identityRegistry)}`
-      : 'IdentityRegistry address unavailable',
-  });
-
-  // ServiceRegistry doesn't expose per-row Basescan URLs (it's a mapping
-  // keyed by serviceId), so the link lands on the contract page and the
-  // serviceId hash is shown alongside for cross-referencing on-chain logs.
-  if (service.serviceId) {
-    rows.push({
-      label: 'Service · ServiceRegistry row',
-      value: shortHash(service.serviceId),
-      href: serviceRegistry ? basescanAddress(serviceRegistry) : null,
-      hint:
-        service.serviceSlug && service.serviceVersion
-          ? `slug=${service.serviceSlug} · version=${service.serviceVersion}`
-          : null,
-    });
-  }
-
-  return (
-    <div
-      style={{
-        marginTop: -8,
-        border: '1px solid var(--pro-border)',
-        borderRadius: 12,
-        overflow: 'hidden',
-        background: 'var(--pro-surface)',
-      }}
-    >
-      {rows.map((r, i) => (
-        <div
-          key={r.label}
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '260px 1fr 130px',
-            padding: '16px 22px',
+            padding: '12px 16px',
             gap: 16,
+            borderBottom: '1px solid var(--pro-border)',
             alignItems: 'center',
             color: 'var(--pro-text)',
-            borderBottom: i < rows.length - 1 ? '1px solid var(--pro-border)' : 'none',
           }}
         >
-          <div>
-            <Caption style={{ marginBottom: 4 }}>{r.label}</Caption>
-            {r.hint && (
-              <Mono dim style={{ fontSize: 11, letterSpacing: '0.02em' }}>
-                {r.hint}
-              </Mono>
-            )}
-          </div>
-          <code
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 13,
-              color: 'var(--mint-400)',
-              background: 'transparent',
-              padding: 0,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {r.value}
-          </code>
-          {r.href ? (
-            <a
-              href={r.href}
-              target="_blank"
-              rel="noreferrer"
-              style={{
-                color: 'var(--pro-text-dim)',
-                fontSize: 11,
-                borderBottom: 'none',
-                fontFamily: 'var(--font-mono)',
-                letterSpacing: '0.04em',
-                textTransform: 'uppercase',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                justifySelf: 'end',
-              }}
-            >
-              basescan <Icon name="external" size={11} />
-            </a>
-          ) : (
-            <span />
-          )}
+          <Mono>{shortBuyer(r.buyerAgentId)}</Mono>
+          <Mono mint>{r.skillId ?? '-'}</Mono>
+          <span style={{ color: 'var(--mint-400)' }}>
+            {r.amount} <span style={{ color: 'var(--pro-text-dim)' }}>USDC</span>
+          </span>
+          <span style={{ color: 'var(--pro-text-dim)' }}>{timeAgo(r.timestamp)}</span>
+          <a href={basescanTx(r.txHash)} target="_blank" rel="noreferrer" className="dk-basescan-link">
+            tx <Icon name="external" size={11} />
+          </a>
         </div>
       ))}
     </div>
@@ -905,7 +672,7 @@ function shortHash(hex: string): string {
 }
 
 function SkillTags({ skill }: { skill: PublicSkill }) {
-  const tags: { label: string; tone: 'warn' | 'mint' | 'dim' }[] = [];
+  const tags: { label: string; tone: 'warn' | 'dim' }[] = [];
   if (skill.requiresCapability) tags.push({ label: 'capability', tone: 'warn' });
   if (skill.requiresAssetOwnership) tags.push({ label: 'asset-gated', tone: 'dim' });
   if (skill.assetType) tags.push({ label: skill.assetType, tone: 'dim' });
@@ -921,12 +688,7 @@ function SkillTags({ skill }: { skill: PublicSkill }) {
             padding: '2px 6px',
             borderRadius: 4,
             border: '1px solid var(--pro-border)',
-            color:
-              t.tone === 'warn'
-                ? '#f0a878'
-                : t.tone === 'mint'
-                  ? 'var(--mint-400)'
-                  : 'var(--pro-text-dim)',
+            color: t.tone === 'warn' ? '#f0a878' : 'var(--pro-text-dim)',
             letterSpacing: '0.04em',
           }}
         >
@@ -1035,18 +797,4 @@ function CopySmall({ text }: { text: string }) {
       )}
     </button>
   );
-}
-
-function priceRangeFor(s: ServiceDetail): string {
-  const paid = s.skills.filter((sk) => sk.paymentRequired);
-  const numbers = paid
-    .map((sk) => (sk.basePrice ? Number(sk.basePrice) : null))
-    .filter((n): n is number => typeof n === 'number' && Number.isFinite(n));
-  if (numbers.length > 0) {
-    const min = Math.min(...numbers);
-    const max = Math.max(...numbers);
-    return min === max ? `${min.toFixed(2)} USDC` : `${min.toFixed(2)} – ${max.toFixed(2)} USDC`;
-  }
-  if (s.pricing.basePrice) return `${Number(s.pricing.basePrice).toFixed(2)} USDC`;
-  return 'live';
 }

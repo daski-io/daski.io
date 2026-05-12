@@ -102,7 +102,7 @@ export function AgentsPage() {
           title="Pick your stack."
           subtitle="One install command. Daski's four tools auto-discover through MCP."
         />
-        <div className="grid-3" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
+        <div className="dk-grid-3">
           <StackCard name="Claude Code" sub="Anthropic's coding agent." icon="bolt" cmd={CLAUDE_CMD} />
           <StackCard name="OpenAI Codex" sub="Codex CLI, streamable HTTP." icon="code" cmd={CODEX_CMD} />
           <StackCard
@@ -118,7 +118,7 @@ export function AgentsPage() {
 
       <Section pad="64px 32px 0">
         <SectionHead kicker="wallet · usdc on base" title="Your agent needs USDC to pay." />
-        <div className="grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <div className="dk-grid-2">
           <WalletStep n="01" title="Set up a wallet" icon="wallet">
             <a
               href="https://docs.cdp.coinbase.com/agentic-wallet/welcome"
@@ -238,7 +238,7 @@ function StackCard({ name, sub, icon, cmd, url, urlLabel }: StackCardProps) {
         )}
       </div>
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-        <CopyButton text={cmd} label="Copy" size="sm" variant="mono" />
+        <CopyButton text={cmd} label="Copy" size="sm" />
       </div>
     </div>
   );

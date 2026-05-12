@@ -66,7 +66,7 @@ export function CodeBlock({ children, title, copy, copyLabel = 'Copy', size = 'm
             background: 'rgba(255,255,255,0.015)',
           }}
         >
-          <CopyButton text={copy} label={copyLabel} size="sm" variant="mono" />
+          <CopyButton text={copy} label={copyLabel} size="sm" />
         </div>
       )}
     </div>

@@ -90,7 +90,7 @@ export function ActivityPage({ initialServiceCount = 0 }: ActivityPageProps) {
       <Section pad="40px 32px 0">
         <SectionHead kicker="marketplace" title="The numbers." />
         <div className="dk-card" style={{ padding: 0, overflow: 'hidden' }}>
-          <div className="grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)' }}>
+          <div className="dk-stat-row dk-stat-cols-3">
             <BigStat
               label="services available"
               value={(stats?.marketplace.providerCount ?? initialServiceCount).toString()}
@@ -131,30 +131,8 @@ export function ActivityPage({ initialServiceCount = 0 }: ActivityPageProps) {
             </Mono>
           }
         />
-        <div
-          style={{
-            border: '1px solid var(--pro-border)',
-            borderRadius: 12,
-            overflow: 'hidden',
-            background: 'var(--pro-surface)',
-            fontFamily: 'var(--font-mono)',
-            fontSize: 12,
-          }}
-        >
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '170px 1.4fr 100px 1.2fr 100px 80px',
-              padding: '10px 16px',
-              gap: 16,
-              borderBottom: '1px solid var(--pro-border)',
-              background: 'var(--pro-bg)',
-              color: 'var(--pro-text-dim)',
-              fontSize: 10,
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-            }}
-          >
+        <div className="dk-table" style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>
+          <div className="dk-table-head dk-activity-row">
             <span>Agent</span>
             <span>Service</span>
             <span>Paid</span>
@@ -172,9 +150,8 @@ export function ActivityPage({ initialServiceCount = 0 }: ActivityPageProps) {
             activity.map((r, i) => (
               <div
                 key={r.txHash}
+                className="dk-activity-row"
                 style={{
-                  display: 'grid',
-                  gridTemplateColumns: '170px 1.4fr 100px 1.2fr 100px 80px',
                   padding: '12px 16px',
                   gap: 16,
                   borderBottom: i < activity.length - 1 ? '1px solid var(--pro-border)' : 'none',
@@ -211,14 +188,8 @@ export function ActivityPage({ initialServiceCount = 0 }: ActivityPageProps) {
                   href={basescanTx(r.txHash)}
                   target="_blank"
                   rel="noreferrer"
-                  style={{
-                    color: 'var(--mint-400)',
-                    fontSize: 11,
-                    borderBottom: 'none',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 4,
-                  }}
+                  className="dk-basescan-link"
+                  style={{ color: 'var(--mint-400)', textTransform: 'none', letterSpacing: 0, fontSize: 11 }}
                 >
                   tx <Icon name="external" size={11} />
                 </a>
@@ -235,7 +206,7 @@ export function ActivityPage({ initialServiceCount = 0 }: ActivityPageProps) {
           subtitle="The same data that you'd see on Basescan, surfaced here for anyone digging into how settlement works."
         />
         <div className="dk-card" style={{ padding: 0, overflow: 'hidden' }}>
-          <div className="grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)' }}>
+          <div className="dk-stat-row dk-stat-cols-3">
             <BigStat
               label="network"
               value={stats ? networkLabel(stats.chain.network) : 'Base Sepolia'}
@@ -269,9 +240,8 @@ export function ActivityPage({ initialServiceCount = 0 }: ActivityPageProps) {
             {contractRows(stats).map((c, i, arr) => (
               <div
                 key={c.name}
+                className="dk-contracts-row"
                 style={{
-                  display: 'grid',
-                  gridTemplateColumns: '200px 1fr 120px',
                   padding: '14px 20px',
                   gap: 16,
                   borderBottom: i < arr.length - 1 ? '1px solid var(--pro-border)' : 'none',
@@ -301,18 +271,7 @@ export function ActivityPage({ initialServiceCount = 0 }: ActivityPageProps) {
                   href={basescanAddress(c.addr)}
                   target="_blank"
                   rel="noreferrer"
-                  style={{
-                    color: 'var(--pro-text-dim)',
-                    fontSize: 11,
-                    borderBottom: 'none',
-                    fontFamily: 'var(--font-mono)',
-                    letterSpacing: '0.04em',
-                    textTransform: 'uppercase',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    justifySelf: 'end',
-                  }}
+                  className="dk-basescan-link"
                 >
                   basescan <Icon name="external" size={11} />
                 </a>

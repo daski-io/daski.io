@@ -19,18 +19,19 @@ interface ServicesDirectoryProps {
   error?: string | null;
 }
 
+// Categories surfaced as filter chips. Keep aligned with `categoryToIcon` —
+// only the values it actually returns (`cat: '<id>'`) belong here, otherwise
+// the chip will count zero and never light up.
 const CATEGORIES: { id: string; label: string }[] = [
   { id: 'all', label: 'All' },
   { id: 'domains', label: 'Domains' },
   { id: 'hosting', label: 'Hosting' },
   { id: 'legal', label: 'Legal' },
   { id: 'email', label: 'Email' },
-  { id: 'compute', label: 'Compute' },
 ];
 
 export function ServicesDirectory({ services, loading, error }: ServicesDirectoryProps) {
   const [filter, setFilter] = useState('all');
-  const [sort, setSort] = useState('reputation');
 
   const counts = useMemo(() => {
     const out: Record<string, number> = { all: services.length };
@@ -41,19 +42,11 @@ export function ServicesDirectory({ services, loading, error }: ServicesDirector
     return out;
   }, [services]);
 
-  const filtered = useMemo(() => {
-    let list = services.filter(
-      (s) => filter === 'all' || categoryToIcon(s.category).cat === filter,
-    );
-    if (sort === 'price-low') {
-      list = [...list].sort((a, b) => {
-        const ap = Number(a.pricing.basePrice ?? 0);
-        const bp = Number(b.pricing.basePrice ?? 0);
-        return ap - bp;
-      });
-    }
-    return list;
-  }, [services, filter, sort]);
+  const filtered = useMemo(
+    () =>
+      services.filter((s) => filter === 'all' || categoryToIcon(s.category).cat === filter),
+    [services, filter],
+  );
 
   return (
     <Section pad="24px 32px 16px" style={{ position: 'relative' }}>
@@ -69,7 +62,6 @@ export function ServicesDirectory({ services, loading, error }: ServicesDirector
         style={{
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between',
           gap: 16,
           marginBottom: 22,
           flexWrap: 'wrap',
@@ -116,17 +108,9 @@ export function ServicesDirectory({ services, loading, error }: ServicesDirector
             );
           })}
         </div>
-        <SortDropdown value={sort} onChange={setSort} />
       </div>
 
-      <div
-        className="grid-3"
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: 16,
-        }}
-      >
+      <div className="dk-grid-3">
         {loading && services.length === 0 && <ServiceCardSkeleton />}
         {error && (
           <div
@@ -147,101 +131,6 @@ export function ServicesDirectory({ services, loading, error }: ServicesDirector
         <BecomeProviderCard />
       </div>
     </Section>
-  );
-}
-
-function SortDropdown({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const opts = [
-    { id: 'reputation', label: 'Reputation' },
-    { id: 'recent', label: 'Recent' },
-    { id: 'price-low', label: 'Price · low to high' },
-  ];
-  const current = opts.find((o) => o.id === value) ?? opts[0];
-  return (
-    <div style={{ position: 'relative' }}>
-      <button
-        onClick={() => setOpen((o) => !o)}
-        style={{
-          height: 30,
-          padding: '0 12px',
-          borderRadius: 8,
-          cursor: 'pointer',
-          background: 'transparent',
-          border: '1px solid var(--pro-border)',
-          color: 'var(--pro-text)',
-          fontSize: 13,
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 8,
-        }}
-      >
-        <span
-          style={{
-            color: 'var(--pro-text-dim)',
-            fontFamily: 'var(--font-mono)',
-            fontSize: 11,
-            textTransform: 'uppercase',
-            letterSpacing: '0.06em',
-          }}
-        >
-          sort
-        </span>
-        {current.label}
-        <Icon name="chevronDown" size={12} />
-      </button>
-      {open && (
-        <div
-          style={{
-            position: 'absolute',
-            right: 0,
-            top: 36,
-            minWidth: 200,
-            background: 'var(--pro-surface)',
-            border: '1px solid var(--pro-border)',
-            borderRadius: 8,
-            padding: 4,
-            zIndex: 5,
-            boxShadow: 'var(--shadow-3)',
-          }}
-        >
-          {opts.map((o) => (
-            <button
-              key={o.id}
-              onClick={() => {
-                onChange(o.id);
-                setOpen(false);
-              }}
-              style={{
-                width: '100%',
-                textAlign: 'left',
-                padding: '8px 12px',
-                borderRadius: 6,
-                background: o.id === value ? 'var(--pro-surface2)' : 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                color: 'var(--pro-text)',
-                fontSize: 13,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}
-            >
-              {o.label}
-              {o.id === value && (
-                <Icon name="check" size={13} color="var(--mint-400)" strokeWidth={2.4} />
-              )}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
   );
 }
 
@@ -290,9 +179,7 @@ function ServiceCard({ service }: { service: PublicService }) {
             }}
           >
             <ServiceIcon category={service.category} />
-            <Pill tone="success" pulse>
-              live
-            </Pill>
+            <Pill pulse>live</Pill>
           </div>
           <h3
             style={{

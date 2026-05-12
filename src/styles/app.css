@@ -110,14 +110,166 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   color: var(--pro-text-dim);
 }
 
-/* Responsive containers */
-@media (max-width: 980px) {
-  .grid-3 { grid-template-columns: 1fr 1fr !important; }
-  .grid-2 { grid-template-columns: 1fr !important; }
-  .demo-grid { grid-template-columns: 1fr !important; }
+/* =====================================================================
+   Layout grids. Declarative responsive grids — components apply the
+   class and breakpoints handle the rest, so we never have to write
+   `!important` to override an inline gridTemplateColumns again.
+   ===================================================================== */
+.dk-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.dk-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.dk-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+
+/* Demo block uses an asymmetric split (trace pane wider than the side
+   panel). At narrow widths it stacks; otherwise the inline gap stays 0
+   because the two halves share a single bordered surface. */
+.dk-demo-grid { display: grid; grid-template-columns: 1.5fr 1fr; }
+
+/* Footer is a 4-column grid: logo block (2fr) + three link columns (1fr each). */
+.dk-footer-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 48px;
+  align-items: flex-start;
 }
 @media (max-width: 720px) {
-  .grid-3 { grid-template-columns: 1fr !important; }
+  .dk-footer-grid { grid-template-columns: 1fr 1fr; gap: 24px; }
+}
+
+@media (max-width: 980px) {
+  .dk-grid-3 { grid-template-columns: 1fr 1fr; }
+  .dk-grid-2, .dk-grid-4 { grid-template-columns: 1fr; }
+  .dk-demo-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 720px) {
+  .dk-grid-3, .dk-grid-4 { grid-template-columns: 1fr; }
   h1.hero-headline { font-size: 44px !important; }
   .hide-mobile { display: none !important; }
+}
+
+/* =====================================================================
+   Composite "box" with stat tile rows and on-chain identity footers.
+   Used by ServiceDetailPage to bundle hero stats + reputation + on-chain
+   identity into one cohesive card per entity (service / provider).
+   ===================================================================== */
+.dk-box {
+  border: 1px solid var(--pro-border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--pro-surface);
+}
+
+.dk-box-divider {
+  padding: 12px 20px;
+  background: var(--pro-bg);
+  border-top: 1px solid var(--pro-border);
+  border-bottom: 1px solid var(--pro-border);
+}
+
+.dk-stat-row { display: grid; }
+.dk-stat-cols-1 { grid-template-columns: 1fr; }
+.dk-stat-cols-2 { grid-template-columns: repeat(2, 1fr); }
+.dk-stat-cols-3 { grid-template-columns: repeat(3, 1fr); }
+.dk-stat-cols-4 { grid-template-columns: repeat(4, 1fr); }
+.dk-stat-tile { padding: 20px 24px; }
+
+@media (max-width: 980px) {
+  .dk-stat-cols-3, .dk-stat-cols-4 { grid-template-columns: repeat(2, 1fr); }
+  .dk-stat-tile { border-right: none !important; }
+}
+@media (max-width: 560px) {
+  .dk-stat-cols-2, .dk-stat-cols-3, .dk-stat-cols-4 { grid-template-columns: 1fr; }
+}
+
+.dk-onchain-row {
+  display: grid;
+  grid-template-columns: 260px 1fr 130px;
+  padding: 16px 22px;
+  gap: 16px;
+  align-items: center;
+  color: var(--pro-text);
+}
+@media (max-width: 720px) {
+  .dk-onchain-row {
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto;
+  }
+  .dk-onchain-row > code { grid-column: 1 / -1; }
+}
+
+.dk-basescan-link {
+  color: var(--pro-text-dim);
+  font-size: 11px;
+  border-bottom: none;
+  font-family: var(--font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  justify-self: end;
+}
+
+.dk-link-mint {
+  color: var(--mint-400);
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  border-bottom: none;
+}
+
+/* =====================================================================
+   Tables (skills offered, recent purchases, activity feed).
+   ===================================================================== */
+.dk-table {
+  border: 1px solid var(--pro-border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--pro-surface);
+}
+.dk-table-head {
+  padding: 12px 20px;
+  gap: 16px;
+  border-bottom: 1px solid var(--pro-border);
+  background: var(--pro-bg);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--pro-text-dim);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dk-skills-row {
+  display: grid;
+  grid-template-columns: 1.2fr 2fr 1fr 1fr;
+}
+.dk-recent-row {
+  display: grid;
+  grid-template-columns: 170px 1.4fr 100px 1fr 80px;
+}
+.dk-activity-row {
+  display: grid;
+  grid-template-columns: 170px 1.4fr 100px 1.2fr 100px 80px;
+}
+.dk-contracts-row {
+  display: grid;
+  grid-template-columns: 200px 1fr 120px;
+}
+
+@media (max-width: 720px) {
+  .dk-skills-row, .dk-recent-row, .dk-activity-row {
+    grid-template-columns: 1fr;
+  }
+  .dk-contracts-row { grid-template-columns: 1fr auto; }
+}
+
+/* Skill chip used in the service detail hero header. */
+.dk-skill-chip {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: var(--pro-surface2);
+  color: var(--pro-text);
+  border: 1px solid var(--pro-border);
+  letter-spacing: 0.02em;
 }

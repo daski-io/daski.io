@@ -12,6 +12,11 @@ const BEATS = [
   { t: 'Domain registered and owned by the agent', sub: '47 seconds end-to-end' },
 ];
 
+// Maps the 0..TOTAL_STEPS animation step to the BEAT index (0..3).
+// Two trace steps fall under each beat, so a length-(TOTAL_STEPS+1) table
+// keeps the mapping declarative — no off-by-one Math.min clamps needed.
+const STEP_TO_BEAT = [0, 0, 1, 1, 2, 2, 3];
+
 export function DemoBlock() {
   const [step, setStep] = useState(0);
 
@@ -22,7 +27,7 @@ export function DemoBlock() {
     return () => window.clearInterval(t);
   }, []);
 
-  const beatStep = [0, 0, 1, 1, 2, 2, 3, 3][Math.min(step, 7)];
+  const beatStep = STEP_TO_BEAT[step];
 
   return (
     <Section pad="32px 32px 64px">
@@ -55,10 +60,8 @@ export function DemoBlock() {
       </div>
 
       <div
-        className="demo-grid"
+        className="dk-demo-grid"
         style={{
-          display: 'grid',
-          gridTemplateColumns: '1.5fr 1fr',
           gap: 0,
           background: 'var(--pro-surface)',
           border: '1px solid var(--pro-border)',
