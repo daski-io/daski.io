@@ -112,16 +112,23 @@ export interface PublicServiceReputation {
   canceledCount: number;
   confirmedCount: number;
   notConfirmedCount: number;
+  /** Cumulative USDC paid into the provider/service. String to preserve precision. */
+  totalSpentUsdc: string;
 }
 
 /**
  * Service-scoped reputation. Same shape as `PublicServiceReputation` plus
- * `totalRefundedUsdc` (the contract tracks refunds per-service only) and
- * the `serviceId` these counters scope to.
+ * service-only fields:
+ *   - `totalRefundedUsdc` — refunds are tracked per-service in the contract.
+ *   - `averageFulfillmentSeconds` — measured wall-clock time from payment to
+ *     `completed`, averaged over `fulfillmentSampleSize` completed tasks.
+ *     Null if no completed task has produced a usable sample yet.
  */
 export interface PublicServiceLevelReputation extends PublicServiceReputation {
   totalRefundedUsdc: string;
   serviceId: string;
+  averageFulfillmentSeconds: number | null;
+  fulfillmentSampleSize: number;
 }
 
 export interface ServiceDetail extends PublicService {

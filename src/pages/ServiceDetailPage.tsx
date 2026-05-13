@@ -14,6 +14,7 @@ import {
   priceRange,
   shortBuyer,
   timeAgo,
+  type PublicServiceLevelReputation,
   type PublicServiceReputation,
   type PublicSkill,
   type ServiceDetail,
@@ -63,16 +64,18 @@ export function ServiceDetailPage() {
   }
 
   const m = categoryToIcon(service.category);
-  const rep = service.serviceReputation ?? service.reputation ?? null;
-  const totalPaid = rep?.totalTransactions ?? null;
-  const completionRate =
-    rep && rep.completionRate !== null ? `${(rep.completionRate * 100).toFixed(0)}%` : '–';
-
+  const sRep = service.serviceReputation;
   const headerTiles: StatTile[] = [
     { label: 'Price range', value: priceRange(service), mint: true },
-    { label: 'Avg completion', value: service.turnaroundEstimate ?? '-' },
-    { label: 'Total purchases', value: totalPaid !== null ? totalPaid.toString() : '–' },
-    { label: 'Completion rate', value: completionRate },
+    {
+      label: 'Total purchases',
+      value: sRep ? sRep.totalTransactions.toString() : '–',
+    },
+    {
+      label: 'Total value',
+      value: sRep ? `${formatUsdc(sRep.totalSpentUsdc)} USDC` : '–',
+    },
+    { label: 'Completion rate', value: formatRate(sRep?.completionRate ?? null) },
   ];
 
   return (
@@ -147,6 +150,17 @@ export function ServiceDetailPage() {
 
         <div className="dk-box" style={{ marginTop: 28 }}>
           <StatTileRow tiles={headerTiles} />
+          {sRep && (
+            <div
+              style={{
+                padding: '18px 24px',
+                borderTop: '1px solid var(--pro-border)',
+              }}
+            >
+              <Caption style={{ marginBottom: 10 }}>service reputation</Caption>
+              <RepStatRow items={serviceReputationStats(sRep)} />
+            </div>
+          )}
         </div>
       </Section>
 
@@ -344,34 +358,57 @@ function ProvidedByBox({ service }: { service: ServiceDetail }) {
           }}
         >
           <Caption style={{ marginBottom: 10 }}>provider reputation</Caption>
-          <RepStatRow items={providerReputationStats(service.reputation, service.turnaroundEstimate)} />
+          <RepStatRow items={providerReputationStats(service.reputation)} />
         </div>
       )}
     </div>
   );
 }
 
-function providerReputationStats(
-  rep: PublicServiceReputation,
-  turnaround: string | null,
-): RepStatItem[] {
+function providerReputationStats(rep: PublicServiceReputation): RepStatItem[] {
   if (rep.totalTransactions === 0) {
     return [{ label: 'awaiting first completed task', value: '0' }];
   }
-  // "disputes" = non-happy outcomes the contract has counted (failed or canceled
-  // payments + tasks the buyer never confirmed). notConfirmedCount catches the
-  // soft case where the buyer didn't sign off; failed/canceled catch the hard
-  // protocol failures.
-  const disputes = rep.failedCount + rep.canceledCount + rep.notConfirmedCount;
   return [
     { label: 'purchases', value: rep.totalTransactions.toString() },
-    {
-      label: 'completion',
-      value: rep.completionRate !== null ? `${(rep.completionRate * 100).toFixed(0)}%` : '–',
-    },
-    { label: 'disputes', value: disputes.toString() },
-    { label: 'avg response', value: turnaround ?? '–' },
+    { label: 'total value', value: `${formatUsdc(rep.totalSpentUsdc)} USDC` },
+    { label: 'completion', value: formatRate(rep.completionRate) },
+    { label: 'buyer satisfaction', value: formatRate(rep.buyerSatisfactionRate) },
   ];
+}
+
+// Service rep shows the two stats the hero tiles don't already cover, plus
+// the contract's avg fulfillment time (service-only — provider-wide doesn't
+// have a measured average).
+function serviceReputationStats(rep: PublicServiceLevelReputation): RepStatItem[] {
+  return [
+    { label: 'avg completion', value: formatSeconds(rep.averageFulfillmentSeconds) },
+    { label: 'buyer satisfaction', value: formatRate(rep.buyerSatisfactionRate) },
+  ];
+}
+
+function formatRate(r: number | null): string {
+  return r !== null ? `${(r * 100).toFixed(0)}%` : '–';
+}
+
+function formatUsdc(s: string): string {
+  // Strip trailing zeros for cleaner display: "4.99" → "4.99", "100.00" → "100".
+  const n = Number(s);
+  if (!Number.isFinite(n)) return s;
+  return n % 1 === 0 ? n.toFixed(0) : n.toFixed(2);
+}
+
+function formatSeconds(sec: number | null): string {
+  if (sec === null || sec < 0) return '–';
+  if (sec < 60) return `${sec}s`;
+  if (sec < 3600) {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return s === 0 ? `${m}m` : `${m}m ${s}s`;
+  }
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  return m === 0 ? `${h}h` : `${h}h ${m}m`;
 }
 
 function SkillsTable({ skills }: { skills: PublicSkill[] }) {
