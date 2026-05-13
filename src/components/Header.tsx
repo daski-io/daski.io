@@ -137,12 +137,15 @@ export function Header() {
           </nav>
         </div>
 
-        {/* Desktop utility cluster (GitHub) */}
-        <div className="dk-desktop-only" style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
+        {/* Always-visible utility cluster: GitHub + SANDBOX + Base Sepolia.
+            GitHub link is shown as icon + text on desktop, icon-only on mobile
+            so it stays outside the hamburger panel. */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginLeft: 'auto' }}>
           <a
             href="https://github.com/daski-io"
             target="_blank"
             rel="noreferrer"
+            aria-label="GitHub"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -153,12 +156,8 @@ export function Header() {
             }}
           >
             <Icon name="github" size={15} />
-            <span>GitHub</span>
+            <span className="dk-desktop-only">GitHub</span>
           </a>
-        </div>
-
-        {/* Always-visible: SANDBOX + Base Sepolia */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginLeft: 'auto' }}>
           <span
             style={{
               fontFamily: 'var(--font-mono)',
@@ -254,35 +253,6 @@ export function Header() {
               </NavLink>
             );
           })}
-
-          <div
-            style={{
-              marginTop: 14,
-              paddingTop: 14,
-              borderTop: '1px solid var(--pro-border)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 12,
-            }}
-          >
-            <a
-              href="https://github.com/daski-io"
-              target="_blank"
-              rel="noreferrer"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 10,
-                color: 'var(--pro-text-dim)',
-                borderBottom: 'none',
-                fontSize: 14,
-                padding: '4px 2px',
-              }}
-            >
-              <Icon name="github" size={16} />
-              <span>GitHub</span>
-            </a>
-          </div>
         </div>
       )}
     </header>

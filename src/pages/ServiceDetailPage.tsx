@@ -8,25 +8,20 @@ import { Icon, type IconName } from '../components/ui/Icon';
 import { Addr } from '../components/ui/Addr';
 import {
   basescanAddress,
-  basescanNft,
   basescanTx,
   categoryToIcon,
   getServiceDetail,
-  getStats,
   priceRange,
   shortBuyer,
   timeAgo,
-  type PublicServiceLevelReputation,
   type PublicServiceReputation,
   type PublicSkill,
-  type PublicStats,
   type ServiceDetail,
 } from '../lib/api';
 
 export function ServiceDetailPage() {
   const { agentId } = useParams<{ agentId: string }>();
   const [service, setService] = useState<ServiceDetail | null>(null);
-  const [stats, setStats] = useState<PublicStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,12 +30,9 @@ export function ServiceDetailPage() {
     const ctrl = new AbortController();
     setLoading(true);
     setError(null);
-    // Stats fetched in parallel so the on-chain identity links to
-    // IdentityRegistry / ServiceRegistry don't need a second waterfall.
-    Promise.all([getServiceDetail(agentId, ctrl.signal), getStats(ctrl.signal)])
-      .then(([s, st]) => {
+    getServiceDetail(agentId, ctrl.signal)
+      .then((s) => {
         setService(s);
-        setStats(st);
         setLoading(false);
       })
       .catch((e) => {
@@ -71,16 +63,16 @@ export function ServiceDetailPage() {
   }
 
   const m = categoryToIcon(service.category);
-  const totalPaid =
-    service.serviceReputation?.totalTransactions ??
-    service.reputation?.totalTransactions ??
-    null;
+  const rep = service.serviceReputation ?? service.reputation ?? null;
+  const totalPaid = rep?.totalTransactions ?? null;
+  const completionRate =
+    rep && rep.completionRate !== null ? `${(rep.completionRate * 100).toFixed(0)}%` : '–';
 
   const headerTiles: StatTile[] = [
     { label: 'Price range', value: priceRange(service), mint: true },
     { label: 'Avg completion', value: service.turnaroundEstimate ?? '-' },
     { label: 'Total purchases', value: totalPaid !== null ? totalPaid.toString() : '–' },
-    { label: 'Active skills', value: service.skills.length.toString() },
+    { label: 'Completion rate', value: completionRate },
   ];
 
   return (
@@ -153,22 +145,14 @@ export function ServiceDetailPage() {
             'A real service offered to AI agents on the Daski marketplace. The agent pays in USDC on Base, the provider fulfils via A2A, and a verified completion lands on-chain.'}
         </p>
 
-        <ServiceBox
-          headerTiles={headerTiles}
-          serviceReputation={service.serviceReputation}
-          serviceId={service.serviceId}
-          serviceSlug={service.serviceSlug}
-          serviceVersion={service.serviceVersion}
-          serviceRegistry={stats?.contracts.serviceRegistry ?? null}
-        />
+        <div className="dk-box" style={{ marginTop: 28 }}>
+          <StatTileRow tiles={headerTiles} />
+        </div>
       </Section>
 
       <Section pad="0 32px 0">
         <SectionHead kicker="provided by" title={null} />
-        <ProvidedByBox
-          service={service}
-          identityRegistry={stats?.contracts.identityRegistry ?? null}
-        />
+        <ProvidedByBox service={service} />
       </Section>
 
       <Section pad="40px 32px 0">
@@ -288,253 +272,106 @@ function RepStatRow({ items }: { items: RepStatItem[] }) {
   );
 }
 
-function ServiceBox({
-  headerTiles,
-  serviceReputation,
-  serviceId,
-  serviceSlug,
-  serviceVersion,
-  serviceRegistry,
-}: {
-  headerTiles: StatTile[];
-  serviceReputation: PublicServiceLevelReputation | null;
-  serviceId: string | null;
-  serviceSlug: string | null;
-  serviceVersion: string | null;
-  serviceRegistry: string | null;
-}) {
+function ProvidedByBox({ service }: { service: ServiceDetail }) {
   return (
-    <div className="dk-box" style={{ marginTop: 28 }}>
-      <StatTileRow tiles={headerTiles} />
-
-      {serviceReputation && (
-        <div className="dk-rep-section">
-          <Caption style={{ marginBottom: 10 }}>reputation · this service</Caption>
-          <RepStatRow items={serviceReputationStats(serviceReputation)} />
-        </div>
-      )}
-
-      {serviceId && (
-        <>
-          <div className="dk-box-divider">
-            <Caption>on-chain · serviceRegistry</Caption>
-          </div>
-          <OnChainRow
-            label="ServiceRegistry row"
-            value={shortHash(serviceId)}
-            href={serviceRegistry ? basescanAddress(serviceRegistry) : null}
-            hint={
-              serviceSlug && serviceVersion
-                ? `slug=${serviceSlug} · version=${serviceVersion}`
-                : 'mapping keyed by serviceId'
-            }
-          />
-        </>
-      )}
-    </div>
-  );
-}
-
-function serviceReputationStats(rep: PublicServiceLevelReputation): RepStatItem[] {
-  if (rep.totalTransactions === 0) {
-    return [{ label: 'no activity yet', value: '0' }];
-  }
-  const items: RepStatItem[] = [
-    { label: 'purchases', value: rep.totalTransactions.toString() },
-    {
-      label: 'completion',
-      value: rep.completionRate !== null ? `${(rep.completionRate * 100).toFixed(0)}%` : '–',
-      mint: true,
-    },
-  ];
-  if (rep.failedCount + rep.canceledCount > 0) {
-    items.push({ label: 'failed · canceled', value: `${rep.failedCount} · ${rep.canceledCount}` });
-  }
-  if (parseFloat(rep.totalRefundedUsdc) > 0) {
-    items.push({ label: 'refunded', value: `${rep.totalRefundedUsdc} USDC` });
-  }
-  return items;
-}
-
-function ProvidedByBox({
-  service,
-  identityRegistry,
-}: {
-  service: ServiceDetail;
-  identityRegistry: string | null;
-}) {
-  return (
-    <div className="dk-box" style={{ marginTop: -8 }}>
-      <div style={{ padding: 24 }}>
-        {service.providerName && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
-            <h3
-              style={{
-                fontSize: 22,
-                fontWeight: 600,
-                margin: 0,
-                color: 'var(--pro-text)',
-                letterSpacing: '-0.015em',
-              }}
-            >
-              {service.providerName}
-            </h3>
-            <Pill>verified</Pill>
-          </div>
-        )}
-        {service.providerDescription && (
-          <p
+    <div className="dk-card" style={{ padding: 24, marginTop: -8 }}>
+      {service.providerName && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+          <h3
             style={{
-              color: 'var(--pro-text-dim)',
-              fontSize: 14,
-              lineHeight: 1.55,
-              margin: '0 0 14px',
-              fontStyle: 'italic',
+              fontSize: 22,
+              fontWeight: 600,
+              margin: 0,
+              color: 'var(--pro-text)',
+              letterSpacing: '-0.015em',
             }}
           >
-            {service.providerDescription}
-          </p>
-        )}
-        <div
+            {service.providerName}
+          </h3>
+          <Pill>verified</Pill>
+        </div>
+      )}
+      {service.providerDescription && (
+        <p
           style={{
-            display: 'flex',
-            gap: 16,
-            flexWrap: 'wrap',
-            alignItems: 'center',
-            fontSize: 13,
+            color: 'var(--pro-text-dim)',
+            fontSize: 14,
+            lineHeight: 1.55,
+            margin: '0 0 14px',
+            fontStyle: 'italic',
           }}
         >
-          {service.providerA2AUrl && (
+          &ldquo;{service.providerDescription}&rdquo;
+        </p>
+      )}
+      <div
+        style={{
+          display: 'flex',
+          gap: 16,
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          fontSize: 13,
+        }}
+      >
+        {service.providerA2AUrl && (
+          <>
             <a
               href={service.providerA2AUrl}
               target="_blank"
               rel="noreferrer"
               className="dk-link-mint"
             >
-              <Icon name="external" size={13} /> A2A endpoint
+              <Icon name="external" size={13} /> Website
             </a>
-          )}
-          {service.providerA2AUrl && <span style={{ color: 'var(--pro-border-hi)' }}>·</span>}
-          <a
-            href={service.agentURI}
-            target="_blank"
-            rel="noreferrer"
-            className="dk-link-mint"
-          >
-            Agent Card
-          </a>
-          <span style={{ color: 'var(--pro-border-hi)' }}>·</span>
-          <Addr link={basescanAddress(service.providerAddress)} style={{ fontSize: 12 }}>
-            {service.providerAddress}
-          </Addr>
-        </div>
-
-        {service.reputation && (
-          <div
-            style={{
-              marginTop: 20,
-              paddingTop: 18,
-              borderTop: '1px solid var(--pro-border)',
-            }}
-          >
-            <Caption style={{ marginBottom: 10 }}>provider reputation · all activity</Caption>
-            <RepStatRow items={providerReputationStats(service.reputation)} />
-          </div>
+            <span style={{ color: 'var(--pro-border-hi)' }}>·</span>
+          </>
         )}
+        <a href={service.agentURI} target="_blank" rel="noreferrer" className="dk-link-mint">
+          Agent Card
+        </a>
+        <span style={{ color: 'var(--pro-border-hi)' }}>·</span>
+        <Addr link={basescanAddress(service.providerAddress)} style={{ fontSize: 12 }}>
+          {service.providerAddress}
+        </Addr>
       </div>
 
-      <div className="dk-box-divider">
-        <Caption>on-chain · identityRegistry</Caption>
-      </div>
-      <OnChainRow
-        label="Provider · ERC-8004 NFT"
-        value={`agent#${service.agentId}`}
-        href={identityRegistry ? basescanNft(identityRegistry, service.agentId) : null}
-        hint={
-          identityRegistry
-            ? `IdentityRegistry · ${shortHash(identityRegistry)}`
-            : 'IdentityRegistry address unavailable'
-        }
-      />
+      {service.reputation && (
+        <div
+          style={{
+            marginTop: 20,
+            paddingTop: 18,
+            borderTop: '1px solid var(--pro-border)',
+          }}
+        >
+          <Caption style={{ marginBottom: 10 }}>provider reputation</Caption>
+          <RepStatRow items={providerReputationStats(service.reputation, service.turnaroundEstimate)} />
+        </div>
+      )}
     </div>
   );
 }
 
-function providerReputationStats(rep: PublicServiceReputation): RepStatItem[] {
+function providerReputationStats(
+  rep: PublicServiceReputation,
+  turnaround: string | null,
+): RepStatItem[] {
   if (rep.totalTransactions === 0) {
     return [{ label: 'awaiting first completed task', value: '0' }];
   }
-  const items: RepStatItem[] = [
+  // "disputes" = non-happy outcomes the contract has counted (failed or canceled
+  // payments + tasks the buyer never confirmed). notConfirmedCount catches the
+  // soft case where the buyer didn't sign off; failed/canceled catch the hard
+  // protocol failures.
+  const disputes = rep.failedCount + rep.canceledCount + rep.notConfirmedCount;
+  return [
     { label: 'purchases', value: rep.totalTransactions.toString() },
     {
       label: 'completion',
       value: rep.completionRate !== null ? `${(rep.completionRate * 100).toFixed(0)}%` : '–',
-      mint: true,
     },
-    {
-      label: 'buyer-confirmed',
-      value:
-        rep.buyerSatisfactionRate !== null
-          ? `${(rep.buyerSatisfactionRate * 100).toFixed(0)}%`
-          : '–',
-      mint: true,
-    },
+    { label: 'disputes', value: disputes.toString() },
+    { label: 'avg response', value: turnaround ?? '–' },
   ];
-  if (rep.failedCount + rep.canceledCount > 0) {
-    items.push({ label: 'failed · canceled', value: `${rep.failedCount} · ${rep.canceledCount}` });
-  }
-  return items;
-}
-
-function OnChainRow({
-  label,
-  value,
-  href,
-  hint,
-}: {
-  label: string;
-  value: string;
-  href: string | null;
-  hint: string | null;
-}) {
-  return (
-    <div className="dk-onchain-row">
-      <div>
-        <Caption style={{ marginBottom: 4 }}>{label}</Caption>
-        {hint && (
-          <Mono dim style={{ fontSize: 11, letterSpacing: '0.02em' }}>
-            {hint}
-          </Mono>
-        )}
-      </div>
-      <code
-        style={{
-          fontFamily: 'var(--font-mono)',
-          fontSize: 13,
-          color: 'var(--mint-400)',
-          background: 'transparent',
-          padding: 0,
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-        }}
-      >
-        {value}
-      </code>
-      {href ? (
-        <a
-          href={href}
-          target="_blank"
-          rel="noreferrer"
-          className="dk-basescan-link"
-        >
-          basescan <Icon name="external" size={11} />
-        </a>
-      ) : (
-        <span />
-      )}
-    </div>
-  );
 }
 
 function SkillsTable({ skills }: { skills: PublicSkill[] }) {
@@ -673,12 +510,6 @@ function RecentPurchases({
       ))}
     </div>
   );
-}
-
-function shortHash(hex: string): string {
-  if (!hex || !hex.startsWith('0x')) return hex;
-  if (hex.length <= 14) return hex;
-  return `${hex.slice(0, 10)}…${hex.slice(-6)}`;
 }
 
 function SkillTags({ skill }: { skill: PublicSkill }) {

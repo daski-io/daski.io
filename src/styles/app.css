@@ -173,13 +173,6 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   border-bottom: 1px solid var(--pro-border);
 }
 
-/* Compact reputation block inside dk-box: thin border-top separator,
-   padded inside the same surface (no contrast bar). */
-.dk-rep-section {
-  padding: 18px 24px;
-  border-top: 1px solid var(--pro-border);
-}
-
 .dk-stat-row { display: grid; }
 .dk-stat-cols-1 { grid-template-columns: 1fr; }
 .dk-stat-cols-2 { grid-template-columns: repeat(2, 1fr); }
