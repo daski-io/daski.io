@@ -146,6 +146,14 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   .hide-mobile { display: none !important; }
 }
 
+/* Responsive show/hide helpers used by the Header. */
+.dk-mobile-only { display: none; }
+@media (max-width: 820px) {
+  .dk-desktop-only { display: none !important; }
+  .dk-mobile-only { display: flex !important; }
+  .dk-section-pad-mobile { padding-left: 20px !important; padding-right: 20px !important; }
+}
+
 /* =====================================================================
    Composite "box" with stat tile rows and on-chain identity footers.
    Used by ServiceDetailPage to bundle hero stats + reputation + on-chain
@@ -163,6 +171,13 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   background: var(--pro-bg);
   border-top: 1px solid var(--pro-border);
   border-bottom: 1px solid var(--pro-border);
+}
+
+/* Compact reputation block inside dk-box: thin border-top separator,
+   padded inside the same surface (no contrast bar). */
+.dk-rep-section {
+  padding: 18px 24px;
+  border-top: 1px solid var(--pro-border);
 }
 
 .dk-stat-row { display: grid; }

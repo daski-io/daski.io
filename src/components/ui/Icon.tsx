@@ -3,7 +3,7 @@ import type { CSSProperties } from 'react';
 export type IconName =
   | 'arrow' | 'check' | 'copy' | 'external' | 'wallet' | 'code' | 'github'
   | 'twitter' | 'domain' | 'server' | 'legal' | 'mail' | 'bolt' | 'spark'
-  | 'dollar' | 'user' | 'layers' | 'file' | 'plug';
+  | 'dollar' | 'user' | 'layers' | 'file' | 'plug' | 'menu' | 'close';
 
 interface IconProps {
   name: IconName;
@@ -33,6 +33,8 @@ const PATHS: Record<IconName, JSX.Element> = {
   layers: <><path d="m12 3 9 5-9 5-9-5 9-5z"/><path d="m3 13 9 5 9-5M3 18l9 5 9-5"/></>,
   file: <><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/></>,
   plug: <><path d="M9 2v6M15 2v6M6 8h12v4a6 6 0 0 1-12 0z"/><path d="M12 18v4"/></>,
+  menu: <path d="M3 12h18M3 6h18M3 18h18"/>,
+  close: <path d="M6 6l12 12M6 18 18 6"/>,
 };
 
 export function Icon({ name, size = 18, color = 'currentColor', strokeWidth = 1.6, style }: IconProps) {

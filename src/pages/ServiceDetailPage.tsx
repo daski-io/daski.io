@@ -254,6 +254,40 @@ function StatTileRow({ tiles }: { tiles: StatTile[] }) {
   );
 }
 
+interface RepStatItem {
+  label: string;
+  value: string;
+  mint?: boolean;
+}
+
+function RepStatRow({ items }: { items: RepStatItem[] }) {
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24, alignItems: 'baseline' }}>
+      {items.map((it) => (
+        <div key={it.label}>
+          <div
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: 18,
+              fontWeight: 600,
+              color: it.mint ? 'var(--mint-400)' : 'var(--pro-text)',
+              letterSpacing: '-0.01em',
+            }}
+          >
+            {it.value}
+          </div>
+          <Mono
+            dim
+            style={{ fontSize: 11, letterSpacing: '0.04em', textTransform: 'uppercase' }}
+          >
+            {it.label}
+          </Mono>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function ServiceBox({
   headerTiles,
   serviceReputation,
@@ -274,12 +308,10 @@ function ServiceBox({
       <StatTileRow tiles={headerTiles} />
 
       {serviceReputation && (
-        <>
-          <div className="dk-box-divider">
-            <Caption>reputation · this service</Caption>
-          </div>
-          <StatTileRow tiles={serviceReputationTiles(serviceReputation)} />
-        </>
+        <div className="dk-rep-section">
+          <Caption style={{ marginBottom: 10 }}>reputation · this service</Caption>
+          <RepStatRow items={serviceReputationStats(serviceReputation)} />
+        </div>
       )}
 
       {serviceId && (
@@ -303,37 +335,25 @@ function ServiceBox({
   );
 }
 
-function serviceReputationTiles(rep: PublicServiceLevelReputation): StatTile[] {
+function serviceReputationStats(rep: PublicServiceLevelReputation): RepStatItem[] {
   if (rep.totalTransactions === 0) {
-    return [
-      {
-        label: 'Service transactions',
-        value: '0',
-        sub: `serviceId ${shortHash(rep.serviceId)} · no activity yet`,
-      },
-    ];
+    return [{ label: 'no activity yet', value: '0' }];
   }
-  return [
+  const items: RepStatItem[] = [
+    { label: 'purchases', value: rep.totalTransactions.toString() },
     {
-      label: 'Service transactions',
-      value: rep.totalTransactions.toString(),
-      sub:
-        rep.failedCount + rep.canceledCount > 0
-          ? `${rep.failedCount} failed · ${rep.canceledCount} canceled`
-          : 'all completed',
-    },
-    {
-      label: 'Completion rate',
+      label: 'completion',
       value: rep.completionRate !== null ? `${(rep.completionRate * 100).toFixed(0)}%` : '–',
-      sub: `${rep.completedCount} of ${rep.totalTransactions}`,
       mint: true,
     },
-    {
-      label: 'Refunded',
-      value: `${rep.totalRefundedUsdc} USDC`,
-      sub: `serviceId ${shortHash(rep.serviceId)}`,
-    },
   ];
+  if (rep.failedCount + rep.canceledCount > 0) {
+    items.push({ label: 'failed · canceled', value: `${rep.failedCount} · ${rep.canceledCount}` });
+  }
+  if (parseFloat(rep.totalRefundedUsdc) > 0) {
+    items.push({ label: 'refunded', value: `${rep.totalRefundedUsdc} USDC` });
+  }
+  return items;
 }
 
 function ProvidedByBox({
@@ -408,16 +428,20 @@ function ProvidedByBox({
             {service.providerAddress}
           </Addr>
         </div>
-      </div>
 
-      {service.reputation && (
-        <>
-          <div className="dk-box-divider">
-            <Caption>reputation · provider · all activity</Caption>
+        {service.reputation && (
+          <div
+            style={{
+              marginTop: 20,
+              paddingTop: 18,
+              borderTop: '1px solid var(--pro-border)',
+            }}
+          >
+            <Caption style={{ marginBottom: 10 }}>provider reputation · all activity</Caption>
+            <RepStatRow items={providerReputationStats(service.reputation)} />
           </div>
-          <StatTileRow tiles={providerReputationTiles(service.reputation)} />
-        </>
-      )}
+        )}
+      </div>
 
       <div className="dk-box-divider">
         <Caption>on-chain · identityRegistry</Caption>
@@ -436,44 +460,30 @@ function ProvidedByBox({
   );
 }
 
-function providerReputationTiles(rep: PublicServiceReputation): StatTile[] {
+function providerReputationStats(rep: PublicServiceReputation): RepStatItem[] {
   if (rep.totalTransactions === 0) {
-    return [
-      {
-        label: 'Transactions',
-        value: '0',
-        sub: 'awaiting first completed task',
-      },
-    ];
+    return [{ label: 'awaiting first completed task', value: '0' }];
   }
-  return [
+  const items: RepStatItem[] = [
+    { label: 'purchases', value: rep.totalTransactions.toString() },
     {
-      label: 'Transactions',
-      value: rep.totalTransactions.toString(),
-      sub:
-        rep.failedCount + rep.canceledCount > 0
-          ? `${rep.failedCount} failed · ${rep.canceledCount} canceled`
-          : 'all completed',
-    },
-    {
-      label: 'Completion rate',
+      label: 'completion',
       value: rep.completionRate !== null ? `${(rep.completionRate * 100).toFixed(0)}%` : '–',
-      sub: `${rep.completedCount} of ${rep.totalTransactions}`,
       mint: true,
     },
     {
-      label: 'Buyer-confirmed',
+      label: 'buyer-confirmed',
       value:
         rep.buyerSatisfactionRate !== null
           ? `${(rep.buyerSatisfactionRate * 100).toFixed(0)}%`
           : '–',
-      sub:
-        rep.buyerSatisfactionRate !== null
-          ? `${rep.confirmedCount} of ${rep.confirmedCount + rep.notConfirmedCount}`
-          : 'awaiting confirmations',
       mint: true,
     },
   ];
+  if (rep.failedCount + rep.canceledCount > 0) {
+    items.push({ label: 'failed · canceled', value: `${rep.failedCount} · ${rep.canceledCount}` });
+  }
+  return items;
 }
 
 function OnChainRow({
