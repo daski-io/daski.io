@@ -10,8 +10,9 @@ interface NavItem {
 }
 
 const ITEMS: NavItem[] = [
-  { to: '/', label: 'Services', match: (p) => p === '/' || p.startsWith('/service') || p.startsWith('/providers') },
+  { to: '/', label: 'Services', match: (p) => p === '/' || p.startsWith('/service') },
   { to: '/agents', label: 'For Agents' },
+  { to: '/providers', label: 'For Providers' },
   { to: '/activity', label: 'Activity' },
 ];
 
@@ -125,7 +126,7 @@ export function Header() {
                         position: 'absolute',
                         left: 12,
                         right: 12,
-                        bottom: -19,
+                        bottom: -14,
                         height: 1,
                         background: 'var(--mint-400)',
                       }}

@@ -1,13 +1,13 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Section } from '../ui/Section';
 import { SectionHead } from '../ui/SectionHead';
 import { Mono } from '../ui/Mono';
-import { Pill } from '../ui/Pill';
 import { Icon } from '../ui/Icon';
 import { Card } from '../ui/Card';
 import {
   categoryToIcon,
+  getServiceDetail,
   priceRange,
   serviceChips,
   type PublicService,
@@ -53,8 +53,7 @@ export function ServicesDirectory({ services, loading, error }: ServicesDirector
       <span id="directory" style={{ position: 'absolute', top: -80 }} />
       <SectionHead
         kicker="live services"
-        title="Real services your agent can buy right now."
-        subtitle="One real service for now. New services coming."
+        title={null}
         action={<Mono dim>{filtered.length} live</Mono>}
       />
 
@@ -157,6 +156,18 @@ function ServiceIcon({ category }: { category: string | null }) {
 
 function ServiceCard({ service }: { service: PublicService }) {
   const chips = serviceChips(service);
+  const [avgSeconds, setAvgSeconds] = useState<number | null | undefined>(undefined);
+
+  useEffect(() => {
+    const ctrl = new AbortController();
+    getServiceDetail(service.agentId, ctrl.signal)
+      .then((d) => setAvgSeconds(d.serviceReputation?.averageFulfillmentSeconds ?? null))
+      .catch(() => {
+        if (!ctrl.signal.aborted) setAvgSeconds(null);
+      });
+    return () => ctrl.abort();
+  }, [service.agentId]);
+
   return (
     <Card
       hoverable
@@ -179,7 +190,6 @@ function ServiceCard({ service }: { service: PublicService }) {
             }}
           >
             <ServiceIcon category={service.category} />
-            <Pill pulse>live</Pill>
           </div>
           <h3
             style={{
@@ -229,11 +239,11 @@ function ServiceCard({ service }: { service: PublicService }) {
               {priceRange(service)}
             </Mono>
             <Mono dim style={{ display: 'block', fontSize: 11, marginTop: 2, letterSpacing: '0.04em' }}>
-              price range
+              price
             </Mono>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <Mono style={{ fontSize: 14 }}>~{service.turnaroundEstimate ?? '-'}</Mono>
+            <Mono style={{ fontSize: 14 }}>{formatAvgCompletion(avgSeconds)}</Mono>
             <Mono dim style={{ display: 'block', fontSize: 11, marginTop: 2, letterSpacing: '0.04em' }}>
               avg completion
             </Mono>
@@ -385,6 +395,24 @@ function BecomeProviderCard() {
       </div>
     </Link>
   );
+}
+
+/**
+ * Format on-chain measured fulfillment time. `undefined` = still loading
+ * (show em-dash placeholder); `null` = gateway returned no sample yet
+ * (also em-dash); number = real seconds, formatted as e.g. "64s" or "2m".
+ */
+function formatAvgCompletion(sec: number | null | undefined): string {
+  if (sec === undefined || sec === null || sec < 0) return '–';
+  if (sec < 60) return `~${sec}s`;
+  if (sec < 3600) {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return s === 0 ? `~${m}m` : `~${m}m ${s}s`;
+  }
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  return m === 0 ? `~${h}h` : `~${h}h ${m}m`;
 }
 
 function providerNameFromUri(uri: string): string | null {

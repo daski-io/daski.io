@@ -265,8 +265,7 @@ export function priceRange(service: Pick<PublicService, 'skills' | 'pricing'>): 
  *
  *   { value: '4.99',              unit: 'USDC' }
  *   { value: '4.99 – 14.00',      unit: 'USDC' }
- *   { value: 'live',              unit: 'USDC' }   ← live pricing model (oracle/feed)
- *   { value: 'variable',          unit: 'USDC' }   ← not fixed, not live
+ *   { value: 'variable',          unit: 'USDC' }   ← no fixed numeric price
  *   { value: '-',                 unit: null   }
  */
 export function priceDisplay(
@@ -289,15 +288,7 @@ export function priceDisplay(
     return { value: Number(service.pricing.basePrice).toFixed(2), unit: 'USDC' };
   }
 
-  const isLive =
-    service.pricing.pricingModel === 'live' ||
-    service.skills.some((s) => s.pricingModel === 'live');
-  if (isLive) return { value: 'live', unit: 'USDC' };
-
-  if (service.pricing.variable || service.skills.some((s) => s.variable)) {
-    return { value: 'variable', unit: 'USDC' };
-  }
-  return { value: '-', unit: null };
+  return { value: 'variable', unit: 'USDC' };
 }
 
 /** Per-skill price label for the skills table. Either an actual price, the
