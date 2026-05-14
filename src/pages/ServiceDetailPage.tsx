@@ -8,10 +8,10 @@ import { Addr } from '../components/ui/Addr';
 import {
   basescanAddress,
   basescanTx,
+  buyerDisplay,
   categoryToIcon,
   getServiceDetail,
   priceDisplay,
-  shortBuyer,
   skillPriceLabel,
   timeAgo,
   type PublicServiceLevelReputation,
@@ -592,7 +592,7 @@ function RecentPurchases({
             color: 'var(--pro-text)',
           }}
         >
-          <Mono>{r.buyerName ?? shortBuyer(r.buyerAgentId)}</Mono>
+          <Mono>{buyerDisplay(r)}</Mono>
           <Mono mint>{r.skillId ?? '-'}</Mono>
           <span style={{ color: 'var(--mint-400)' }}>
             {r.amount} <span style={{ color: 'var(--pro-text-dim)' }}>USDC</span>

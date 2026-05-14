@@ -6,9 +6,9 @@ import { Icon } from '../components/ui/Icon';
 import {
   basescanAddress,
   basescanTx,
+  buyerDisplay,
   getActivity,
   getStats,
-  shortBuyer,
   timeAgo,
   type PublicActivityRow,
   type PublicStats,
@@ -159,7 +159,7 @@ export function ActivityPage({ initialServiceCount = 0 }: ActivityPageProps) {
                   color: 'var(--pro-text)',
                 }}
               >
-                <Mono>{shortBuyer(r.buyerAgentId)}</Mono>
+                <Mono>{buyerDisplay(r)}</Mono>
                 <span
                   style={{
                     minWidth: 0,

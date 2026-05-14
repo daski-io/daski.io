@@ -211,6 +211,15 @@ export function shortBuyer(agentId: string) {
   return `agent#${agentId}`;
 }
 
+/** Buyer display label for activity rows. Prefers the gateway-resolved
+ *  ERC-721 metadata name; falls back to "unknown" when the gateway
+ *  couldn't resolve a name (NFT has no name, metadata fetch failed,
+ *  or the field hasn't been populated yet). */
+export function buyerDisplay(row: Pick<PublicActivityRow, 'buyerName'>): string {
+  const n = row.buyerName?.trim();
+  return n ? n : 'unknown';
+}
+
 export function timeAgo(iso: string): string {
   const then = new Date(iso).getTime();
   if (Number.isNaN(then)) return '';
