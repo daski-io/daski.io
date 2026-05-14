@@ -101,7 +101,12 @@ export function ServiceDetailPage() {
       </Section>
 
       <Section pad="24px 32px 32px">
-        <ServiceCatIcon iconName={m.name} color={m.color} />
+        <ServiceHeaderMark
+          iconUrl={service.iconUrl}
+          providerName={service.providerName}
+          fallbackIcon={m.name}
+          fallbackColor={m.color}
+        />
         <h1
           className="dk-service-h1"
           style={{
@@ -334,43 +339,6 @@ function ProvStatCell({
   );
 }
 
-// Square provider brand mark for the "Provided By" header. Sourced from
-// the ERC-8004 registration file's `image` field (surfaced as
-// PublicService.iconUrl). On load failure we collapse the cell so the
-// section degrades to a name-only header instead of showing a broken
-// image — the detail page already has the category glyph at the top, so
-// a secondary fallback would just be visual noise.
-function ProviderLogo({ src, alt }: { src: string; alt: string | null }) {
-  const [failed, setFailed] = useState(false);
-  if (failed) return null;
-  return (
-    <div
-      style={{
-        width: 56,
-        height: 56,
-        borderRadius: 12,
-        background: '#ffffff',
-        border: '1px solid var(--pro-border)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        overflow: 'hidden',
-        flexShrink: 0,
-      }}
-    >
-      <img
-        src={src}
-        alt={alt ? `${alt} logo` : 'Provider logo'}
-        width={56}
-        height={56}
-        loading="lazy"
-        onError={() => setFailed(true)}
-        style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-      />
-    </div>
-  );
-}
-
 function ProvidedByBox({ service }: { service: ServiceDetail }) {
   return (
     <div className="dk-card" style={{ padding: 24, marginTop: -8 }}>
@@ -383,84 +351,72 @@ function ProvidedByBox({ service }: { service: ServiceDetail }) {
           flexWrap: 'wrap',
         }}
       >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'flex-start',
-            gap: 16,
-            flex: 1,
-            minWidth: 240,
-            maxWidth: 720,
-          }}
-        >
-          {service.iconUrl && <ProviderLogo src={service.iconUrl} alt={service.providerName} />}
-          <div style={{ flex: 1, minWidth: 0 }}>
-            {service.providerName && (
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 12,
-                  marginBottom: 10,
-                  flexWrap: 'wrap',
-                }}
-              >
-                <h3
-                  style={{
-                    fontSize: 22,
-                    fontWeight: 600,
-                    margin: 0,
-                    color: 'var(--pro-text)',
-                    letterSpacing: '-0.015em',
-                  }}
-                >
-                  {service.providerName}
-                </h3>
-              </div>
-            )}
-            {service.providerDescription && (
-              <p
-                style={{
-                  color: 'var(--pro-text-dim)',
-                  fontSize: 14,
-                  lineHeight: 1.55,
-                  margin: '0 0 14px',
-                  fontStyle: 'italic',
-                }}
-              >
-                &ldquo;{service.providerDescription}&rdquo;
-              </p>
-            )}
+        <div style={{ flex: 1, minWidth: 240, maxWidth: 720 }}>
+          {service.providerName && (
             <div
               style={{
                 display: 'flex',
-                gap: 14,
-                flexWrap: 'wrap',
                 alignItems: 'center',
-                fontSize: 13,
+                gap: 12,
+                marginBottom: 10,
+                flexWrap: 'wrap',
               }}
             >
-              {service.providerWebsite && (
-                <>
-                  <a
-                    href={service.providerWebsite}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="dk-link-mint"
-                  >
-                    <Icon name="external" size={13} /> Website
-                  </a>
-                  <span style={{ color: 'var(--pro-border-hi)' }}>·</span>
-                </>
-              )}
-              <a href={service.agentURI} target="_blank" rel="noreferrer" className="dk-link-mint">
-                Provider Card
-              </a>
-              <span style={{ color: 'var(--pro-border-hi)' }}>·</span>
-              <Addr link={basescanAddress(service.providerAddress)} style={{ fontSize: 12 }}>
-                {service.providerAddress}
-              </Addr>
+              <h3
+                style={{
+                  fontSize: 22,
+                  fontWeight: 600,
+                  margin: 0,
+                  color: 'var(--pro-text)',
+                  letterSpacing: '-0.015em',
+                }}
+              >
+                {service.providerName}
+              </h3>
             </div>
+          )}
+          {service.providerDescription && (
+            <p
+              style={{
+                color: 'var(--pro-text-dim)',
+                fontSize: 14,
+                lineHeight: 1.55,
+                margin: '0 0 14px',
+                fontStyle: 'italic',
+              }}
+            >
+              &ldquo;{service.providerDescription}&rdquo;
+            </p>
+          )}
+          <div
+            style={{
+              display: 'flex',
+              gap: 14,
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              fontSize: 13,
+            }}
+          >
+            {service.providerWebsite && (
+              <>
+                <a
+                  href={service.providerWebsite}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="dk-link-mint"
+                >
+                  <Icon name="external" size={13} /> Website
+                </a>
+                <span style={{ color: 'var(--pro-border-hi)' }}>·</span>
+              </>
+            )}
+            <a href={service.agentURI} target="_blank" rel="noreferrer" className="dk-link-mint">
+              Provider Card
+            </a>
+            <span style={{ color: 'var(--pro-border-hi)' }}>·</span>
+            <Addr link={basescanAddress(service.providerAddress)} style={{ fontSize: 12 }}>
+              {service.providerAddress}
+            </Addr>
           </div>
         </div>
       </div>
@@ -684,22 +640,53 @@ function SkillTags({ skill }: { skill: PublicSkill }) {
   );
 }
 
-function ServiceCatIcon({ iconName, color }: { iconName: IconName; color: string }) {
+// Header brand mark for the service detail page. Renders the provider's
+// iconUrl (sourced from the ERC-8004 registration file's `image` field)
+// when present; falls back to a category-derived glyph when the
+// provider hasn't set a logo OR the image fails to load. Matches the
+// home-page ServiceCard treatment so a provider's brand is consistent
+// across the directory and the detail view.
+function ServiceHeaderMark({
+  iconUrl,
+  providerName,
+  fallbackIcon,
+  fallbackColor,
+}: {
+  iconUrl?: string | null;
+  providerName: string | null;
+  fallbackIcon: IconName;
+  fallbackColor: string;
+}) {
+  const [imgFailed, setImgFailed] = useState(false);
+  const showImg = !!iconUrl && !imgFailed;
   return (
     <div
       style={{
         width: 56,
         height: 56,
         borderRadius: 12,
-        background: 'rgba(52,211,177,0.06)',
-        border: `1px solid ${color}`,
+        background: showImg ? '#ffffff' : 'rgba(52,211,177,0.06)',
+        border: `1px solid ${showImg ? 'var(--pro-border)' : fallbackColor}`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        color: color,
+        color: fallbackColor,
+        overflow: 'hidden',
       }}
     >
-      <Icon name={iconName} size={26} />
+      {showImg ? (
+        <img
+          src={iconUrl ?? undefined}
+          alt={providerName ? `${providerName} logo` : 'Provider logo'}
+          width={56}
+          height={56}
+          loading="lazy"
+          onError={() => setImgFailed(true)}
+          style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+        />
+      ) : (
+        <Icon name={fallbackIcon} size={26} />
+      )}
     </div>
   );
 }
