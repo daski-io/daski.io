@@ -55,6 +55,17 @@ export interface PublicService {
   providerName: string | null;
   providerDescription: string | null;
   /**
+   * Provider website URL from the AgentCard's A2A v1.0 `provider.url`.
+   * Optional/null when the gateway hasn't been extended with this field
+   * (pre-2026-05) or the provider hasn't set PROVIDER_WEBSITE_URL.
+   */
+  providerWebsite?: string | null;
+  /**
+   * Square icon URL from the AgentCard's A2A v1.0 `iconUrl`. Optional —
+   * when null, the UI falls back to the category-derived icon.
+   */
+  iconUrl?: string | null;
+  /**
    * Primary on-chain service identity in `ServiceRegistry`. With current
    * 1:1 cardinality (one provider lists one service) this is the only
    * service; gateway returns null if the provider's agent card has no

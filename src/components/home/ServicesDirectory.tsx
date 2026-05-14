@@ -133,23 +133,50 @@ export function ServicesDirectory({ services, loading, error }: ServicesDirector
   );
 }
 
-function ServiceIcon({ category }: { category: string | null }) {
+// Renders the provider's brand mark when the AgentCard advertises an
+// iconUrl (A2A v1.0); otherwise falls back to a category-derived glyph.
+// On image load failure (broken URL, hot-link block) we also fall back —
+// the cell never goes blank.
+function ServiceIcon({
+  category,
+  iconUrl,
+  providerName,
+}: {
+  category: string | null;
+  iconUrl?: string | null;
+  providerName?: string | null;
+}) {
   const m = categoryToIcon(category);
+  const [imgFailed, setImgFailed] = useState(false);
+  const showImg = !!iconUrl && !imgFailed;
   return (
     <div
       style={{
         width: 44,
         height: 44,
         borderRadius: 10,
-        background: 'rgba(52,211,177,0.06)',
-        border: `1px solid ${m.color}`,
+        background: showImg ? '#ffffff' : 'rgba(52,211,177,0.06)',
+        border: `1px solid ${showImg ? 'var(--pro-border)' : m.color}`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         color: m.color,
+        overflow: 'hidden',
       }}
     >
-      <Icon name={m.name} size={20} />
+      {showImg ? (
+        <img
+          src={iconUrl ?? undefined}
+          alt={providerName ? `${providerName} logo` : 'Provider logo'}
+          width={44}
+          height={44}
+          loading="lazy"
+          onError={() => setImgFailed(true)}
+          style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+        />
+      ) : (
+        <Icon name={m.name} size={20} />
+      )}
     </div>
   );
 }
@@ -189,7 +216,11 @@ function ServiceCard({ service }: { service: PublicService }) {
               gap: 12,
             }}
           >
-            <ServiceIcon category={service.category} />
+            <ServiceIcon
+              category={service.category}
+              iconUrl={service.iconUrl}
+              providerName={service.providerName}
+            />
           </div>
           <h3
             style={{
