@@ -665,7 +665,7 @@ function ServiceHeaderMark({
         width: 56,
         height: 56,
         borderRadius: 12,
-        background: showImg ? '#ffffff' : 'rgba(52,211,177,0.06)',
+        background: showImg ? '#e0e0e8' : 'rgba(52,211,177,0.06)',
         border: `1px solid ${showImg ? 'var(--pro-border)' : fallbackColor}`,
         display: 'flex',
         alignItems: 'center',
