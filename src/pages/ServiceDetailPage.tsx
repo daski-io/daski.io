@@ -3,7 +3,6 @@ import { Link, useParams } from 'react-router-dom';
 import { Section } from '../components/ui/Section';
 import { SectionHead } from '../components/ui/SectionHead';
 import { Caption, Mono } from '../components/ui/Mono';
-import { Pill } from '../components/ui/Pill';
 import { Icon, type IconName } from '../components/ui/Icon';
 import { Addr } from '../components/ui/Addr';
 import {
@@ -11,8 +10,9 @@ import {
   basescanTx,
   categoryToIcon,
   getServiceDetail,
-  priceRange,
+  priceDisplay,
   shortBuyer,
+  skillPriceLabel,
   timeAgo,
   type PublicServiceLevelReputation,
   type PublicServiceReputation,
@@ -65,18 +65,7 @@ export function ServiceDetailPage() {
 
   const m = categoryToIcon(service.category);
   const sRep = service.serviceReputation;
-  const headerTiles: StatTile[] = [
-    { label: 'Price range', value: priceRange(service), mint: true },
-    {
-      label: 'Total purchases',
-      value: sRep ? sRep.totalTransactions.toString() : '–',
-    },
-    {
-      label: 'Total value',
-      value: sRep ? `${formatUsdc(sRep.totalSpentUsdc)} USDC` : '–',
-    },
-    { label: 'Completion rate', value: formatRate(sRep?.completionRate ?? null) },
-  ];
+  const price = priceDisplay(service);
 
   return (
     <div style={{ background: 'var(--pro-bg)' }}>
@@ -107,13 +96,14 @@ export function ServiceDetailPage() {
             services
           </Link>
           <span>/</span>
-          <span style={{ color: 'var(--pro-text)' }}>agent#{service.agentId}</span>
+          <span style={{ color: 'var(--pro-text)' }}>{service.name}</span>
         </div>
       </Section>
 
       <Section pad="24px 32px 32px">
         <ServiceCatIcon iconName={m.name} color={m.color} />
         <h1
+          className="dk-service-h1"
           style={{
             fontSize: 48,
             fontWeight: 700,
@@ -148,19 +138,39 @@ export function ServiceDetailPage() {
             'A real service offered to AI agents on the Daski marketplace. The agent pays in USDC on Base, the provider fulfils via A2A, and a verified completion lands on-chain.'}
         </p>
 
-        <div className="dk-box" style={{ marginTop: 28 }}>
-          <StatTileRow tiles={headerTiles} />
-          {sRep && (
-            <div
-              style={{
-                padding: '18px 24px',
-                borderTop: '1px solid var(--pro-border)',
-              }}
-            >
-              <Caption style={{ marginBottom: 10 }}>service reputation</Caption>
-              <RepStatRow items={serviceReputationStats(sRep)} />
-            </div>
-          )}
+        {/* Service stats — unified 6-cell grid (Option 1). */}
+        <div
+          style={{
+            marginTop: 28,
+            border: '1px solid var(--pro-border)',
+            borderRadius: 14,
+            overflow: 'hidden',
+          }}
+        >
+          <div
+            className="dk-stat-grid dk-collapse-6-to-3"
+            style={{ gridTemplateColumns: 'repeat(6, 1fr)' }}
+          >
+            <StatCell label="Price" value={price.value} unit={price.unit} mint />
+            <StatCell
+              label="All-time Purchases"
+              value={sRep ? sRep.totalTransactions.toString() : '–'}
+            />
+            <StatCell
+              label="All-time Sales"
+              value={sRep ? formatUsdc(sRep.totalSpentUsdc) : '–'}
+              unit={sRep ? 'USDC' : null}
+            />
+            <StatCell
+              label="Avg Completion Time"
+              value={formatSeconds(sRep?.averageFulfillmentSeconds ?? null)}
+            />
+            <StatCell label="Completion Rate" value={formatRate(sRep?.completionRate ?? null)} />
+            <StatCell
+              label="Buyer Satisfaction"
+              value={formatRate(sRep?.buyerSatisfactionRate ?? null)}
+            />
+          </div>
         </div>
       </Section>
 
@@ -170,7 +180,7 @@ export function ServiceDetailPage() {
       </Section>
 
       <Section pad="40px 32px 0">
-        <SectionHead kicker="skills offered" title="Under this service." />
+        <SectionHead kicker="skills offered" title={null} />
         <SkillsTable skills={service.skills} />
       </Section>
 
@@ -203,85 +213,123 @@ export function ServiceDetailPage() {
   );
 }
 
-interface StatTile {
+function StatCell({
+  label,
+  value,
+  unit,
+  mint,
+}: {
   label: string;
   value: string;
-  sub?: string | null;
+  unit?: string | null;
   mint?: boolean;
-}
-
-function StatTileRow({ tiles }: { tiles: StatTile[] }) {
+}) {
   return (
-    <div className={`dk-stat-row dk-stat-cols-${tiles.length}`}>
-      {tiles.map((t, i) => (
-        <div
-          key={t.label}
-          className="dk-stat-tile"
-          style={{
-            borderRight: i < tiles.length - 1 ? '1px solid var(--pro-border)' : 'none',
-          }}
-        >
-          <Caption style={{ marginBottom: 10 }}>{t.label}</Caption>
-          <div
+    <div
+      style={{
+        padding: '22px 18px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 8,
+        minWidth: 0,
+      }}
+    >
+      <span
+        style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: 10.5,
+          color: 'var(--pro-text-dim)',
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+          lineHeight: 1.3,
+        }}
+      >
+        {label}
+      </span>
+      <span
+        style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: 22,
+          fontWeight: 600,
+          color: mint ? 'var(--mint-400)' : 'var(--pro-text)',
+          letterSpacing: '-0.01em',
+          lineHeight: 1.05,
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {value}
+        {unit && (
+          <span
             style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 22,
-              fontWeight: 600,
-              color: t.mint ? 'var(--mint-400)' : 'var(--pro-text)',
-              letterSpacing: '-0.01em',
+              fontSize: 11,
+              color: 'var(--pro-text-dim)',
+              letterSpacing: '0.04em',
+              marginLeft: 6,
             }}
           >
-            {t.value}
-          </div>
-          {t.sub && (
-            <div
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: 11,
-                color: 'var(--pro-text-dim)',
-                letterSpacing: '0.02em',
-                marginTop: 4,
-              }}
-            >
-              {t.sub}
-            </div>
-          )}
-        </div>
-      ))}
+            {unit}
+          </span>
+        )}
+      </span>
     </div>
   );
 }
 
-interface RepStatItem {
+function ProvStatCell({
+  label,
+  value,
+  unit,
+}: {
   label: string;
   value: string;
-  mint?: boolean;
-}
-
-function RepStatRow({ items }: { items: RepStatItem[] }) {
+  unit?: string | null;
+}) {
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24, alignItems: 'baseline' }}>
-      {items.map((it) => (
-        <div key={it.label}>
-          <div
+    <div
+      style={{
+        padding: '14px 18px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 6,
+        minWidth: 0,
+      }}
+    >
+      <span
+        style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: 10.5,
+          color: 'var(--pro-text-dim)',
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+          lineHeight: 1.3,
+        }}
+      >
+        {label}
+      </span>
+      <span
+        style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: 18,
+          fontWeight: 600,
+          color: 'var(--pro-text)',
+          letterSpacing: '-0.01em',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {value}
+        {unit && (
+          <span
             style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 18,
-              fontWeight: 600,
-              color: it.mint ? 'var(--mint-400)' : 'var(--pro-text)',
-              letterSpacing: '-0.01em',
+              fontSize: 11,
+              color: 'var(--pro-text-dim)',
+              letterSpacing: '0.04em',
+              marginLeft: 6,
             }}
           >
-            {it.value}
-          </div>
-          <Mono
-            dim
-            style={{ fontSize: 11, letterSpacing: '0.04em', textTransform: 'uppercase' }}
-          >
-            {it.label}
-          </Mono>
-        </div>
-      ))}
+            {unit}
+          </span>
+        )}
+      </span>
     </div>
   );
 }
@@ -289,102 +337,114 @@ function RepStatRow({ items }: { items: RepStatItem[] }) {
 function ProvidedByBox({ service }: { service: ServiceDetail }) {
   return (
     <div className="dk-card" style={{ padding: 24, marginTop: -8 }}>
-      {service.providerName && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
-          <h3
-            style={{
-              fontSize: 22,
-              fontWeight: 600,
-              margin: 0,
-              color: 'var(--pro-text)',
-              letterSpacing: '-0.015em',
-            }}
-          >
-            {service.providerName}
-          </h3>
-          <Pill>verified</Pill>
-        </div>
-      )}
-      {service.providerDescription && (
-        <p
-          style={{
-            color: 'var(--pro-text-dim)',
-            fontSize: 14,
-            lineHeight: 1.55,
-            margin: '0 0 14px',
-            fontStyle: 'italic',
-          }}
-        >
-          &ldquo;{service.providerDescription}&rdquo;
-        </p>
-      )}
       <div
         style={{
           display: 'flex',
-          gap: 16,
+          alignItems: 'flex-start',
+          justifyContent: 'space-between',
+          gap: 24,
           flexWrap: 'wrap',
-          alignItems: 'center',
-          fontSize: 13,
         }}
       >
-        {service.providerA2AUrl && (
-          <>
-            <a
-              href={service.providerA2AUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="dk-link-mint"
+        <div style={{ flex: 1, minWidth: 240, maxWidth: 720 }}>
+          {service.providerName && (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                marginBottom: 10,
+                flexWrap: 'wrap',
+              }}
             >
-              <Icon name="external" size={13} /> Website
+              <h3
+                style={{
+                  fontSize: 22,
+                  fontWeight: 600,
+                  margin: 0,
+                  color: 'var(--pro-text)',
+                  letterSpacing: '-0.015em',
+                }}
+              >
+                {service.providerName}
+              </h3>
+            </div>
+          )}
+          {service.providerDescription && (
+            <p
+              style={{
+                color: 'var(--pro-text-dim)',
+                fontSize: 14,
+                lineHeight: 1.55,
+                margin: '0 0 14px',
+                fontStyle: 'italic',
+              }}
+            >
+              &ldquo;{service.providerDescription}&rdquo;
+            </p>
+          )}
+          <div
+            style={{
+              display: 'flex',
+              gap: 14,
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              fontSize: 13,
+            }}
+          >
+            {service.providerA2AUrl && (
+              <>
+                <a
+                  href={service.providerA2AUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="dk-link-mint"
+                >
+                  <Icon name="external" size={13} /> Website
+                </a>
+                <span style={{ color: 'var(--pro-border-hi)' }}>·</span>
+              </>
+            )}
+            <a href={service.agentURI} target="_blank" rel="noreferrer" className="dk-link-mint">
+              Agent Card
             </a>
             <span style={{ color: 'var(--pro-border-hi)' }}>·</span>
-          </>
-        )}
-        <a href={service.agentURI} target="_blank" rel="noreferrer" className="dk-link-mint">
-          Agent Card
-        </a>
-        <span style={{ color: 'var(--pro-border-hi)' }}>·</span>
-        <Addr link={basescanAddress(service.providerAddress)} style={{ fontSize: 12 }}>
-          {service.providerAddress}
-        </Addr>
+            <Addr link={basescanAddress(service.providerAddress)} style={{ fontSize: 12 }}>
+              {service.providerAddress}
+            </Addr>
+          </div>
+        </div>
       </div>
 
       {service.reputation && (
-        <div
-          style={{
-            marginTop: 20,
-            paddingTop: 18,
-            borderTop: '1px solid var(--pro-border)',
-          }}
-        >
-          <Caption style={{ marginBottom: 10 }}>provider reputation</Caption>
-          <RepStatRow items={providerReputationStats(service.reputation)} />
-        </div>
+        <>
+          <div style={{ marginTop: 22, height: 1, background: 'var(--pro-border)' }} />
+          <div
+            className="dk-stat-grid dk-collapse-4-to-2"
+            style={{ marginTop: 18, gridTemplateColumns: 'repeat(4, 1fr)' }}
+          >
+            <ProvStatCell
+              label="All-time Purchases"
+              value={service.reputation.totalTransactions.toString()}
+            />
+            <ProvStatCell
+              label="All-time Sales"
+              value={formatUsdc(service.reputation.totalSpentUsdc)}
+              unit="USDC"
+            />
+            <ProvStatCell
+              label="Completion Rate"
+              value={formatRate(service.reputation.completionRate)}
+            />
+            <ProvStatCell
+              label="Buyer Satisfaction"
+              value={formatRate(service.reputation.buyerSatisfactionRate)}
+            />
+          </div>
+        </>
       )}
     </div>
   );
-}
-
-function providerReputationStats(rep: PublicServiceReputation): RepStatItem[] {
-  if (rep.totalTransactions === 0) {
-    return [{ label: 'awaiting first completed task', value: '0' }];
-  }
-  return [
-    { label: 'purchases', value: rep.totalTransactions.toString() },
-    { label: 'total value', value: `${formatUsdc(rep.totalSpentUsdc)} USDC` },
-    { label: 'completion', value: formatRate(rep.completionRate) },
-    { label: 'buyer satisfaction', value: formatRate(rep.buyerSatisfactionRate) },
-  ];
-}
-
-// Service rep shows the two stats the hero tiles don't already cover, plus
-// the contract's avg fulfillment time (service-only — provider-wide doesn't
-// have a measured average).
-function serviceReputationStats(rep: PublicServiceLevelReputation): RepStatItem[] {
-  return [
-    { label: 'avg completion', value: formatSeconds(rep.averageFulfillmentSeconds) },
-    { label: 'buyer satisfaction', value: formatRate(rep.buyerSatisfactionRate) },
-  ];
 }
 
 function formatRate(r: number | null): string {
@@ -418,7 +478,6 @@ function SkillsTable({ skills }: { skills: PublicSkill[] }) {
         <span>Skill</span>
         <span>Description</span>
         <span>Price</span>
-        <span>Paid</span>
       </div>
       {skills.map((sk, i) => (
         <div
@@ -455,7 +514,7 @@ function SkillsTable({ skills }: { skills: PublicSkill[] }) {
             )}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <Mono>{sk.basePrice ? `${sk.basePrice} USDC` : sk.variable ? 'live' : '-'}</Mono>
+            <Mono dim={!sk.paymentRequired}>{skillPriceLabel(sk)}</Mono>
             {sk.pricingModelDetail?.hint && (
               <span
                 style={{
@@ -471,7 +530,6 @@ function SkillsTable({ skills }: { skills: PublicSkill[] }) {
               </span>
             )}
           </div>
-          <Mono dim>{sk.paymentRequired ? 'yes' : 'free'}</Mono>
         </div>
       ))}
     </div>
@@ -534,7 +592,7 @@ function RecentPurchases({
             color: 'var(--pro-text)',
           }}
         >
-          <Mono>{shortBuyer(r.buyerAgentId)}</Mono>
+          <Mono>{r.buyerName ?? shortBuyer(r.buyerAgentId)}</Mono>
           <Mono mint>{r.skillId ?? '-'}</Mono>
           <span style={{ color: 'var(--mint-400)' }}>
             {r.amount} <span style={{ color: 'var(--pro-text-dim)' }}>USDC</span>

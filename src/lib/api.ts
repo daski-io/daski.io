@@ -71,6 +71,12 @@ export interface PublicService {
 export interface PublicActivityRow {
   txHash: string;
   buyerAgentId: string;
+  /**
+   * Buyer's ERC-721 display name (from the IdentityRegistry NFT metadata),
+   * when the gateway has resolved it. Optional/null when the gateway hasn't
+   * been extended with this field or when the buyer hasn't set a name.
+   */
+  buyerName?: string | null;
   providerAgentId: string;
   providerName: string | null;
   amount: string;
@@ -239,6 +245,24 @@ export function categoryToIcon(category: string | null | undefined) {
 /** Compute a price-range string for a service from its skills.
  *  Falls back to the service-level pricing if no skill prices are set. */
 export function priceRange(service: Pick<PublicService, 'skills' | 'pricing'>): string {
+  const d = priceDisplay(service);
+  if (d.unit) return `${d.value} ${d.unit}`;
+  return d.value;
+}
+
+/**
+ * Structured price for the service-detail hero tile. Splits the value text
+ * from its unit so the StatCell can render them with different weights.
+ *
+ *   { value: '4.99',              unit: 'USDC' }
+ *   { value: '4.99 – 14.00',      unit: 'USDC' }
+ *   { value: 'live',              unit: 'USDC' }   ← live pricing model (oracle/feed)
+ *   { value: 'variable',          unit: 'USDC' }   ← not fixed, not live
+ *   { value: '-',                 unit: null   }
+ */
+export function priceDisplay(
+  service: Pick<PublicService, 'skills' | 'pricing'>,
+): { value: string; unit: string | null } {
   const paid = service.skills.filter((s) => s.paymentRequired);
   const numericPrices = paid
     .map((s) => (s.basePrice ? Number(s.basePrice) : null))
@@ -248,19 +272,31 @@ export function priceRange(service: Pick<PublicService, 'skills' | 'pricing'>): 
     const min = Math.min(...numericPrices);
     const max = Math.max(...numericPrices);
     return min === max
-      ? `${min.toFixed(2)} USDC`
-      : `${min.toFixed(2)} – ${max.toFixed(2)} USDC`;
+      ? { value: min.toFixed(2), unit: 'USDC' }
+      : { value: `${min.toFixed(2)} – ${max.toFixed(2)}`, unit: 'USDC' };
   }
 
   if (service.pricing.basePrice) {
-    return `${Number(service.pricing.basePrice).toFixed(2)} USDC`;
+    return { value: Number(service.pricing.basePrice).toFixed(2), unit: 'USDC' };
   }
 
-  // Live / variable pricing: show a hint instead of a hard range.
+  const isLive =
+    service.pricing.pricingModel === 'live' ||
+    service.skills.some((s) => s.pricingModel === 'live');
+  if (isLive) return { value: 'live', unit: 'USDC' };
+
   if (service.pricing.variable || service.skills.some((s) => s.variable)) {
-    return 'live';
+    return { value: 'variable', unit: 'USDC' };
   }
-  return '-';
+  return { value: '-', unit: null };
+}
+
+/** Per-skill price label for the skills table. Either an actual price, the
+ *  word "variable" for unfixed paid skills, or "free" for free skills. */
+export function skillPriceLabel(skill: PublicSkill): string {
+  if (!skill.paymentRequired) return 'free';
+  if (skill.basePrice) return `${skill.basePrice} USDC`;
+  return 'variable';
 }
 
 /** Synthesize a chip list (small monospace tags) for service cards.
