@@ -15,15 +15,21 @@ import {
 } from '../lib/api';
 
 interface ActivityPageProps {
+  initialActivity?: PublicActivityRow[];
+  initialStats?: PublicStats | null;
   initialServiceCount?: number;
 }
 
 const REFRESH_MS = 30_000;
 
-export function ActivityPage({ initialServiceCount = 0 }: ActivityPageProps) {
-  const [activity, setActivity] = useState<PublicActivityRow[]>([]);
-  const [stats, setStats] = useState<PublicStats | null>(null);
-  const [loading, setLoading] = useState(true);
+export function ActivityPage({
+  initialActivity = [],
+  initialStats = null,
+  initialServiceCount = 0,
+}: ActivityPageProps) {
+  const [activity, setActivity] = useState<PublicActivityRow[]>(initialActivity);
+  const [stats, setStats] = useState<PublicStats | null>(initialStats);
+  const [loading, setLoading] = useState(initialActivity.length === 0 && !initialStats);
   const [tickSeconds, setTickSeconds] = useState(REFRESH_MS / 1000);
 
   useEffect(() => {
@@ -42,7 +48,11 @@ export function ActivityPage({ initialServiceCount = 0 }: ActivityPageProps) {
       }
     };
 
-    load();
+    // Only do an immediate client load if we had no SSR data; otherwise
+    // wait for the first scheduled refresh so the UI doesn't flicker.
+    if (initialActivity.length === 0 && !initialStats) {
+      load();
+    }
     timer = window.setInterval(load, REFRESH_MS);
     const tickTimer = window.setInterval(() => {
       setTickSeconds((s) => (s <= 1 ? REFRESH_MS / 1000 : s - 1));
@@ -53,6 +63,7 @@ export function ActivityPage({ initialServiceCount = 0 }: ActivityPageProps) {
       if (timer) window.clearInterval(timer);
       window.clearInterval(tickTimer);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -333,9 +344,6 @@ function contractRows(stats: PublicStats | null) {
     { name: 'IdentityRegistry', addr: c?.identityRegistry ?? '0x…' },
     { name: 'ProviderRegistry', addr: c?.providerRegistry ?? '0x…' },
   ];
-  // ServiceRegistry came in with the 2026-05 service-identity refactor;
-  // older gateway builds don't return the field at all. Render the row
-  // only when present so this view degrades cleanly against either.
   if (c?.serviceRegistry) {
     rows.push({ name: 'ServiceRegistry', addr: c.serviceRegistry });
   }

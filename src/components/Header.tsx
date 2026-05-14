@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { Link, NavLink, useLocation } from 'react-router-dom';
 import { Logo } from './ui/Logo';
 import { Icon } from './ui/Icon';
 
@@ -50,13 +49,12 @@ function NetworkBadge() {
   );
 }
 
-export function Header() {
-  const location = useLocation();
-  const [open, setOpen] = useState(false);
+interface HeaderProps {
+  pathname: string;
+}
 
-  useEffect(() => {
-    setOpen(false);
-  }, [location.pathname]);
+export function Header({ pathname }: HeaderProps) {
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -93,16 +91,16 @@ export function Header() {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 28 }}>
-          <Link to="/" style={{ borderBottom: 'none' }}>
+          <a href="/" style={{ borderBottom: 'none' }}>
             <Logo size={20} />
-          </Link>
+          </a>
           <nav className="dk-desktop-only" style={{ display: 'flex', gap: 2 }}>
             {ITEMS.map((it) => {
-              const active = it.match ? it.match(location.pathname) : location.pathname === it.to;
+              const active = it.match ? it.match(pathname) : pathname === it.to;
               return (
-                <NavLink
+                <a
                   key={it.to}
-                  to={it.to}
+                  href={it.to}
                   style={{
                     background: 'transparent',
                     border: 'none',
@@ -117,6 +115,7 @@ export function Header() {
                     position: 'relative',
                     display: 'inline-flex',
                     alignItems: 'center',
+                    textDecoration: 'none',
                   }}
                 >
                   {it.label}
@@ -132,7 +131,7 @@ export function Header() {
                       }}
                     />
                   )}
-                </NavLink>
+                </a>
               );
             })}
           </nav>
@@ -219,12 +218,11 @@ export function Header() {
           }}
         >
           {ITEMS.map((it) => {
-            const active = it.match ? it.match(location.pathname) : location.pathname === it.to;
+            const active = it.match ? it.match(pathname) : pathname === it.to;
             return (
-              <NavLink
+              <a
                 key={it.to}
-                to={it.to}
-                onClick={() => setOpen(false)}
+                href={it.to}
                 style={{
                   background: active ? 'var(--pro-surface)' : 'transparent',
                   border: '1px solid ' + (active ? 'var(--pro-border-hi)' : 'transparent'),
@@ -254,7 +252,7 @@ export function Header() {
                     }}
                   />
                 )}
-              </NavLink>
+              </a>
             );
           })}
 
@@ -272,7 +270,6 @@ export function Header() {
               href="https://github.com/daski-io"
               target="_blank"
               rel="noreferrer"
-              onClick={() => setOpen(false)}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',

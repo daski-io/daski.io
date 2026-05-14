@@ -4,7 +4,9 @@
  * (purchase, settle, etc.) live in the agent's MCP runtime, not here.
  */
 
-export const GATEWAY_URL = (import.meta.env.VITE_GATEWAY_URL as string | undefined) ?? 'https://sandbox-gateway.daski.io';
+export const GATEWAY_URL =
+  (import.meta.env.PUBLIC_GATEWAY_URL as string | undefined) ??
+  'https://sandbox-gateway.daski.io';
 
 export interface PublicSkillPricingModel {
   kind: string;

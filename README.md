@@ -7,8 +7,9 @@ standards (MCP, x402, A2A, ERC-8004). This repo is the marketing site, live at
 [sandbox.daski.io](https://sandbox.daski.io). For the full protocol design,
 read the [whitepaper](https://sandbox.daski.io/MarketplaceProtocolWhitePaper.pdf).
 
-Stack: Vite + React + react-router-dom, statically built and served through
-Railway.
+Stack: Astro 5 (SSR) + React islands, served through Railway on the Node adapter.
+Every page renders real HTML on the first byte so AI crawlers (ChatGPT, Claude,
+Perplexity) can read the service catalog without executing JavaScript.
 
 ## Local dev
 
@@ -21,21 +22,22 @@ The site reads from the public Daski Gateway at
 `https://sandbox-gateway.daski.io` by default. Override via:
 
 ```bash
-VITE_GATEWAY_URL=http://localhost:3000 npm run dev
+PUBLIC_GATEWAY_URL=http://localhost:3000 npm run dev
 ```
 
 ## Build
 
 ```bash
-npm run build   # tsc -b + vite build
-npm run preview # serve dist locally
+npm run build    # astro build (server output via @astrojs/node standalone)
+npm run preview  # serve the production build locally
+npm start        # equivalent to: node ./dist/server/entry.mjs
 ```
 
 ## Deploy
 
-Railway picks up `Dockerfile` + `railway.json`. The container builds the
-Vite bundle and serves `dist/` with [`serve`](https://www.npmjs.com/package/serve)
-in single-page-app mode (every unknown path falls back to `index.html`).
+Railway picks up `Dockerfile` + `railway.json`. The container runs
+`node ./dist/server/entry.mjs` — the standalone Node server emitted by the
+Astro Node adapter, which renders every route on demand.
 
 ## License
 

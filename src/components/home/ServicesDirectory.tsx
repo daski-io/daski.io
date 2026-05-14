@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { Section } from '../ui/Section';
 import { SectionHead } from '../ui/SectionHead';
 import { Mono } from '../ui/Mono';
@@ -205,7 +204,7 @@ function ServiceCard({ service }: { service: PublicService }) {
         flexDirection: 'column',
       }}
     >
-      <Link to={`/service/${service.agentId}`} style={{ borderBottom: 'none', color: 'inherit' }}>
+      <a href={`/service/${service.agentId}`} style={{ borderBottom: 'none', color: 'inherit', textDecoration: 'none', display: 'block' }}>
         <div style={{ padding: '22px 22px 16px' }}>
           <div
             style={{
@@ -326,7 +325,7 @@ function ServiceCard({ service }: { service: PublicService }) {
             View <Icon name="arrow" size={12} />
           </span>
         </div>
-      </Link>
+      </a>
     </Card>
   );
 }
@@ -351,8 +350,8 @@ function ServiceCardSkeleton() {
 
 function BecomeProviderCard() {
   return (
-    <Link
-      to="/providers"
+    <a
+      href="/providers"
       className="dk-card hoverable"
       style={{
         borderStyle: 'dashed',
@@ -424,7 +423,7 @@ function BecomeProviderCard() {
           See what's required <Icon name="arrow" size={13} />
         </span>
       </div>
-    </Link>
+    </a>
   );
 }
 

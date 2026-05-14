@@ -1,0 +1,35 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { ActivityPage } from '../views/ActivityPage';
+import {
+  getActivity,
+  getStats,
+  getServices,
+  type PublicActivityRow,
+  type PublicStats,
+} from '../lib/api';
+
+let initialActivity: PublicActivityRow[] = [];
+let initialStats: PublicStats | null = null;
+let initialServiceCount = 0;
+
+const [activityRes, statsRes, servicesRes] = await Promise.allSettled([
+  getActivity(50),
+  getStats(),
+  getServices(),
+]);
+if (activityRes.status === 'fulfilled') initialActivity = activityRes.value.activity;
+if (statsRes.status === 'fulfilled') initialStats = statsRes.value;
+if (servicesRes.status === 'fulfilled') initialServiceCount = servicesRes.value.services.length;
+---
+<BaseLayout
+  title="Activity · Daski"
+  description="Live marketplace activity — recent agent purchases and on-chain settlement stats."
+>
+  <ActivityPage
+    client:load
+    initialActivity={initialActivity}
+    initialStats={initialStats}
+    initialServiceCount={initialServiceCount}
+  />
+</BaseLayout>

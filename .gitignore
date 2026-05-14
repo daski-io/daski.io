@@ -1,6 +1,7 @@
 node_modules
 dist
 dist-ssr
+.astro
 *.tsbuildinfo
 .env
 .env.local

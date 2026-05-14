@@ -1,0 +1,38 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { ServiceDetailPage } from '../../views/ServiceDetailPage';
+import { getServiceDetail, type ServiceDetail } from '../../lib/api';
+
+const { agentId } = Astro.params;
+
+let service: ServiceDetail | null = null;
+let error: string | null = null;
+
+if (!agentId) {
+  error = 'Missing agentId';
+} else {
+  try {
+    service = await getServiceDetail(agentId);
+  } catch (e) {
+    error = e instanceof Error ? e.message : 'unknown error';
+  }
+}
+
+if (!service) {
+  Astro.response.status = 404;
+}
+---
+<BaseLayout
+  title={service ? `${service.name} · Daski` : 'Service not found · Daski'}
+  description={service?.serviceDescription ?? 'A real service offered to AI agents on the Daski marketplace.'}
+>
+  {service ? (
+    <ServiceDetailPage client:load service={service} />
+  ) : (
+    <div style="padding: 88px 32px 48px; max-width: 1280px; margin: 0 auto;">
+      <h1 style="color: var(--pro-text); font-size: 32px;">Service not found</h1>
+      <p style="color: var(--pro-text-dim);">{error ?? 'No service with that id.'}</p>
+      <a href="/" style="color: var(--mint-400);">← Back to services</a>
+    </div>
+  )}
+</BaseLayout>

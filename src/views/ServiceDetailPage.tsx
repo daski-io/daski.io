@@ -1,5 +1,4 @@
-import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useState } from 'react';
 import { Section } from '../components/ui/Section';
 import { SectionHead } from '../components/ui/SectionHead';
 import { Caption, Mono } from '../components/ui/Mono';
@@ -10,59 +9,18 @@ import {
   basescanTx,
   buyerDisplay,
   categoryToIcon,
-  getServiceDetail,
   priceDisplay,
   skillPriceLabel,
   timeAgo,
-  type PublicServiceLevelReputation,
-  type PublicServiceReputation,
   type PublicSkill,
   type ServiceDetail,
 } from '../lib/api';
 
-export function ServiceDetailPage() {
-  const { agentId } = useParams<{ agentId: string }>();
-  const [service, setService] = useState<ServiceDetail | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+interface ServiceDetailPageProps {
+  service: ServiceDetail;
+}
 
-  useEffect(() => {
-    if (!agentId) return;
-    const ctrl = new AbortController();
-    setLoading(true);
-    setError(null);
-    getServiceDetail(agentId, ctrl.signal)
-      .then((s) => {
-        setService(s);
-        setLoading(false);
-      })
-      .catch((e) => {
-        if (ctrl.signal.aborted) return;
-        setError(e instanceof Error ? e.message : 'unknown error');
-        setLoading(false);
-      });
-    return () => ctrl.abort();
-  }, [agentId]);
-
-  if (loading && !service) {
-    return (
-      <Section pad="88px 32px 48px">
-        <Mono dim>loading service…</Mono>
-      </Section>
-    );
-  }
-  if (error || !service) {
-    return (
-      <Section pad="88px 32px 48px">
-        <h1 style={{ color: 'var(--pro-text)', fontSize: 32 }}>Service not found</h1>
-        <p style={{ color: 'var(--pro-text-dim)' }}>{error ?? 'No service with that id.'}</p>
-        <Link to="/" style={{ color: 'var(--mint-400)', borderBottom: 'none' }}>
-          ← Back to services
-        </Link>
-      </Section>
-    );
-  }
-
+export function ServiceDetailPage({ service }: ServiceDetailPageProps) {
   const m = categoryToIcon(service.category);
   const sRep = service.serviceReputation;
   const price = priceDisplay(service);
@@ -82,8 +40,8 @@ export function ServiceDetailPage() {
             textTransform: 'uppercase',
           }}
         >
-          <Link
-            to="/"
+          <a
+            href="/"
             style={{
               background: 'transparent',
               border: 'none',
@@ -91,10 +49,11 @@ export function ServiceDetailPage() {
               cursor: 'pointer',
               padding: 0,
               borderBottom: 'none',
+              textDecoration: 'none',
             }}
           >
             services
-          </Link>
+          </a>
           <span>/</span>
           <span style={{ color: 'var(--pro-text)' }}>{service.name}</span>
         </div>
@@ -457,7 +416,6 @@ function formatRate(r: number | null): string {
 }
 
 function formatUsdc(s: string): string {
-  // Strip trailing zeros for cleaner display: "4.99" → "4.99", "100.00" → "100".
   const n = Number(s);
   if (!Number.isFinite(n)) return s;
   return n % 1 === 0 ? n.toFixed(0) : n.toFixed(2);
@@ -640,12 +598,6 @@ function SkillTags({ skill }: { skill: PublicSkill }) {
   );
 }
 
-// Header brand mark for the service detail page. Renders the provider's
-// iconUrl (sourced from the ERC-8004 registration file's `image` field)
-// when present; falls back to a category-derived glyph when the
-// provider hasn't set a logo OR the image fails to load. Matches the
-// home-page ServiceCard treatment so a provider's brand is consistent
-// across the directory and the detail view.
 function ServiceHeaderMark({
   iconUrl,
   providerName,

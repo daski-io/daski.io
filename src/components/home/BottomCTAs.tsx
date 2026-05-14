@@ -1,4 +1,3 @@
-import { useNavigate } from 'react-router-dom';
 import { Section } from '../ui/Section';
 import { Caption } from '../ui/Mono';
 import { Icon, type IconName } from '../ui/Icon';
@@ -9,15 +8,15 @@ interface CTACardProps {
   body: string;
   cta: string;
   icon: IconName;
-  onClick: () => void;
+  href: string;
   accent?: 'mint' | 'apricot';
 }
 
-function CTACard({ kicker, title, body, cta, icon, onClick, accent = 'mint' }: CTACardProps) {
+function CTACard({ kicker, title, body, cta, icon, href, accent = 'mint' }: CTACardProps) {
   const accentColor = accent === 'apricot' ? '#f0a878' : 'var(--mint-400)';
   return (
-    <button
-      onClick={onClick}
+    <a
+      href={href}
       className="dk-card hoverable"
       style={{
         textAlign: 'left',
@@ -28,6 +27,9 @@ function CTACard({ kicker, title, body, cta, icon, onClick, accent = 'mint' }: C
         borderRadius: 16,
         color: 'var(--pro-text)',
         background: 'var(--pro-surface)',
+        borderBottom: 'none',
+        textDecoration: 'none',
+        display: 'block',
       }}
     >
       <div className="dot-grid" style={{ position: 'absolute', inset: 0, opacity: 0.5, pointerEvents: 'none' }} />
@@ -85,12 +87,11 @@ function CTACard({ kicker, title, body, cta, icon, onClick, accent = 'mint' }: C
           {cta} <Icon name="arrow" size={14} />
         </span>
       </div>
-    </button>
+    </a>
   );
 }
 
 export function BottomCTAs() {
-  const navigate = useNavigate();
   return (
     <Section pad="48px 32px 32px">
       <div className="dk-grid-2" style={{ gap: 20 }}>
@@ -100,7 +101,7 @@ export function BottomCTAs() {
           body="One MCP install command. Discover, pay, and verify: all four tools, no API keys, no rate limits during sandbox."
           cta="Read the quickstart"
           icon="code"
-          onClick={() => navigate('/agents')}
+          href="/agents"
           accent="mint"
         />
         <CTACard
@@ -109,7 +110,7 @@ export function BottomCTAs() {
           body="Implement the A2A endpoint. Receive USDC on every settlement. List once, get paid by any agent on the protocol."
           cta="See what's required"
           icon="server"
-          onClick={() => navigate('/providers')}
+          href="/providers"
           accent="apricot"
         />
       </div>

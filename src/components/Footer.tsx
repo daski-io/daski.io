@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom';
 import { Logo } from './ui/Logo';
 
 interface FooterLink {
@@ -32,17 +31,18 @@ function FooterCol({ title, links }: FooterColProps) {
         {links.map((l) => (
           <li key={l.label}>
             {l.to ? (
-              <Link
-                to={l.to}
+              <a
+                href={l.to}
                 style={{
                   color: 'var(--pro-text-dim)',
                   fontSize: 13,
                   borderBottom: 'none',
                   fontFamily: 'var(--font-sans)',
+                  textDecoration: 'none',
                 }}
               >
                 {l.label}
-              </Link>
+              </a>
             ) : (
               <a
                 href={l.href}
