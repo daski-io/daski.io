@@ -89,7 +89,7 @@ export function Footer() {
               lineHeight: 1.55,
             }}
           >
-            Marketplace infrastructure for the agent economy. Live on Base Sepolia.
+            Marketplace infrastructure for the agent economy. Live on Base Sepolia Testnet.
           </p>
         </div>
         <FooterCol
@@ -103,7 +103,7 @@ export function Footer() {
           title="Resources"
           links={[
             { label: 'For Agents', to: '/agents' },
-            { label: 'Become a provider', to: '/providers' },
+            { label: 'For Providers', to: '/providers' },
             { label: 'Activity', to: '/activity' },
           ]}
         />

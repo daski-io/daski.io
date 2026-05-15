@@ -52,7 +52,7 @@ export function ServicesDirectory({ services, loading, error }: ServicesDirector
       <span id="directory" style={{ position: 'absolute', top: -80 }} />
       <SectionHead
         kicker="live services"
-        title={null}
+        title="Base Sepolia testnet. The protocol is real. The money isn't, yet."
         action={<Mono dim>{filtered.length} live</Mono>}
       />
 
@@ -126,7 +126,6 @@ export function ServicesDirectory({ services, loading, error }: ServicesDirector
         {filtered.map((s) => (
           <ServiceCard key={s.agentId} service={s} />
         ))}
-        <BecomeProviderCard />
       </div>
     </Section>
   );
@@ -345,85 +344,6 @@ function ServiceCardSkeleton() {
       <div className="dot-grid" style={{ height: 44, opacity: 0.3 }} />
       <Mono dim style={{ marginTop: 18, display: 'block' }}>loading services…</Mono>
     </div>
-  );
-}
-
-function BecomeProviderCard() {
-  return (
-    <a
-      href="/providers"
-      className="dk-card hoverable"
-      style={{
-        borderStyle: 'dashed',
-        padding: 22,
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'space-between',
-        textDecoration: 'none',
-        color: 'var(--pro-text)',
-        position: 'relative',
-        overflow: 'hidden',
-        minHeight: 240,
-        borderBottom: 'none',
-      }}
-    >
-      <div className="dot-grid" style={{ position: 'absolute', inset: 0, opacity: 0.4, pointerEvents: 'none' }} />
-      <div style={{ position: 'relative' }}>
-        <div
-          style={{
-            width: 44,
-            height: 44,
-            borderRadius: 10,
-            background: 'transparent',
-            border: '1px dashed var(--pro-border-hi)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'var(--pro-text-dim)',
-            marginBottom: 18,
-          }}
-        >
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 22, lineHeight: 1 }}>+</span>
-        </div>
-        <h3
-          style={{
-            fontSize: 22,
-            color: 'var(--pro-text)',
-            margin: '0 0 10px',
-            fontWeight: 600,
-            letterSpacing: '-0.02em',
-            lineHeight: 1.15,
-          }}
-        >
-          Become a Provider
-        </h3>
-        <p
-          style={{
-            color: 'var(--pro-text-dim)',
-            fontSize: 13.5,
-            lineHeight: 1.55,
-            margin: 0,
-            maxWidth: 280,
-          }}
-        >
-          Add your service to Daski. Reach AI agents the moment they need what you offer.
-        </p>
-      </div>
-      <div style={{ position: 'relative', marginTop: 18 }}>
-        <span
-          style={{
-            color: 'var(--mint-400)',
-            fontSize: 13,
-            fontWeight: 500,
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 6,
-          }}
-        >
-          See what's required <Icon name="arrow" size={13} />
-        </span>
-      </div>
-    </a>
   );
 }
 

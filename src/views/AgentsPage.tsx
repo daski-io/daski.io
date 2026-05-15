@@ -2,14 +2,11 @@ import type { ReactNode } from 'react';
 import { Section } from '../components/ui/Section';
 import { SectionHead } from '../components/ui/SectionHead';
 import { Caption } from '../components/ui/Mono';
-import { Icon, type IconName } from '../components/ui/Icon';
+import { type IconName } from '../components/ui/Icon';
 import { IconTile } from '../components/ui/IconTile';
 import { CodeBlock } from '../components/ui/CodeBlock';
-import { CopyButton } from '../components/ui/CopyButton';
+import { PlatformPicker } from '../components/PlatformPicker';
 
-const CLAUDE_CMD = 'claude mcp add daski https://sandbox-gateway.daski.io/mcp';
-const CODEX_CMD = 'codex mcp add daski --url https://sandbox-gateway.daski.io/mcp';
-const MCP_URL = 'https://sandbox-gateway.daski.io/mcp';
 const PROMPT = `Use the Daski MCP server at https://sandbox-gateway.daski.io/mcp\nto [your task here].`;
 
 export function AgentsPage() {
@@ -102,18 +99,7 @@ export function AgentsPage() {
           title="Pick your stack."
           subtitle="One install command. Daski's four tools auto-discover through MCP."
         />
-        <div className="dk-grid-3">
-          <StackCard name="Claude Code" sub="Anthropic's coding agent." icon="bolt" cmd={CLAUDE_CMD} />
-          <StackCard name="OpenAI Codex" sub="Codex CLI, streamable HTTP." icon="code" cmd={CODEX_CMD} />
-          <StackCard
-            name="Bring your own"
-            sub="Cursor, Continue, custom MCP clients."
-            icon="plug"
-            urlLabel="MCP gateway URL"
-            cmd={MCP_URL}
-            url
-          />
-        </div>
+        <PlatformPicker />
       </Section>
 
       <Section pad="64px 32px 0">
@@ -177,70 +163,6 @@ function NumberChip({ children }: { children: ReactNode }) {
     >
       {children}
     </span>
-  );
-}
-
-interface StackCardProps {
-  name: string;
-  sub: string;
-  icon: IconName;
-  cmd: string;
-  url?: boolean;
-  urlLabel?: string;
-}
-
-function StackCard({ name, sub, icon, cmd, url, urlLabel }: StackCardProps) {
-  return (
-    <div className="dk-card" style={{ padding: 18, display: 'flex', flexDirection: 'column', gap: 14 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <IconTile name={icon} size="md" />
-        <div>
-          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--pro-text)' }}>{name}</div>
-          <div style={{ fontSize: 12, color: 'var(--pro-text-dim)' }}>{sub}</div>
-        </div>
-      </div>
-      <div
-        style={{
-          background: '#06070b',
-          border: '1px solid var(--pro-border)',
-          borderRadius: 8,
-          padding: 12,
-          color: '#cfcfdb',
-          fontFamily: 'var(--font-mono)',
-          fontSize: 11.5,
-          lineHeight: 1.6,
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 6,
-          overflow: 'hidden',
-        }}
-      >
-        {url ? (
-          <>
-            <div
-              style={{
-                color: 'var(--pro-text-dim)',
-                fontSize: 10.5,
-                letterSpacing: '0.06em',
-                textTransform: 'uppercase',
-              }}
-            >
-              {urlLabel}
-            </div>
-            <code style={{ color: 'var(--mint-400)', wordBreak: 'break-all' }}>{cmd}</code>
-          </>
-        ) : (
-          <code style={{ color: '#cfcfdb', wordBreak: 'break-all' }}>
-            <span style={{ color: 'var(--pro-text-dim)' }}>$ </span>
-            {cmd}
-          </code>
-        )}
-      </div>
-      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-        <CopyButton text={cmd} label="Copy" size="sm" />
-      </div>
-    </div>
   );
 }
 

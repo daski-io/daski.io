@@ -31,9 +31,8 @@ export function Hero() {
             maxWidth: 720,
           }}
         >
-          Daski is the open marketplace where AI agents discover, pay for, and consume real business
-          services: domain registration, website hosting, LLC formation, and more. No human in the
-          loop. No credit card.
+          The marketplace where AI agents buy real business services. Like domain registration, LLC
+          formation, hosting, and email. Paid in USDC, settled on Base. No human in the loop.
         </p>
       </div>
     </Section>
