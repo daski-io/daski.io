@@ -13,6 +13,7 @@ import {
   skillPriceLabel,
   timeAgo,
   type PublicSkill,
+  type PublicSkillStats,
   type ServiceDetail,
 } from '../lib/api';
 
@@ -132,7 +133,16 @@ export function ServiceDetailPage({ service }: ServiceDetailPageProps) {
             <StatCell label="Completion Rate" value={formatRate(sRep?.completionRate ?? null)} />
             <StatCell
               label="Buyer Satisfaction"
-              value={formatRate(sRep?.buyerSatisfactionRate ?? null)}
+              value={formatRate(
+                // USDC-value-weighted (log2 curve, $0.25 floor) — the
+                // anti-Sybil display metric. Falls back to the count-based
+                // rate when no attestations land above the floor; falls
+                // back further to null (rendered as '–') when there's no
+                // signal at all.
+                sRep?.buyerSatisfactionRateByValue ??
+                  sRep?.buyerSatisfactionRate ??
+                  null,
+              )}
             />
           </div>
         </div>
@@ -147,6 +157,17 @@ export function ServiceDetailPage({ service }: ServiceDetailPageProps) {
         <SectionHead kicker="skills offered" title={null} />
         <SkillsTable skills={service.skills} />
       </Section>
+
+      {service.skillStats.length > 0 && (
+        <Section pad="40px 32px 0">
+          <SectionHead
+            kicker="per-skill performance"
+            title={null}
+            subtitle="Completion + satisfaction per skill. Skills with wildly different fulfillment times (e.g. register vs. transfer) tell different stories — service-level averages hide that."
+          />
+          <SkillStatsTable stats={service.skillStats} />
+        </Section>
+      )}
 
       <Section pad="40px 32px 0">
         <SectionHead kicker="recent purchases of this service" title={null} />
@@ -493,6 +514,66 @@ function SkillsTable({ skills }: { skills: PublicSkill[] }) {
               </span>
             )}
           </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function SkillStatsTable({ stats }: { stats: PublicSkillStats[] }) {
+  return (
+    <div className="dk-table">
+      <div
+        className="dk-table-head"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 1fr',
+          gap: 16,
+          padding: '12px 20px',
+        }}
+      >
+        <span>Skill</span>
+        <span>Transactions</span>
+        <span>Completion</span>
+        <span>Satisfaction</span>
+        <span>Median Time</span>
+        <span>Refund Rate</span>
+      </div>
+      {stats.map((s, i) => (
+        <div
+          key={s.skillId}
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 1fr',
+            gap: 16,
+            padding: '16px 20px',
+            alignItems: 'center',
+            color: 'var(--pro-text)',
+            borderBottom:
+              i < stats.length - 1 ? '1px solid var(--pro-border)' : 'none',
+          }}
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <Mono mint>{s.skillId}</Mono>
+            <span style={{ fontSize: 11, color: 'var(--pro-text-dim)' }}>
+              {s.uniqueBuyerCount} buyer{s.uniqueBuyerCount === 1 ? '' : 's'} ·{' '}
+              {formatUsdc(s.totalSpentUsdc)} USDC volume
+            </span>
+          </div>
+          <Mono>{s.totalTransactions}</Mono>
+          <Mono>{formatRate(s.completionRate)}</Mono>
+          {/*
+            USDC-value-weighted satisfaction (log2 curve, $0.25 floor) —
+            the anti-Sybil display metric. Falls back to count-based when
+            no attestations land above the floor.
+          */}
+          <Mono>
+            {formatRate(
+              s.buyerSatisfactionRateByValue ?? s.buyerSatisfactionRate,
+            )}
+          </Mono>
+          <Mono>{formatSeconds(s.medianFulfillmentSeconds)}</Mono>
+          <Mono>{formatRate(s.refundRate)}</Mono>
         </div>
       ))}
     </div>

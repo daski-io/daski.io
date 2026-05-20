@@ -142,12 +142,47 @@ export interface PublicServiceReputation {
  *   - `averageFulfillmentSeconds` — measured wall-clock time from payment to
  *     `completed`, averaged over `fulfillmentSampleSize` completed tasks.
  *     Null if no completed task has produced a usable sample yet.
+ *   - `buyerSatisfactionRateByValue` — USDC-value-weighted satisfaction
+ *     (log2 curve with $0.25 floor); the canonical anti-Sybil display
+ *     metric. Falls back to count-based `buyerSatisfactionRate` when null.
  */
 export interface PublicServiceLevelReputation extends PublicServiceReputation {
   totalRefundedUsdc: string;
   serviceId: string;
   averageFulfillmentSeconds: number | null;
   fulfillmentSampleSize: number;
+  buyerSatisfactionRateByValue: number | null;
+  buyerSatisfactionRateByValueSampleSize: number;
+}
+
+/**
+ * Per-skill stats for a service: the same metrics the service-level view
+ * surfaces, grouped by the buyer's stated `skillId`. Critical when a
+ * service has skills with wildly different shapes (e.g. 60-second
+ * register-domain vs week-long transfer-out) — service-level aggregates
+ * hide that variance.
+ */
+export interface PublicSkillStats {
+  skillId: string;
+  skillName: string | null;
+  totalTransactions: number;
+  totalSpentUsdc: string;
+  uniqueBuyerCount: number;
+  completedCount: number;
+  failedCount: number;
+  canceledCount: number;
+  completionRate: number | null;
+  confirmedCount: number;
+  notConfirmedCount: number;
+  pendingConfirmationCount: number;
+  buyerSatisfactionRate: number | null;
+  buyerSatisfactionRateByValue: number | null;
+  medianFulfillmentSeconds: number | null;
+  p90FulfillmentSeconds: number | null;
+  fulfillmentSampleSize: number;
+  refundedUsdc: string;
+  refundCount: number;
+  refundRate: number | null;
 }
 
 export interface ServiceDetail extends PublicService {
@@ -159,6 +194,11 @@ export interface ServiceDetail extends PublicService {
    * primary serviceId (e.g. agent card without a marketplace extension).
    */
   serviceReputation: PublicServiceLevelReputation | null;
+  /**
+   * Per-skill stats array, ordered by transaction count descending.
+   * Empty when no paid transactions have been recorded for any skill.
+   */
+  skillStats: PublicSkillStats[];
 }
 
 async function fetchJson<T>(path: string, signal?: AbortSignal): Promise<T> {
