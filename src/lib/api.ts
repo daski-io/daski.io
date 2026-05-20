@@ -126,12 +126,20 @@ export interface PublicServiceReputation {
   totalTransactions: number;
   completionRate: number | null;
   buyerSatisfactionRate: number | null;
+  /**
+   * USDC-value-weighted satisfaction (log2 curve with $0.25 floor); the
+   * canonical anti-Sybil display metric. Falls back to count-based
+   * `buyerSatisfactionRate` when null. Present on both provider-level
+   * and service-level reputation.
+   */
+  buyerSatisfactionRateByValue: number | null;
+  buyerSatisfactionRateByValueSampleSize: number;
   completedCount: number;
   failedCount: number;
   canceledCount: number;
   confirmedCount: number;
   notConfirmedCount: number;
-  /** Cumulative USDC paid into the provider/service. String to preserve precision. */
+  /** Cumulative USDC paid into the provider/service. Sourced from chain_events. */
   totalSpentUsdc: string;
 }
 
@@ -142,17 +150,12 @@ export interface PublicServiceReputation {
  *   - `averageFulfillmentSeconds` — measured wall-clock time from payment to
  *     `completed`, averaged over `fulfillmentSampleSize` completed tasks.
  *     Null if no completed task has produced a usable sample yet.
- *   - `buyerSatisfactionRateByValue` — USDC-value-weighted satisfaction
- *     (log2 curve with $0.25 floor); the canonical anti-Sybil display
- *     metric. Falls back to count-based `buyerSatisfactionRate` when null.
  */
 export interface PublicServiceLevelReputation extends PublicServiceReputation {
   totalRefundedUsdc: string;
   serviceId: string;
   averageFulfillmentSeconds: number | null;
   fulfillmentSampleSize: number;
-  buyerSatisfactionRateByValue: number | null;
-  buyerSatisfactionRateByValueSampleSize: number;
 }
 
 /**

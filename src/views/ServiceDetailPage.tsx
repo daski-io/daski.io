@@ -10,7 +10,6 @@ import {
   buyerDisplay,
   categoryToIcon,
   priceDisplay,
-  skillPriceLabel,
   timeAgo,
   type PublicSkill,
   type PublicSkillStats,
@@ -155,19 +154,8 @@ export function ServiceDetailPage({ service }: ServiceDetailPageProps) {
 
       <Section pad="40px 32px 0">
         <SectionHead kicker="skills offered" title={null} />
-        <SkillsTable skills={service.skills} />
+        <SkillsTable skills={service.skills} stats={service.skillStats} />
       </Section>
-
-      {service.skillStats.length > 0 && (
-        <Section pad="40px 32px 0">
-          <SectionHead
-            kicker="per-skill performance"
-            title={null}
-            subtitle="Completion + satisfaction per skill. Skills with wildly different fulfillment times (e.g. register vs. transfer) tell different stories — service-level averages hide that."
-          />
-          <SkillStatsTable stats={service.skillStats} />
-        </Section>
-      )}
 
       <Section pad="40px 32px 0">
         <SectionHead kicker="recent purchases of this service" title={null} />
@@ -423,7 +411,14 @@ function ProvidedByBox({ service }: { service: ServiceDetail }) {
             />
             <ProvStatCell
               label="Buyer Satisfaction"
-              value={formatRate(service.reputation.buyerSatisfactionRate)}
+              value={formatRate(
+                // USDC-value-weighted (log2 curve, $0.25 floor) — same
+                // anti-Sybil metric used on the service-level card.
+                // Falls back to count-based when no attestations land
+                // above the floor.
+                service.reputation.buyerSatisfactionRateByValue ??
+                  service.reputation.buyerSatisfactionRate,
+              )}
             />
           </div>
         </>
@@ -455,127 +450,221 @@ function formatSeconds(sec: number | null): string {
   return m === 0 ? `${h}h` : `${h}h ${m}m`;
 }
 
-function SkillsTable({ skills }: { skills: PublicSkill[] }) {
-  return (
-    <div className="dk-table">
-      <div className="dk-table-head dk-skills-row">
-        <span>Skill</span>
-        <span>Description</span>
-        <span>Price</span>
-      </div>
-      {skills.map((sk, i) => (
-        <div
-          key={sk.id}
-          className="dk-skills-row"
-          style={{
-            padding: '16px 20px',
-            gap: 16,
-            alignItems: 'start',
-            color: 'var(--pro-text)',
-            borderBottom: i < skills.length - 1 ? '1px solid var(--pro-border)' : 'none',
-          }}
-        >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <Mono mint>{sk.id}</Mono>
-            <SkillTags skill={sk} />
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <span style={{ fontSize: 13, color: 'var(--pro-text-dim)' }}>
-              {sk.description ?? '-'}
-            </span>
-            {sk.requiredFields && sk.requiredFields.length > 0 && (
-              <span
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 11,
-                  color: 'var(--pro-text-dim)',
-                  letterSpacing: '0.02em',
-                  lineHeight: 1.45,
-                }}
-              >
-                fields: {sk.requiredFields.join(', ')}
-              </span>
-            )}
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <Mono dim={!sk.paymentRequired}>{skillPriceLabel(sk)}</Mono>
-            {sk.pricingModelDetail?.hint && (
-              <span
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 11,
-                  color: 'var(--pro-text-dim)',
-                  lineHeight: 1.4,
-                }}
-              >
-                {sk.pricingModelDetail.source
-                  ? `via ${sk.pricingModelDetail.source}`
-                  : sk.pricingModelDetail.kind}
-              </span>
-            )}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
+// Format the Price cell of the combined skills table per the design:
+//   - flat price (no live pricing)        → "$X.XX"
+//   - variable pricing + ≥2 settled txs   → "variable · avg. $X.XX"
+//   - variable pricing + 0–1 txs          → "variable"
+//   - paymentRequired false               → "free"
+function formatSkillPrice(
+  sk: PublicSkill,
+  stat: PublicSkillStats | undefined,
+): string {
+  if (!sk.paymentRequired) return 'free';
+  if (sk.variable) {
+    if (stat && stat.totalTransactions > 1) {
+      const avg = Number(stat.totalSpentUsdc) / stat.totalTransactions;
+      return `variable · avg. $${avg.toFixed(2)}`;
+    }
+    return 'variable';
+  }
+  return sk.basePrice ? `$${sk.basePrice}` : 'variable';
 }
 
-function SkillStatsTable({ stats }: { stats: PublicSkillStats[] }) {
+/**
+ * Combined skills + per-skill performance table. Each row carries the
+ * catalog info (skill id, price) alongside settled stats (volume,
+ * completion, satisfaction, median time). A More/Less toggle expands an
+ * inline description card — matches the design's expandable skill row
+ * pattern (see design ref `provider.jsx` in the handoff bundle).
+ *
+ * Stats come from gateway `skillStats[]` joined by skillId. Skills that
+ * have no settled transactions still appear (catalog-only row) with
+ * dashes in the stats columns.
+ */
+function SkillsTable({
+  skills,
+  stats,
+}: {
+  skills: PublicSkill[];
+  stats: PublicSkillStats[];
+}) {
+  const [open, setOpen] = useState<Record<string, boolean>>({});
+  const toggle = (id: string) =>
+    setOpen((o) => ({ ...o, [id]: !o[id] }));
+
+  const statsById = new Map(stats.map((s) => [s.skillId, s]));
+
+  // 7 columns, fixed widths on the numerics so the table aligns when
+  // values vary in length. Last column reserved for the More/Less
+  // toggle. Numbers right-aligned on the design; we keep them in-flow
+  // for simplicity since column widths bound the dispersion already.
+  const COLS = '1.1fr 1.6fr 1fr 1fr 1fr 1fr 76px';
+
   return (
-    <div className="dk-table">
-      <div
-        className="dk-table-head"
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 1fr',
-          gap: 16,
-          padding: '12px 20px',
-        }}
-      >
-        <span>Skill</span>
-        <span>Transactions</span>
-        <span>Completion</span>
-        <span>Satisfaction</span>
-        <span>Median Time</span>
-        <span>Refund Rate</span>
-      </div>
-      {stats.map((s, i) => (
-        <div
-          key={s.skillId}
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 1fr',
-            gap: 16,
-            padding: '16px 20px',
-            alignItems: 'center',
-            color: 'var(--pro-text)',
-            borderBottom:
-              i < stats.length - 1 ? '1px solid var(--pro-border)' : 'none',
-          }}
-        >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <Mono mint>{s.skillId}</Mono>
-            <span style={{ fontSize: 11, color: 'var(--pro-text-dim)' }}>
-              {s.uniqueBuyerCount} buyer{s.uniqueBuyerCount === 1 ? '' : 's'} ·{' '}
-              {formatUsdc(s.totalSpentUsdc)} USDC volume
-            </span>
+    <div className="dk-table" style={{ overflow: 'hidden' }}>
+      <div style={{ overflowX: 'auto' }}>
+        <div style={{ minWidth: 880 }}>
+          <div
+            className="dk-table-head"
+            style={{
+              display: 'grid',
+              gridTemplateColumns: COLS,
+              gap: 16,
+              padding: '12px 20px',
+            }}
+          >
+            <span>Skill</span>
+            <span>Price</span>
+            <span>All-time Sales</span>
+            <span>Avg Completion</span>
+            <span>Completion Rate</span>
+            <span>Buyer Satisfaction</span>
+            <span />
           </div>
-          <Mono>{s.totalTransactions}</Mono>
-          <Mono>{formatRate(s.completionRate)}</Mono>
-          {/*
-            USDC-value-weighted satisfaction (log2 curve, $0.25 floor) —
-            the anti-Sybil display metric. Falls back to count-based when
-            no attestations land above the floor.
-          */}
-          <Mono>
-            {formatRate(
-              s.buyerSatisfactionRateByValue ?? s.buyerSatisfactionRate,
-            )}
-          </Mono>
-          <Mono>{formatSeconds(s.medianFulfillmentSeconds)}</Mono>
-          <Mono>{formatRate(s.refundRate)}</Mono>
+          {skills.map((sk, i) => {
+            const stat = statsById.get(sk.id);
+            const isOpen = !!open[sk.id];
+            const isLast = i === skills.length - 1;
+            return (
+              <div
+                key={sk.id}
+                style={{
+                  borderBottom: isLast ? 'none' : '1px solid var(--pro-border)',
+                }}
+              >
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: COLS,
+                    gap: 16,
+                    padding: '16px 20px',
+                    alignItems: 'center',
+                    color: 'var(--pro-text)',
+                  }}
+                >
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    <Mono mint style={{ fontSize: 13 }}>{sk.id}</Mono>
+                    <SkillTags skill={sk} />
+                  </div>
+                  <Mono style={{ fontSize: 13 }}>{formatSkillPrice(sk, stat)}</Mono>
+                  <Mono style={{ fontSize: 13 }}>
+                    {stat ? formatUsdc(stat.totalSpentUsdc) : '–'}
+                    {stat && (
+                      <span style={{ color: 'var(--pro-text-dim)', marginLeft: 6, fontSize: 11 }}>
+                        USDC
+                      </span>
+                    )}
+                  </Mono>
+                  <Mono style={{ fontSize: 13 }}>
+                    {formatSeconds(stat?.medianFulfillmentSeconds ?? null)}
+                  </Mono>
+                  <Mono style={{ fontSize: 13 }}>{formatRate(stat?.completionRate ?? null)}</Mono>
+                  {/*
+                    USDC-value-weighted satisfaction (log2 curve, $0.25
+                    floor) — the anti-Sybil display metric. Falls back to
+                    count-based when no attestations land above the floor.
+                  */}
+                  <Mono style={{ fontSize: 13 }}>
+                    {formatRate(
+                      stat?.buyerSatisfactionRateByValue ??
+                        stat?.buyerSatisfactionRate ??
+                        null,
+                    )}
+                  </Mono>
+                  <button
+                    onClick={() => toggle(sk.id)}
+                    aria-expanded={isOpen}
+                    style={{
+                      height: 26,
+                      padding: '0 10px',
+                      borderRadius: 6,
+                      cursor: 'pointer',
+                      background: 'transparent',
+                      border: `1px solid ${isOpen ? 'var(--mint-700)' : 'var(--pro-border-hi)'}`,
+                      color: isOpen ? 'var(--mint-400)' : 'var(--pro-text-dim)',
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: 10,
+                      letterSpacing: '0.06em',
+                      textTransform: 'uppercase',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 5,
+                      justifySelf: 'end',
+                      transition: 'color 160ms ease, border-color 160ms ease',
+                    }}
+                  >
+                    {isOpen ? 'Less' : 'More'}
+                    <span
+                      aria-hidden
+                      style={{
+                        display: 'inline-flex',
+                        transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                        transition: 'transform 200ms ease',
+                        fontSize: 9,
+                        lineHeight: 1,
+                      }}
+                    >
+                      ▾
+                    </span>
+                  </button>
+                </div>
+                {isOpen && (
+                  <div
+                    style={{
+                      padding: '0 20px 18px',
+                      display: 'grid',
+                      gridTemplateColumns: '1fr',
+                      gap: 12,
+                    }}
+                  >
+                    <div
+                      style={{
+                        padding: '14px 16px',
+                        borderRadius: 8,
+                        background: '#06070b',
+                        border: '1px solid var(--pro-border)',
+                        color: 'var(--pro-text)',
+                        fontSize: 13.5,
+                        lineHeight: 1.6,
+                      }}
+                    >
+                      <Mono
+                        dim
+                        style={{
+                          fontSize: 10,
+                          letterSpacing: '0.08em',
+                          textTransform: 'uppercase',
+                          display: 'block',
+                          marginBottom: 8,
+                        }}
+                      >
+                        description
+                      </Mono>
+                      {sk.description ?? '–'}
+                      {sk.requiredFields && sk.requiredFields.length > 0 && (
+                        <div
+                          style={{
+                            marginTop: 12,
+                            paddingTop: 12,
+                            borderTop: '1px solid var(--pro-border)',
+                            fontFamily: 'var(--font-mono)',
+                            fontSize: 11,
+                            color: 'var(--pro-text-dim)',
+                            letterSpacing: '0.02em',
+                            lineHeight: 1.45,
+                          }}
+                        >
+                          fields: {sk.requiredFields.join(', ')}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
-      ))}
+      </div>
     </div>
   );
 }
@@ -615,34 +704,53 @@ function RecentPurchases({
       </div>
     );
   }
+  // Mirror the /activity table layout (minus Service column): same column
+  // order (Agent | Paid | Skill | When | Receipt), same monospace styling,
+  // same row spacing, same dim/mint color treatments. Chain-only rows
+  // render skill as `-` exactly like /activity does.
   return (
     <div className="dk-table" style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>
       <div className="dk-table-head dk-recent-row">
         <span>Agent</span>
-        <span>Skill</span>
         <span>Paid</span>
+        <span>Skill</span>
         <span>When</span>
         <span>Receipt</span>
       </div>
-      {purchases.map((r) => (
+      {purchases.map((r, i) => (
         <div
           key={r.txHash}
           className="dk-recent-row"
           style={{
             padding: '12px 16px',
             gap: 16,
-            borderBottom: '1px solid var(--pro-border)',
+            borderBottom: i < purchases.length - 1 ? '1px solid var(--pro-border)' : 'none',
             alignItems: 'center',
             color: 'var(--pro-text)',
           }}
         >
           <Mono>{buyerDisplay(r)}</Mono>
-          <Mono mint>{r.skillId ?? '-'}</Mono>
           <span style={{ color: 'var(--mint-400)' }}>
             {r.amount} <span style={{ color: 'var(--pro-text-dim)' }}>USDC</span>
           </span>
+          <span
+            style={{
+              color: 'var(--pro-text-dim)',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {r.skillId ?? '-'}
+          </span>
           <span style={{ color: 'var(--pro-text-dim)' }}>{timeAgo(r.timestamp)}</span>
-          <a href={basescanTx(r.txHash)} target="_blank" rel="noreferrer" className="dk-basescan-link">
+          <a
+            href={basescanTx(r.txHash)}
+            target="_blank"
+            rel="noreferrer"
+            className="dk-basescan-link"
+            style={{ color: 'var(--mint-400)', textTransform: 'none', letterSpacing: 0, fontSize: 11 }}
+          >
             tx <Icon name="external" size={11} />
           </a>
         </div>

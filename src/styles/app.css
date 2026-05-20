@@ -284,9 +284,13 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   display: grid;
   grid-template-columns: 1.2fr 2fr 1fr;
 }
+/* Recent purchases on the service detail page. Same column ordering as
+   the global /activity table minus the Service column (you're already
+   on the service page, no need to repeat the provider name).
+   Columns: Agent | Paid | Skill | When | Receipt. */
 .dk-recent-row {
   display: grid;
-  grid-template-columns: 170px 1.4fr 100px 1fr 80px;
+  grid-template-columns: 170px 100px 1.2fr 100px 80px;
 }
 .dk-activity-row {
   display: grid;
