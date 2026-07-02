@@ -331,6 +331,8 @@ export function categoryToIcon(category: string | null | undefined) {
     case 'legal':
       return { name: 'legal' as const, color: '#f0a878', cat: 'legal' };
     case 'email':
+    // The gateway's canonical bucket for email/sms/messaging providers.
+    case 'communications':
       return { name: 'mail' as const, color: '#e7b34a', cat: 'email' };
     default:
       return { name: 'domain' as const, color: 'var(--mint-400)', cat: 'domains' };

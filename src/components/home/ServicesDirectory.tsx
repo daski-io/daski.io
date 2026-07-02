@@ -209,8 +209,22 @@ function ServiceCard({ service }: { service: PublicService }) {
         flexDirection: 'column',
       }}
     >
-      <a href={servicePath(service)} style={{ borderBottom: 'none', color: 'inherit', textDecoration: 'none', display: 'block' }}>
-        <div style={{ padding: '22px 22px 16px' }}>
+      {/* Flex column with the content block flexing: grid rows stretch
+          cards to equal height, and this pins the price/provider bars to
+          the bottom even when one card's content is shorter. */}
+      <a
+        href={servicePath(service)}
+        style={{
+          borderBottom: 'none',
+          color: 'inherit',
+          textDecoration: 'none',
+          display: 'flex',
+          flexDirection: 'column',
+          flex: 1,
+          minHeight: 0,
+        }}
+      >
+        <div style={{ padding: '22px 22px 16px', flex: 1 }}>
           <div
             style={{
               display: 'flex',
