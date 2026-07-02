@@ -9,6 +9,8 @@ import {
   getServiceDetail,
   priceRange,
   serviceChips,
+  serviceKey,
+  servicePath,
   type PublicService,
 } from '../../lib/api';
 
@@ -124,7 +126,9 @@ export function ServicesDirectory({ services, loading, error }: ServicesDirector
           </div>
         )}
         {filtered.map((s) => (
-          <ServiceCard key={s.agentId} service={s} />
+          // agentId alone is not unique — multi-service providers appear
+          // once per service, so key on the (agentId, serviceSlug) pair.
+          <ServiceCard key={serviceKey(s)} service={s} />
         ))}
       </div>
     </Section>
@@ -185,13 +189,15 @@ function ServiceCard({ service }: { service: PublicService }) {
 
   useEffect(() => {
     const ctrl = new AbortController();
-    getServiceDetail(service.agentId, ctrl.signal)
+    // Pass the slug so a multi-service provider's second card shows ITS
+    // stats, not the primary service's.
+    getServiceDetail(service.agentId, service.serviceSlug, ctrl.signal)
       .then((d) => setAvgSeconds(d.serviceReputation?.averageFulfillmentSeconds ?? null))
       .catch(() => {
         if (!ctrl.signal.aborted) setAvgSeconds(null);
       });
     return () => ctrl.abort();
-  }, [service.agentId]);
+  }, [service.agentId, service.serviceSlug]);
 
   return (
     <Card
@@ -203,7 +209,7 @@ function ServiceCard({ service }: { service: PublicService }) {
         flexDirection: 'column',
       }}
     >
-      <a href={`/service/${service.agentId}`} style={{ borderBottom: 'none', color: 'inherit', textDecoration: 'none', display: 'block' }}>
+      <a href={servicePath(service)} style={{ borderBottom: 'none', color: 'inherit', textDecoration: 'none', display: 'block' }}>
         <div style={{ padding: '22px 22px 16px' }}>
           <div
             style={{

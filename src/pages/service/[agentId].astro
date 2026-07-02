@@ -4,6 +4,10 @@ import { ServiceDetailPage } from '../../views/ServiceDetailPage';
 import { getServiceDetail, type ServiceDetail } from '../../lib/api';
 
 const { agentId } = Astro.params;
+// Multi-service providers share an agentId; ?service=<slug> selects which
+// of their services to render. Absent -> the provider's primary service,
+// so legacy links keep working.
+const serviceSlug = Astro.url.searchParams.get('service');
 
 let service: ServiceDetail | null = null;
 let error: string | null = null;
@@ -12,7 +16,7 @@ if (!agentId) {
   error = 'Missing agentId';
 } else {
   try {
-    service = await getServiceDetail(agentId);
+    service = await getServiceDetail(agentId, serviceSlug);
   } catch (e) {
     error = e instanceof Error ? e.message : 'unknown error';
   }

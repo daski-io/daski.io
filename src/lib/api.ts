@@ -219,8 +219,38 @@ export function getServices(signal?: AbortSignal) {
   );
 }
 
-export function getServiceDetail(agentId: string, signal?: AbortSignal) {
-  return fetchJson<ServiceDetail>(`/public/v1/services/${encodeURIComponent(agentId)}`, signal);
+/**
+ * Fetch one service's detail. Multi-service providers share an agentId and
+ * are disambiguated by `serviceSlug` (`?service=<slug>` on the gateway);
+ * omitting the slug returns the provider's primary (first) service, which
+ * keeps legacy links working.
+ */
+export function getServiceDetail(
+  agentId: string,
+  serviceSlug?: string | null,
+  signal?: AbortSignal,
+) {
+  const query = serviceSlug ? `?service=${encodeURIComponent(serviceSlug)}` : '';
+  return fetchJson<ServiceDetail>(
+    `/public/v1/services/${encodeURIComponent(agentId)}${query}`,
+    signal,
+  );
+}
+
+/**
+ * Stable identity for a service entry. agentId alone is NOT unique — a
+ * multi-service provider appears once per service — so lists/keys must
+ * use the (agentId, serviceSlug) pair.
+ */
+export function serviceKey(s: Pick<PublicService, 'agentId' | 'serviceSlug'>): string {
+  return `${s.agentId}:${s.serviceSlug ?? ''}`;
+}
+
+/** Detail-page path for a service entry, carrying the service selector
+ *  when the entry declares a slug. */
+export function servicePath(s: Pick<PublicService, 'agentId' | 'serviceSlug'>): string {
+  const base = `/service/${s.agentId}`;
+  return s.serviceSlug ? `${base}?service=${encodeURIComponent(s.serviceSlug)}` : base;
 }
 
 export function getActivity(limit = 50, signal?: AbortSignal) {
