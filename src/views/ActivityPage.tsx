@@ -9,6 +9,7 @@ import {
   buyerDisplay,
   getActivity,
   getStats,
+  servicePath,
   timeAgo,
   type PublicActivityRow,
   type PublicStats,
@@ -104,7 +105,10 @@ export function ActivityPage({
           <div className="dk-stat-row dk-stat-cols-3">
             <BigStat
               label="services available"
-              value={(stats?.marketplace.providerCount ?? initialServiceCount).toString()}
+              // Count distinct services, not providers — one provider can list
+              // several. Prefer the gateway's serviceCount; fall back to the
+              // SSR /services list length until that field ships.
+              value={(stats?.marketplace.serviceCount ?? initialServiceCount).toString()}
               hint="on the marketplace"
             />
             <BigStat
@@ -179,7 +183,7 @@ export function ActivityPage({
                     whiteSpace: 'nowrap',
                   }}
                 >
-                  <span style={{ color: 'var(--pro-text)' }}>{r.providerName ?? '-'}</span>
+                  <ServiceCell row={r} />
                 </span>
                 <span style={{ color: 'var(--mint-400)' }}>
                   {r.amount} <span style={{ color: 'var(--pro-text-dim)' }}>USDC</span>
@@ -293,6 +297,27 @@ export function ActivityPage({
       </Section>
     </div>
   );
+}
+
+/**
+ * Service column for an activity row: the specific service purchased,
+ * linked to its detail page when the gateway supplied a slug. Falls back to
+ * the provider's primary name (older gateway builds without per-row service
+ * identity), then '-'.
+ */
+function ServiceCell({ row }: { row: PublicActivityRow }) {
+  const label = row.serviceName ?? row.providerName ?? '-';
+  if (row.serviceSlug) {
+    return (
+      <a
+        className="dk-service-link"
+        href={servicePath({ agentId: row.providerAgentId, serviceSlug: row.serviceSlug })}
+      >
+        {label}
+      </a>
+    );
+  }
+  return <span style={{ color: 'var(--pro-text)' }}>{label}</span>;
 }
 
 function BigStat({

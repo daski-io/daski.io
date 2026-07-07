@@ -92,6 +92,20 @@ export interface PublicActivityRow {
   buyerName?: string | null;
   providerAgentId: string;
   providerName: string | null;
+  /**
+   * The specific service this purchase settled against, resolved by the
+   * gateway from the on-chain serviceId. Distinct from `providerName` when
+   * a provider offers multiple services (e.g. domains vs. mailboxes vs.
+   * entity formation under one provider). Optional — gateway builds before
+   * 2026-07 omitted it, so consumers fall back to `providerName`.
+   */
+  serviceName?: string | null;
+  /** Slug of the purchased service; pairs with `providerAgentId` to
+   *  deep-link the service detail page. Optional for the same version
+   *  reason as `serviceName`. */
+  serviceSlug?: string | null;
+  /** 32-byte on-chain serviceId of the purchased service. Optional. */
+  serviceId?: string | null;
   amount: string;
   skillId: string | null;
   timestamp: string;
@@ -99,7 +113,17 @@ export interface PublicActivityRow {
 
 export interface PublicStats {
   chain: { chainId: number; network: string; blockNumber: string };
-  marketplace: { providerCount: number; paidCount: number; totalVolumeUsdc: string };
+  marketplace: {
+    providerCount: number;
+    /**
+     * Distinct services across all providers (≥ providerCount, since one
+     * provider may list several services). Optional — added 2026-07;
+     * consumers fall back to the /services list length.
+     */
+    serviceCount?: number;
+    paidCount: number;
+    totalVolumeUsdc: string;
+  };
   contracts: {
     paymentRouter: string;
     providerRegistry: string;

@@ -259,6 +259,18 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   border-bottom: none;
 }
 
+/* Service name in the /activity feed — reads as plain text, reveals it's a
+   link to the service page on hover. */
+.dk-service-link {
+  color: var(--pro-text);
+  border-bottom: none;
+  text-decoration: none;
+  transition: color 160ms var(--ease);
+}
+.dk-service-link:hover {
+  color: var(--mint-400);
+}
+
 /* =====================================================================
    Tables (skills offered, recent purchases, activity feed).
    ===================================================================== */
