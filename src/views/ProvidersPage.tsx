@@ -86,7 +86,7 @@ export function ProvidersPage() {
               n: 2,
               t: 'Register on-chain',
               sub:
-                'Two short txs: mint your ERC-8004 agent in ProviderRegistry (a small one-time USDC listing fee to the protocol treasury), then add each offering to ServiceRegistry.',
+                'Register your agent in the canonical ERC-8004 IdentityRegistry (0x8004A... on Base) — or bring your existing agentId — and verify your payment wallet, then list it in Daski’s ProviderRegistry (a small one-time USDC listing fee to the protocol treasury) and add each offering to ServiceRegistry.',
             },
             {
               n: 3,

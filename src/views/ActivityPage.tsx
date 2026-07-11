@@ -366,7 +366,8 @@ function contractRows(stats: PublicStats | null) {
   const c = stats?.contracts;
   const rows: { name: string; addr: string }[] = [
     { name: 'PaymentRouter', addr: c?.paymentRouter ?? '0x…' },
-    { name: 'IdentityRegistry', addr: c?.identityRegistry ?? '0x…' },
+    // Canonical per-chain ERC-8004 singleton — not a Daski deploy.
+    { name: 'IdentityRegistry (canonical ERC-8004)', addr: c?.identityRegistry ?? '0x…' },
     { name: 'ProviderRegistry', addr: c?.providerRegistry ?? '0x…' },
   ];
   if (c?.serviceRegistry) {
