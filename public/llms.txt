@@ -183,14 +183,15 @@ Reach out via X ([@pmmmm](https://x.com/pmmmm)) to list a service.
 - **x402 Adapter**: `0xab6E1a96D0262F484EEdAf3AEEd81f6c41758BD2`
 - **USDC (Base Sepolia)**: `0x036CbD53842c5426634e7929541eC2318f3dCF7e`
 
-All contracts are verified on
-[Sepolia Basescan](https://sepolia.basescan.org/).
+All contracts are viewable on
+[Sepolia Basescan](https://sepolia.basescan.org/) (source verification of
+the 2026-07 redeploy pending).
 
 ## Proof of life
 
-First on-chain settlement through Daski:
-[`0x6b9636b773c8d1a22d3509045889a132d053f0841bf0aee80db92ac435a6fda3`](https://sepolia.basescan.org/tx/0x6b9636b773c8d1a22d3509045889a132d053f0841bf0aee80db92ac435a6fda3)
-(4.99 USDC, `register-domain`, buyer paid provider, atomic split to
+First on-chain settlement through the current Daski deployment:
+[`0x9f5e9632a2cd35ef50949d1fb1c4c9a8bcbfa6c2df811820e90628ee23065d72`](https://sepolia.basescan.org/tx/0x9f5e9632a2cd35ef50949d1fb1c4c9a8bcbfa6c2df811820e90628ee23065d72)
+(5.99 USDC, `register-domain`, buyer paid provider, atomic split to
 protocol treasury).
 
 ## Resources
