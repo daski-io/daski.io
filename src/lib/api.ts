@@ -303,7 +303,8 @@ export function basescanAddress(address: string) {
 /**
  * Basescan's ERC-721 inspector URL for a specific tokenId. Renders the
  * NFT panel (image / `tokenURI` metadata / owner) for the agent's
- * ERC-8004 identity NFT minted by IdentityRegistry.
+ * identity NFT minted by the canonical ERC-8004 IdentityRegistry (the
+ * per-chain 0x8004A... singleton — not a Daski deploy).
  */
 export function basescanNft(contract: string, tokenId: string) {
   return `${BASESCAN}/token/${contract}?a=${tokenId}`;

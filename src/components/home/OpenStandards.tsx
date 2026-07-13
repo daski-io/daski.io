@@ -35,7 +35,7 @@ const PROTOCOLS: Record<ProtocolKey, Protocol> = {
   erc8004: {
     title: 'ERC-8004 · Identity',
     desc:
-      'On-chain identity for every actor — buyer, gateway, provider — as an ERC-8004 NFT. Services are a separate on-chain entity in ServiceRegistry, keyed to the provider that owns them. No central account system.',
+      'On-chain identity for every actor — buyer, gateway, provider — as an agent in the canonical ERC-8004 IdentityRegistry on Base. Services are a separate on-chain entity in ServiceRegistry, keyed to the provider that owns them. No central account system.',
   },
 };
 

@@ -7,9 +7,12 @@
 
 Daski lets an AI agent buy real-world business services using USDC, with
 no human in the loop and no shared API key. The agent owns its on-chain
-identity (ERC-8004), holds its own wallet, and accumulates portable
-reputation that travels across providers. Daski is a coordination layer,
-not a middleman: discovery and payment quoting flow through the gateway,
+identity — an agent in the canonical ERC-8004 IdentityRegistry, so it
+travels across the whole ERC-8004 ecosystem, not just Daski — and holds
+its own wallet. Its reputation is payment-verified on-chain attestations
+bound to that agentId (Daski's ledger), plus public ERC-8004 feedback on
+the canonical ReputationRegistry. Daski is a coordination layer, not a
+middleman: discovery and payment quoting flow through the gateway,
 settlement happens on-chain, and buyers and providers talk directly for
 everything else.
 
@@ -27,8 +30,10 @@ Daski composes four open standards. It does not replace any of them.
   challenge, EIP-712 typed-data signature from the buyer, on-chain
   settlement via the Daski PaymentRouter contract.
 - **ERC-8004** (Ethereum): on-chain agent identity. Every buyer and
-  every provider holds an ERC-8004 token, with reputation attestations
-  recorded via EAS.
+  every provider is an agent in the canonical ERC-8004 IdentityRegistry
+  on Base (the `0x8004A...` per-chain singleton), with payment-verified
+  attestations recorded via EAS (Daski's ledger) and public feedback on
+  the canonical ERC-8004 ReputationRegistry.
 
 The gateway is non-custodial. Funds move from the buyer wallet through
 the PaymentRouter to the provider wallet in a single transaction, with
@@ -89,9 +94,11 @@ Onboarding is four steps:
 
 1. Implement the A2A endpoint with the task lifecycle
    (`WORKING` → `INPUT-REQUIRED` → `COMPLETED`).
-2. Register on-chain: mint an ERC-8004 agent in ProviderRegistry (small
-   one-time USDC listing fee to the protocol treasury), then add each
-   offering to ServiceRegistry.
+2. Register on-chain: register your agent in the canonical ERC-8004
+   IdentityRegistry on Base — or bring your existing canonical agentId —
+   and verify your payment wallet, then list it in Daski's
+   ProviderRegistry (small one-time USDC listing fee to the protocol
+   treasury) and add each offering to ServiceRegistry.
 3. Sign Agent Cards declaring skills, prices, and schemas. Cards are
    signed by the provider wallet and posted off-chain; each skill rolls
    up to one on-chain service.
@@ -114,8 +121,8 @@ Reach out via X ([@pmmmm](https://x.com/pmmmm)) to list a service.
 - **Sign gateway-supplied typed-data verbatim.** Domain separators and
   binding fields are validated on-chain; agents should not construct
   x402 or envelope-auth payloads by hand.
-- **Reputation is bound to the ERC-8004 token.** Rotating wallets resets
-  reputation.
+- **Reputation is bound to the canonical ERC-8004 agentId.** Rotating
+  wallets resets reputation.
 
 ## Instructions
 
@@ -131,8 +138,9 @@ Reach out via X ([@pmmmm](https://x.com/pmmmm)) to list a service.
   reputation, async notification path, and provider portability all
   break in that model.
 - **DO NOT** assume any provider is canonical. Daski is a marketplace;
-  any compliant ERC-8004 provider can list, and rankings change based
-  on reputation and pricing.
+  any compliant ERC-8004 provider can list — bring your existing
+  canonical agentId — and rankings change based on reputation and
+  pricing.
 - **DO NOT** scrape `sandbox.daski.io` or `daski.io` for service catalog
   data. Use the MCP gateway.
 
@@ -141,7 +149,7 @@ Reach out via X ([@pmmmm](https://x.com/pmmmm)) to list a service.
 - **Domain management** by Blue T Group, LLC. Skills include
   `register-domain`, `renew-domain`, and `transfer-domain-out`. Variable
   USDC pricing depending on TLD. Backed wholesale by Name.com. Provider
-  ERC-8004 token on Base Sepolia.
+  agent in the canonical ERC-8004 IdentityRegistry on Base Sepolia.
 
 ## On the roadmap
 
@@ -155,8 +163,8 @@ Reach out via X ([@pmmmm](https://x.com/pmmmm)) to list a service.
 
 | Property | Hardcoded API key (Namecheap, etc.) | Daski |
 |---|---|---|
-| Identity | Belongs to a human account | Belongs to the agent (ERC-8004) |
-| Reputation | Locked to one provider | Portable across all providers |
+| Identity | Belongs to a human account | Belongs to the agent (canonical ERC-8004) |
+| Reputation | Locked to one provider | Payment-verified on-chain, bound to the agentId; public feedback on the canonical ERC-8004 ReputationRegistry |
 | Payment | Credit card, monthly invoice | USDC, atomic, per-transaction |
 | Discovery | One provider per integration | One MCP install, many providers |
 | Async messages | Email to a human inbox | A2A to the agent, same channel |
@@ -165,11 +173,14 @@ Reach out via X ([@pmmmm](https://x.com/pmmmm)) to list a service.
 
 ## Deployed contracts (Base Sepolia, chainId 84532)
 
-- **PaymentRouter**: `0x78f9b15F9b228Acd8D5A85eF4DAfef2164459d8f`
-- **IdentityRegistry**: `0xa03bd7e27dB0A942B2C30d6d4bCCD78724FC1E83`
-- **ProviderRegistry**: `0x3D3f1ACA48D5f8AC7cf910d2e075426B7894C2B8`
-- **ServiceRegistry**: `0x68e9d4c55309f71E3C4Fe70fba0983a5De7d4303`
-- **x402 Adapter**: `0x20027cED25D8A9a79B385B6cD57432a6950aD032`
+- **PaymentRouter**: `0x358A5fd242938BAD8b162551ACAC987953c93DC3`
+- **IdentityRegistry** (canonical ERC-8004 singleton, not a Daski
+  deploy): `0x8004A818BFB912233c491871b3d84c89A494BD9e`
+- **ReputationRegistry** (canonical ERC-8004 singleton):
+  `0x8004B663056A597Dffe9eCcC1965A193B7388713`
+- **ProviderRegistry**: `0x9Ae6337534B2e16e93862D4CC8AD76B1778758e4`
+- **ServiceRegistry**: `0x0dA4E956f5b0C504d0c57FD43E7BBF69bA9b0E00`
+- **x402 Adapter**: `0xab6E1a96D0262F484EEdAf3AEEd81f6c41758BD2`
 - **USDC (Base Sepolia)**: `0x036CbD53842c5426634e7929541eC2318f3dCF7e`
 
 All contracts are verified on
