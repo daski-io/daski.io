@@ -183,9 +183,8 @@ Reach out via X ([@pmmmm](https://x.com/pmmmm)) to list a service.
 - **x402 Adapter**: `0xab6E1a96D0262F484EEdAf3AEEd81f6c41758BD2`
 - **USDC (Base Sepolia)**: `0x036CbD53842c5426634e7929541eC2318f3dCF7e`
 
-All contracts are viewable on
-[Sepolia Basescan](https://sepolia.basescan.org/) (source verification of
-the 2026-07 redeploy pending).
+All contracts are verified on
+[Sepolia Basescan](https://sepolia.basescan.org/).
 
 ## Proof of life
 
