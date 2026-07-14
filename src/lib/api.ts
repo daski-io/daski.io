@@ -1,3 +1,5 @@
+import type { CategoryFamily } from '../config/service-taxonomy';
+
 /**
  * Public API client for the Daski Gateway. The marketing site only consumes
  * the read-only `/public/v1/*` and `/health` endpoints; buyer-side flows
@@ -43,7 +45,9 @@ export interface PublicService {
   name: string;
   providerAddress: string;
   agentURI: string;
-  category: string | null;
+  categoryFamily: CategoryFamily;
+  serviceType: string;
+  jurisdictions: string[];
   serviceDescription: string | null;
   serviceLifecycle: string | null;
   turnaroundEstimate: string | null;
@@ -342,26 +346,6 @@ export function timeAgo(iso: string): string {
   if (h < 24) return `${h} hr${h > 1 ? 's' : ''} ago`;
   const d = Math.floor(h / 24);
   return `${d} day${d > 1 ? 's' : ''} ago`;
-}
-
-/** Map provider category → service-card icon/color in the UI. */
-export function categoryToIcon(category: string | null | undefined) {
-  switch ((category ?? '').toLowerCase()) {
-    case 'domains':
-    case 'infrastructure':
-      return { name: 'domain' as const, color: 'var(--mint-400)', cat: 'domains' };
-    case 'hosting':
-    case 'compute':
-      return { name: 'server' as const, color: '#6aa9ee', cat: 'hosting' };
-    case 'legal':
-      return { name: 'legal' as const, color: '#f0a878', cat: 'legal' };
-    case 'email':
-    // The gateway's canonical bucket for email/sms/messaging providers.
-    case 'communications':
-      return { name: 'mail' as const, color: '#e7b34a', cat: 'email' };
-    default:
-      return { name: 'domain' as const, color: 'var(--mint-400)', cat: 'domains' };
-  }
 }
 
 /** Compute a price-range string for a service from its skills.

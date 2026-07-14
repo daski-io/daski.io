@@ -4,24 +4,25 @@ import { SectionHead } from '../components/ui/SectionHead';
 import { Caption, Mono } from '../components/ui/Mono';
 import { Icon, type IconName } from '../components/ui/Icon';
 import { Addr } from '../components/ui/Addr';
+import { ServiceTaxonomyChips } from '../components/ServiceTaxonomyChips';
 import {
   basescanAddress,
   basescanTx,
   buyerDisplay,
-  categoryToIcon,
   priceDisplay,
   timeAgo,
   type PublicSkill,
   type PublicSkillStats,
   type ServiceDetail,
 } from '../lib/api';
+import { categoryFamilyConfig } from '../config/service-taxonomy';
 
 interface ServiceDetailPageProps {
   service: ServiceDetail;
 }
 
 export function ServiceDetailPage({ service }: ServiceDetailPageProps) {
-  const m = categoryToIcon(service.category);
+  const family = categoryFamilyConfig(service.categoryFamily);
   const sRep = service.serviceReputation;
   const price = priceDisplay(service);
 
@@ -63,8 +64,8 @@ export function ServiceDetailPage({ service }: ServiceDetailPageProps) {
         <ServiceHeaderMark
           iconUrl={service.iconUrl}
           providerName={service.providerName}
-          fallbackIcon={m.name}
-          fallbackColor={m.color}
+          fallbackIcon={family.icon}
+          fallbackColor={family.color}
         />
         <h1
           className="dk-service-h1"
@@ -79,6 +80,11 @@ export function ServiceDetailPage({ service }: ServiceDetailPageProps) {
         >
           {service.name}
         </h1>
+        <ServiceTaxonomyChips
+          categoryFamily={service.categoryFamily}
+          serviceType={service.serviceType}
+          style={{ marginBottom: 12 }}
+        />
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 18 }}>
           {service.skills
             .filter((s) => s.paymentRequired)

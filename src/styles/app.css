@@ -320,6 +320,23 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   .dk-contracts-row { grid-template-columns: 1fr auto; }
 }
 
+/* Service classification shown on directory cards and service details. */
+.dk-taxonomy-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.dk-taxonomy-chip {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 5px;
+  background: var(--pro-bg);
+  color: var(--pro-text-dim);
+  border: 1px solid var(--pro-border);
+  letter-spacing: 0.02em;
+}
+
 /* Skill chip used in the service detail hero header. */
 .dk-skill-chip {
   font-family: var(--font-mono);

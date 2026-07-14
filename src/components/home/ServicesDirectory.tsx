@@ -4,8 +4,8 @@ import { SectionHead } from '../ui/SectionHead';
 import { Mono } from '../ui/Mono';
 import { Icon } from '../ui/Icon';
 import { Card } from '../ui/Card';
+import { ServiceTaxonomyChips } from '../ServiceTaxonomyChips';
 import {
-  categoryToIcon,
   getServiceDetail,
   priceRange,
   serviceChips,
@@ -13,6 +13,13 @@ import {
   servicePath,
   type PublicService,
 } from '../../lib/api';
+import {
+  categoryFamilyConfig,
+  filterServicesByCategory,
+  populatedCategoryFamilies,
+  type CategoryFamily,
+  type CategoryFamilyFilter,
+} from '../../config/service-taxonomy';
 
 interface ServicesDirectoryProps {
   services: PublicService[];
@@ -20,32 +27,19 @@ interface ServicesDirectoryProps {
   error?: string | null;
 }
 
-// Categories surfaced as filter chips. Keep aligned with `categoryToIcon` —
-// only the values it actually returns (`cat: '<id>'`) belong here, otherwise
-// the chip will count zero and never light up.
-const CATEGORIES: { id: string; label: string }[] = [
-  { id: 'all', label: 'All' },
-  { id: 'domains', label: 'Domains' },
-  { id: 'hosting', label: 'Hosting' },
-  { id: 'legal', label: 'Legal' },
-  { id: 'email', label: 'Email' },
-];
-
 export function ServicesDirectory({ services, loading, error }: ServicesDirectoryProps) {
-  const [filter, setFilter] = useState('all');
-
-  const counts = useMemo(() => {
-    const out: Record<string, number> = { all: services.length };
-    for (const c of CATEGORIES) {
-      if (c.id === 'all') continue;
-      out[c.id] = services.filter((s) => categoryToIcon(s.category).cat === c.id).length;
-    }
-    return out;
-  }, [services]);
+  const [filter, setFilter] = useState<CategoryFamilyFilter>('all');
+  const families = useMemo(() => populatedCategoryFamilies(services), [services]);
+  const filters = useMemo(
+    () => [
+      { slug: 'all' as const, label: 'All', count: services.length },
+      ...families,
+    ],
+    [families, services.length],
+  );
 
   const filtered = useMemo(
-    () =>
-      services.filter((s) => filter === 'all' || categoryToIcon(s.category).cat === filter),
+    () => filterServicesByCategory(services, filter),
     [services, filter],
   );
 
@@ -68,20 +62,19 @@ export function ServicesDirectory({ services, loading, error }: ServicesDirector
         }}
       >
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-          {CATEGORIES.map((c) => {
-            const active = filter === c.id;
-            const has = (counts[c.id] ?? 0) > 0;
+          {filters.map((category) => {
+            const active = filter === category.slug;
             return (
               <button
-                key={c.id}
-                onClick={() => setFilter(c.id)}
+                key={category.slug}
+                onClick={() => setFilter(category.slug)}
                 style={{
                   padding: '0 12px',
                   height: 30,
                   borderRadius: 8,
-                  cursor: has || c.id === 'all' ? 'pointer' : 'default',
+                  cursor: 'pointer',
                   background: active ? 'var(--mint-400)' : 'transparent',
-                  color: active ? '#04221b' : has ? 'var(--pro-text-dim)' : 'var(--pro-border-hi)',
+                  color: active ? '#04221b' : 'var(--pro-text-dim)',
                   border: '1px solid ' + (active ? 'var(--mint-400)' : 'var(--pro-border)'),
                   fontFamily: 'var(--font-sans)',
                   fontSize: 13,
@@ -89,11 +82,10 @@ export function ServicesDirectory({ services, loading, error }: ServicesDirector
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: 8,
-                  opacity: has || c.id === 'all' ? 1 : 0.5,
                   transition: 'all 180ms var(--ease)',
                 }}
               >
-                {c.label}
+                {category.label}
                 <span
                   style={{
                     fontFamily: 'var(--font-mono)',
@@ -102,7 +94,7 @@ export function ServicesDirectory({ services, loading, error }: ServicesDirector
                     opacity: 0.7,
                   }}
                 >
-                  {counts[c.id] ?? 0}
+                  {category.count}
                 </span>
               </button>
             );
@@ -136,19 +128,19 @@ export function ServicesDirectory({ services, loading, error }: ServicesDirector
 }
 
 // Renders the provider's brand mark when the AgentCard advertises an
-// iconUrl (A2A v1.0); otherwise falls back to a category-derived glyph.
+// iconUrl (A2A v1.0); otherwise falls back to a category-family glyph.
 // On image load failure (broken URL, hot-link block) we also fall back —
 // the cell never goes blank.
 function ServiceIcon({
-  category,
+  categoryFamily,
   iconUrl,
   providerName,
 }: {
-  category: string | null;
+  categoryFamily: CategoryFamily;
   iconUrl?: string | null;
   providerName?: string | null;
 }) {
-  const m = categoryToIcon(category);
+  const family = categoryFamilyConfig(categoryFamily);
   const [imgFailed, setImgFailed] = useState(false);
   const showImg = !!iconUrl && !imgFailed;
   return (
@@ -158,11 +150,11 @@ function ServiceIcon({
         height: 44,
         borderRadius: 10,
         background: showImg ? '#e0e0e8' : 'rgba(52,211,177,0.06)',
-        border: `1px solid ${showImg ? 'var(--pro-border)' : m.color}`,
+        border: `1px solid ${showImg ? 'var(--pro-border)' : family.color}`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        color: m.color,
+        color: family.color,
         overflow: 'hidden',
       }}
     >
@@ -177,7 +169,7 @@ function ServiceIcon({
           style={{ width: '100%', height: '100%', objectFit: 'contain' }}
         />
       ) : (
-        <Icon name={m.name} size={20} />
+        <Icon name={family.icon} size={20} />
       )}
     </div>
   );
@@ -235,7 +227,7 @@ function ServiceCard({ service }: { service: PublicService }) {
             }}
           >
             <ServiceIcon
-              category={service.category}
+              categoryFamily={service.categoryFamily}
               iconUrl={service.iconUrl}
               providerName={service.providerName}
             />
@@ -252,6 +244,11 @@ function ServiceCard({ service }: { service: PublicService }) {
           >
             {service.name}
           </h3>
+          <ServiceTaxonomyChips
+            categoryFamily={service.categoryFamily}
+            serviceType={service.serviceType}
+            style={{ marginBottom: 10 }}
+          />
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 4 }}>
             {chips.map((c) => (
               <span
