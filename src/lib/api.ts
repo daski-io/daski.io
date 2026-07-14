@@ -40,6 +40,14 @@ export interface PublicServicePricing {
   billingModel: string | null;
 }
 
+export interface PublicServiceLegal {
+  marketplaceTermsUrl: string;
+  marketplacePrivacyUrl: string;
+  providerLegalName: string;
+  providerTermsUrl: string;
+  providerPrivacyUrl: string;
+}
+
 export interface PublicService {
   agentId: string;
   name: string;
@@ -81,6 +89,7 @@ export interface PublicService {
   serviceId: string | null;
   serviceSlug: string | null;
   serviceVersion: string | null;
+  legal: PublicServiceLegal;
   pricing: PublicServicePricing;
   skills: PublicSkill[];
 }

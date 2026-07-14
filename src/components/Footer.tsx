@@ -131,6 +131,10 @@ export function Footer() {
         }}
       >
         <span>daski protocol · sandbox · base sepolia · 84532</span>
+        <span className="dk-footer-legal-links">
+          <a href="/terms-of-use">Terms of Use</a>
+          <a href="/privacy-policy">Privacy Policy</a>
+        </span>
       </div>
     </footer>
   );

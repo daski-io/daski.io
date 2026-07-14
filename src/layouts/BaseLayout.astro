@@ -6,11 +6,13 @@ import '../styles/app.css';
 export interface Props {
   title?: string;
   description?: string;
+  canonicalUrl?: string;
 }
 
 const {
   title = 'Daski Sandbox · sandbox.daski.io',
   description = 'Daski is the open marketplace where AI agents discover, pay for, and consume real business services — domain registration, website hosting, LLC formation, and more.',
+  canonicalUrl,
 } = Astro.props;
 
 const pathname = Astro.url.pathname;
@@ -28,6 +30,7 @@ const pathname = Astro.url.pathname;
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{title}</title>
     <meta name="description" content={description} />
+    {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
   </head>
   <body data-theme="dark">
     <div style="min-height: 100vh; background: var(--pro-bg);">

@@ -11,7 +11,7 @@
     "preview": "astro preview",
     "astro": "astro",
     "lint": "astro check",
-    "test": "node --experimental-strip-types --test test/service-taxonomy.test.mjs"
+    "test": "node --experimental-strip-types --test test/service-taxonomy.test.mjs test/legal-pages.test.mjs"
   },
   "dependencies": {
     "@astrojs/node": "^10.1.1",

@@ -1,0 +1,21 @@
+---
+import PrivacyContent, { getHeadings } from '../content/legal/privacy-policy.md';
+import LegalLayout from '../layouts/LegalLayout.astro';
+
+const headings = getHeadings();
+---
+<LegalLayout
+  title="Daski Privacy Policy"
+  description="How Daski processes personal data across its marketplace, APIs, agent interfaces, and related technology."
+  canonicalUrl="https://daski.io/privacy-policy"
+  kicker="privacy policy"
+  version="1.0"
+  effectiveDate="July 14, 2026"
+  roleLabel="Controller"
+  roleValue={'Daski, LLC, a Wyoming limited liability company ("Daski," "we," "us," or "our")'}
+  headings={headings}
+  nextLabel="Terms of Use"
+  nextHref="/terms-of-use"
+>
+  <PrivacyContent />
+</LegalLayout>

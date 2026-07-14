@@ -1,0 +1,21 @@
+---
+import TermsContent, { getHeadings } from '../content/legal/terms-of-use.md';
+import LegalLayout from '../layouts/LegalLayout.astro';
+
+const headings = getHeadings();
+---
+<LegalLayout
+  title="Daski Terms of Use"
+  description="Terms governing access to and use of the Daski marketplace platform, APIs, and agent interfaces."
+  canonicalUrl="https://daski.io/terms-of-use"
+  kicker="terms of use"
+  version="1.0"
+  effectiveDate="July 14, 2026"
+  roleLabel="Marketplace operator"
+  roleValue={'Daski, LLC, a Wyoming limited liability company ("Daski," "we," "us," or "our")'}
+  headings={headings}
+  nextLabel="Privacy Policy"
+  nextHref="/privacy-policy"
+>
+  <TermsContent />
+</LegalLayout>

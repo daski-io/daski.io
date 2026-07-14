@@ -392,6 +392,42 @@ function ProvidedByBox({ service }: { service: ServiceDetail }) {
               {service.providerAddress}
             </Addr>
           </div>
+          <div
+            style={{
+              display: 'flex',
+              gap: 14,
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              fontSize: 13,
+              marginTop: 14,
+            }}
+          >
+            <span style={{ color: 'var(--pro-text)' }}>
+              Contracting party: {service.legal.providerLegalName}
+            </span>
+            <a
+              href={service.legal.providerTermsUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="dk-link-mint"
+            >
+              Provider Terms
+            </a>
+            <a
+              href={service.legal.providerPrivacyUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="dk-link-mint"
+            >
+              Provider Privacy
+            </a>
+            <a href={service.legal.marketplaceTermsUrl} className="dk-link-mint">
+              Daski Terms
+            </a>
+            <a href={service.legal.marketplacePrivacyUrl} className="dk-link-mint">
+              Daski Privacy
+            </a>
+          </div>
         </div>
       </div>
 

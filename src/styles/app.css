@@ -135,6 +135,20 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   .dk-footer-grid { grid-template-columns: 1fr 1fr; gap: 24px; }
 }
 
+.dk-footer-legal-links {
+  display: inline-flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.dk-footer-legal-links a {
+  color: var(--pro-text-dim);
+  border-bottom: none;
+  text-decoration: none;
+  transition: color 160ms var(--ease);
+}
+.dk-footer-legal-links a:hover { color: var(--pro-text); }
+
 @media (max-width: 980px) {
   .dk-grid-3 { grid-template-columns: 1fr 1fr; }
   .dk-grid-2, .dk-grid-4 { grid-template-columns: 1fr; }
