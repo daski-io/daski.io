@@ -1,0 +1,91 @@
+---
+import type { MarkdownHeading } from 'astro';
+import BaseLayout from './BaseLayout.astro';
+import '../styles/legal.css';
+
+interface Props {
+  title: string;
+  description: string;
+  canonicalUrl: string;
+  kicker: string;
+  version: string;
+  effectiveDate: string;
+  roleLabel: string;
+  roleValue: string;
+  headings: MarkdownHeading[];
+  nextLabel: string;
+  nextHref: string;
+}
+
+const {
+  title,
+  description,
+  canonicalUrl,
+  kicker,
+  version,
+  effectiveDate,
+  roleLabel,
+  roleValue,
+  headings,
+  nextLabel,
+  nextHref,
+} = Astro.props;
+
+const sections = headings
+  .filter(({ depth }) => depth === 2)
+  .map(({ slug, text }, index) => {
+    const numberedTitle = /^(\d+)\.\s+(.+)$/.exec(text);
+    return {
+      slug,
+      number: (numberedTitle?.[1] ?? String(index + 1)).padStart(2, '0'),
+      title: numberedTitle?.[2] ?? text,
+    };
+  });
+---
+<BaseLayout title={`${title} · Daski`} description={description} canonicalUrl={canonicalUrl}>
+  <main class="dk-legal-page">
+    <section class="dk-legal-hero">
+      <div class="dk-legal-hero-inner">
+        <p class="dk-legal-kicker">legal · {kicker}</p>
+        <h1>{title}</h1>
+        <dl class="dk-legal-meta">
+          <div>
+            <dt>Version</dt>
+            <dd>{version}</dd>
+          </div>
+          <div>
+            <dt>Effective date</dt>
+            <dd>{effectiveDate}</dd>
+          </div>
+        </dl>
+        <p class="dk-legal-notice"><strong>{roleLabel}:</strong> {roleValue}</p>
+      </div>
+    </section>
+
+    <section class="dk-legal-content-section">
+      <div class="dk-legal-grid">
+        <nav class="dk-legal-toc" aria-label={`${title} sections`}>
+          <div class="dk-legal-toc-title">On this page</div>
+          <ol>
+            {sections.map((section) => (
+              <li>
+                <a href={`#${section.slug}`}>
+                  <span aria-hidden="true">{section.number}</span>
+                  {section.title}
+                </a>
+              </li>
+            ))}
+          </ol>
+        </nav>
+
+        <article class="dk-legal-prose">
+          <slot />
+          <div class="dk-legal-next">
+            <span>Read next</span>
+            <a href={nextHref}>{nextLabel} →</a>
+          </div>
+        </article>
+      </div>
+    </section>
+  </main>
+</BaseLayout>
