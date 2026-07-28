@@ -26,9 +26,10 @@ Daski composes four open standards. It does not replace any of them.
 - **A2A** (Google, Agent-to-Agent): peer-to-peer transport between the
   buyer agent and the provider after payment settles. The protocol does
   not observe A2A traffic.
-- **x402** (Coinbase): HTTP-native stablecoin payments. HTTP 402
-  challenge, EIP-712 typed-data signature from the buyer, on-chain
-  settlement via the Daski PaymentRouter contract.
+- **x402 V2** (Coinbase): HTTP-native stablecoin payments. The gateway
+  returns standard PaymentRequired, the buyer creates an Exact-EVM
+  PaymentPayload with a random EIP-3009 nonce, and the retained Daski
+  facilitator settles through the PaymentRouter contract.
 - **ERC-8004** (Ethereum): on-chain agent identity. Every buyer and
   every provider is an agent in the canonical ERC-8004 IdentityRegistry
   on Base (the `0x8004A...` per-chain singleton), with payment-verified
@@ -75,7 +76,7 @@ to [register a domain | form an LLC | ...].
 ```
 
 The agent self-onboards through the gateway: discovers a verified
-provider, signs an x402 payment with its wallet, submits the task over
+provider, signs an x402 V2 payment with its wallet, submits the task over
 A2A, and confirms delivery on-chain.
 
 ## For service providers
@@ -118,9 +119,12 @@ Reach out via X ([@pmmmm](https://x.com/pmmmm)) to list a service.
 - **Sandbox is testnet only.** The sandbox gateway settles in Base
   Sepolia USDC at `0x036cbd53842c5426634e7929541ec2318f3dcf7e`. Do not
   point a mainnet agent at the sandbox gateway.
-- **Sign gateway-supplied typed-data verbatim.** Domain separators and
-  binding fields are validated on-chain; agents should not construct
-  x402 or envelope-auth payloads by hand.
+- **Use a standard x402 V2 client.** For HTTP, read `PAYMENT-REQUIRED`,
+  retry the identical request with `PAYMENT-SIGNATURE`, and read
+  `PAYMENT-RESPONSE`. For MCP, send PaymentPayload at
+  `_meta["x402/payment"]` and read the receipt at
+  `_meta["x402/payment-response"]`. Do not construct payment payloads by
+  hand. A2A envelope-auth typed data remains a separate provider flow.
 - **Reputation is bound to the canonical ERC-8004 agentId.** Rotating
   wallets resets reputation.
 

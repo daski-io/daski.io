@@ -8,7 +8,7 @@ const TOTAL_STEPS = 6;
 const BEATS = [
   { t: 'Agent recognized it needed a domain', sub: 'no human prompt' },
   { t: 'Discovered a verified provider via Daski', sub: 'bluet group · domains' },
-  { t: 'Authorized x402 payment with its own wallet', sub: '4.99 USDC · EIP-712 signed' },
+  { t: 'Authorized x402 V2 payment with its own wallet', sub: '4.99 USDC · Exact-EVM signed' },
   { t: 'Domain registered and owned by the agent', sub: '47 seconds end-to-end' },
 ];
 
@@ -283,7 +283,7 @@ function AgentTrace({ step }: { step: number }) {
             └─ skill: <span className="ink">register-domain</span>
           </div>
           <div className="indent">
-            payment plan ready <span className="dim">·</span>{' '}
+            PaymentRequired V2 <span className="dim">·</span>{' '}
             <span className="dim">awaiting signature</span>
           </div>
         </Block>
@@ -291,7 +291,7 @@ function AgentTrace({ step }: { step: number }) {
       {step >= 3 && (
         <Block>
           <div>
-            <span className="dim">[wallet]</span> sign EIP-712 transfer
+            <span className="dim">[x402 client]</span> sign Exact-EVM payment
           </div>
           <div className="indent">
             └─ <span className="mint">✓ signed</span>{' '}
@@ -302,7 +302,8 @@ function AgentTrace({ step }: { step: number }) {
       {step >= 4 && (
         <Block>
           <div>
-            <span className="dim">[mcp:daski]</span> <span className="ink">settle_payment</span>
+            <span className="dim">[mcp:daski]</span> <span className="ink">buy_service</span>{' '}
+            <span className="dim">+ payment metadata</span>
           </div>
           <div className="indent">
             └─ <span className="mint">✓ settled</span> <span className="dim">·</span> tx{' '}

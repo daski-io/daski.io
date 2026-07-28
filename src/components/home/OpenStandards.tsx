@@ -18,9 +18,9 @@ const PROTOCOLS: Record<ProtocolKey, Protocol> = {
       'How agents talk to tools and services. Buyer agents discover services and request payment quotes from the Daski Gateway over MCP.',
   },
   x402: {
-    title: 'x402 · HTTP-native payments',
+    title: 'x402 V2 · HTTP-native payments',
     desc:
-      'Agents pay the way browsers handle 402 Payment Required. The buyer pays Base directly. Daski never custodies funds.',
+      'Standard clients answer Payment Required with an Exact-EVM payment. The Daski facilitator submits it through PaymentRouter; funds still move directly from buyer to provider and treasury.',
   },
   a2a: {
     title: 'A2A · Agent-to-Agent',
