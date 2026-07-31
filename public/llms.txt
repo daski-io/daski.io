@@ -177,14 +177,14 @@ Reach out via X ([@pmmmm](https://x.com/pmmmm)) to list a service.
 
 ## Deployed contracts (Base Sepolia, chainId 84532)
 
-- **PaymentRouter**: `0x7E2D6cD01ecb6656BaBC78DcACE896978d55F48D`
+- **PaymentRouter**: `0xC6Ab3cB38D3AFc30aDB78849F2B02133e805d860`
 - **IdentityRegistry** (canonical ERC-8004 singleton, not a Daski
   deploy): `0x8004A818BFB912233c491871b3d84c89A494BD9e`
 - **ReputationRegistry** (canonical ERC-8004 singleton):
   `0x8004B663056A597Dffe9eCcC1965A193B7388713`
-- **ProviderRegistry**: `0xDeb0A3692F988f72130a792A6Ac7146321871A2A`
-- **ServiceRegistry**: `0x48D67BD6F514b461f729D6970aebF6f228942e26`
-- **x402 Adapter**: `0x7778cF4B6bb2Dd84CBce941246d4D4Db34a8E035`
+- **ProviderRegistry**: `0xba7d08a4851975b3e80550b9aa4aA6092dCBC909`
+- **ServiceRegistry**: `0x79114da4DA6FbEcF1897950BB051b55c8d839840`
+- **x402 Adapter**: `0xB83633e2A6A36bd5EaF23e8C8f8d33767EaD3d7D`
 - **USDC (Base Sepolia)**: `0x036CbD53842c5426634e7929541eC2318f3dCF7e`
 
 All contracts are verified on
@@ -192,7 +192,8 @@ All contracts are verified on
 
 ## Proof of life
 
-First on-chain settlement through the current Daski deployment:
+First on-chain settlement through the 2026-07-28 Daski deployment
+(superseded by the 2026-07-31 daski-exact release candidate above):
 [`0x9f5e9632a2cd35ef50949d1fb1c4c9a8bcbfa6c2df811820e90628ee23065d72`](https://sepolia.basescan.org/tx/0x9f5e9632a2cd35ef50949d1fb1c4c9a8bcbfa6c2df811820e90628ee23065d72)
 (5.99 USDC, `register-domain`, buyer paid provider, atomic split to
 protocol treasury).
