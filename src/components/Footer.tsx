@@ -109,7 +109,10 @@ export function Footer() {
         />
         <FooterCol
           title="Connect"
-          links={[{ label: 'X / Twitter', href: 'https://x.com/pmmmm', external: true }]}
+          links={[
+            { label: 'X / Twitter', href: 'https://x.com/daskiio', external: true },
+            { label: 'Discord', href: 'https://discord.gg/uyeMp7Q2HW', external: true },
+          ]}
         />
       </div>
       <div
