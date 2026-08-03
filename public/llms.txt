@@ -56,7 +56,7 @@ specific tool surface from this file.
 Quickstart for Claude Code:
 
 ```bash
-claude mcp add daski https://sandbox-gateway.daski.io/mcp
+claude mcp add --transport http daski https://sandbox-gateway.daski.io/mcp
 ```
 
 The agent then needs a wallet that holds USDC on Base. The

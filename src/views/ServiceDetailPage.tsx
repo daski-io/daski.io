@@ -173,7 +173,7 @@ export function ServiceDetailPage({ service }: ServiceDetailPageProps) {
         <div className="dk-grid-2" style={{ gap: 20 }}>
           <div className="dk-card" style={{ padding: 22 }}>
             <Caption style={{ marginBottom: 12 }}>step 1 · install</Caption>
-            <CommandLine cmd="claude mcp add daski https://sandbox-gateway.daski.io/mcp" />
+            <CommandLine cmd="claude mcp add --transport http daski https://sandbox-gateway.daski.io/mcp" />
             <p style={{ color: 'var(--pro-text-dim)', fontSize: 13, marginTop: 12, lineHeight: 1.55 }}>
               One-click copy. Compatible with Claude Code, Cursor, and any MCP-aware agent.
             </p>
