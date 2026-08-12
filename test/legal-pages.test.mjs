@@ -48,6 +48,16 @@ test('links both canonical legal routes from the global footer', async () => {
   assert.match(footer, /<a href="\/privacy-policy">Privacy Policy<\/a>/);
 });
 
+test('discloses direct-transfer and post-payment identity review consequences', async () => {
+  const [terms, privacy] = await Promise.all([
+    read('src/content/legal/terms-of-use.md'),
+    read('src/content/legal/privacy-policy.md'),
+  ]);
+  assert.match(terms, /outside the exact signed HTTP 402 purchase flow is not a Daski purchase/);
+  assert.match(terms, /require identity, business, sanctions, eligibility, or other compliance information after payment/);
+  assert.match(privacy, /post-payment identity, business, eligibility, sanctions, or similar review/);
+});
+
 test('exposes marketplace and provider legal links on service details', async () => {
   const [api, serviceDetail] = await Promise.all([
     read('src/lib/api.ts'),

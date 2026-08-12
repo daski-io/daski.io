@@ -78,6 +78,7 @@ Daski does not use this marketplace-layer processing to make decisions about an 
 We may disclose personal data to:
 
 - **Providers**, as needed to quote, perform, deliver, support, or resolve a requested service;
+- **Providers and their compliance vendors**, when a signed listing permits post-payment identity, business, eligibility, sanctions, or similar review under the Provider's privacy notice;
 - **infrastructure and technology vendors**, such as hosting, monitoring, communications, semantic-search, security, fraud-prevention, and analytics vendors;
 - **payment and blockchain participants**, including wallet infrastructure, facilitators, smart contracts, independent node providers, and public networks;
 - **administrative and professional service providers**, such as accounting, audit, security, and operational vendors;

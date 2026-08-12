@@ -34,11 +34,16 @@ export function ActivityPage({ initialMetadata = null }: { initialMetadata?: Sta
 
       <Section pad="32px 32px 0">
         <SectionHead kicker="active rail" title="Testnet configuration." />
-        <div className="dk-grid-3">
-          <Fact label="Network" value={metadata?.paymentRail.network ?? 'eip155:84532'} />
-          <Fact label="Scheme" value={`${metadata?.paymentRail.scheme ?? 'exact'} · ${metadata?.paymentRail.transferMethod ?? 'eip3009'}`} />
-          <Fact label="Listed outcomes" value={(metadata?.outcomes.length ?? 0).toString()} />
-        </div>
+        {metadata ? <div className="dk-grid-3">
+          <Fact label="Network" value={metadata.paymentRail.network} />
+          <Fact label="Scheme" value={`${metadata.paymentRail.scheme} · ${metadata.paymentRail.transferMethod}`} />
+          <Fact label="Listed outcomes" value={metadata.outcomes.length.toString()} />
+        </div> : <div className="dk-card" style={{ padding: 22 }}>
+          <Caption>Configuration unavailable</Caption>
+          <p style={{ color: 'var(--pro-text-dim)', marginBottom: 0 }}>
+            Live rail metadata could not be verified. No fallback network or contract facts are shown.
+          </p>
+        </div>}
         <div className="dk-card" style={{ padding: 22, marginTop: 20 }}>
           <Row label="Canonical USDC" value={metadata?.paymentRail.asset} address />
           <Row label="Active rail profile" value={metadata?.paymentRail.activeRailProfileHash} />
@@ -52,7 +57,7 @@ export function ActivityPage({ initialMetadata = null }: { initialMetadata?: Sta
           subtitle="Each address splits the gross USDC payment directly between the provider and Daski. The facilitator is not part of the immutable financial route."
         />
         <div className="dk-card" style={{ padding: 0, overflow: 'hidden' }}>
-          {(metadata?.outcomes ?? []).map((outcome) => (
+          {metadata ? metadata.outcomes.map((outcome) => (
             <div key={`${outcome.providerAgentId}:${outcome.outcomeId}`} style={{ padding: 18, borderBottom: '1px solid var(--pro-border)' }}>
               <Mono mint>{outcome.outcomeId}</Mono>
               <div style={{ display: 'grid', gridTemplateColumns: '160px 1fr', gap: 12, marginTop: 12 }}>
@@ -62,7 +67,7 @@ export function ActivityPage({ initialMetadata = null }: { initialMetadata?: Sta
                 <Mono>{shortAddress(outcome.listingManifestHash, 16, 10)}</Mono>
               </div>
             </div>
-          ))}
+          )) : <div style={{ padding: 18 }}><Caption>Verified outcome routes unavailable</Caption></div>}
         </div>
       </Section>
     </div>

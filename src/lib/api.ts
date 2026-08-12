@@ -1,4 +1,5 @@
 import type { CategoryFamily } from '../config/service-taxonomy';
+import { parseOutcomeIndex, parseRailMetadata } from './railMetadata';
 
 export const GATEWAY_URL =
   (import.meta.env.PUBLIC_GATEWAY_URL as string | undefined) ??
@@ -12,6 +13,7 @@ export interface StandardOutcome {
   bindingProfile: 'stock-fixed-v1' | 'recipe-bound-v1';
   pricingMode: 'fixed' | 'dynamic';
   fixedGrossAmount: string;
+  splitterDeploymentBlockNumber: string;
   token: string;
   payTo: string;
   providerPayee: string;
@@ -98,6 +100,7 @@ export interface StandardRailMetadata {
     asset: string;
     transferMethod: string;
     activeRailProfileHash: string;
+    activeRailProfileUrl: string;
   };
   outcomes: StandardOutcome[];
 }
@@ -160,7 +163,7 @@ function asService(outcome: StandardOutcome): PublicService {
 }
 
 export async function getServices(signal?: AbortSignal) {
-  const response = await fetchJson<{ outcomes: StandardOutcome[] }>('/public/v2/outcomes', signal);
+  const response = parseOutcomeIndex(await fetchJson<unknown>('/public/v2/outcomes', signal));
   return { services: response.outcomes.map(asService), cachedAt: null };
 }
 
@@ -173,8 +176,8 @@ export async function getServiceDetail(agentId: string, outcomeId?: string | nul
   return service;
 }
 
-export function getRailMetadata(signal?: AbortSignal) {
-  return fetchJson<StandardRailMetadata>('/.well-known/daski-chain.json', signal);
+export async function getRailMetadata(signal?: AbortSignal) {
+  return parseRailMetadata(await fetchJson<unknown>('/.well-known/daski-chain.json', signal));
 }
 
 export function serviceKey(service: Pick<PublicService, 'agentId' | 'serviceSlug'>): string {

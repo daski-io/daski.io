@@ -98,11 +98,15 @@ Payment uses the canonical USDC contract on the disclosed Base network and a sta
 
 The payment is sent to the immutable outcome splitter identified in the final challenge. After finality, anyone may call its release function, which routes the disclosed Provider share and Daski commission directly to their respective wallets. The facilitator does not become a payee and Daski does not custody the gross payment. Daski does not guarantee the value of a digital asset or continuous availability of any network, wallet, smart contract, or payment system.
 
+Sending USDC directly to a splitter, token contract, payee, reserve, or other disclosed address outside the exact signed HTTP 402 purchase flow is not a Daski purchase. It creates no marketplace order, Provider fulfillment obligation, confidential receipt, or automatic refund right, even if the transfer resembles a supported payment.
+
 The Operator is responsible for taxes, duties, reporting, and withholding arising from its purchases, except taxes imposed on Daski's own net income.
 
 ## 8. Refunds and transaction problems
 
 The Provider's terms and final quote control whether a Provider Service is cancellable or refundable. Payment settlement does not itself establish service completion, and a public-blockchain payment is not itself reversible.
+
+A Provider may require identity, business, sanctions, eligibility, or other compliance information after payment when the signed listing and Provider terms disclose that possibility. Failure or refusal to complete that review is handled only under the signed KYC disposition and refund policy; it does not make an on-chain payment self-reversing.
 
 Daski reserves exposure for both the Provider share and Daski commission before settlement when the signed refund policy requires it. A refund remains subject to that signed policy, its deadlines, independent chain evidence, screening, and any legal hold. A blockchain payment is not reversed; an approved refund is one new exact-gross USDC transfer from the disclosed execution reserve. The Operator must report service-delivery disputes to the Provider and may contact Daski for marketplace-routing or payment-coordination assistance.
 
