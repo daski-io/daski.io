@@ -24,7 +24,7 @@ const PLATFORMS: Platform[] = [
     kind: 'cmd',
     cmd: 'claude mcp add --transport http daski https://sandbox-gateway.daski.io/mcp',
     cmdLabel: 'one-line install',
-    note: "Restart Claude Code. Daski's four tools register automatically over MCP.",
+    note: "Restart Claude Code. The daski_buy_outcome tool registers automatically over MCP.",
   },
   {
     id: 'codex',

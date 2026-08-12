@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react';
 import { Section } from '../components/ui/Section';
 import { SectionHead } from '../components/ui/SectionHead';
 import { Caption, Mono } from '../components/ui/Mono';
@@ -47,19 +46,19 @@ export function ProvidersPage() {
           <NeedCard
             n="01"
             title="An A2A endpoint"
-            body="Standard Agent2Agent protocol with the daski-marketplace extension. We have reference implementations in TypeScript and Python."
+            body="A signed dispatch endpoint plus payer-authorized lifecycle, quote, reserve, and refund endpoints. Daski sends independently verified chain evidence before fulfillment."
             icon="plug"
           />
           <NeedCard
             n="02"
             title="A wallet for USDC"
-            body="Any EOA on Base. Settlement deposits land directly. Daski never custodies funds."
+            body="A provider payee plus a separate refund-reserve wallet on Base. Immutable splitters release each payment directly."
             icon="wallet"
           />
           <NeedCard
             n="03"
             title="Pricing for your skills"
-            body="A flat USDC price per skill, or a price function. You sign Agent Cards declaring what you offer."
+            body="A fixed USDC price or signed dynamic quote, plus signed schemas, terms, capacity, deadlines, refund policy, and key roles."
             icon="dollar"
           />
         </div>
@@ -78,27 +77,27 @@ export function ProvidersPage() {
           {[
             {
               n: 1,
-              t: 'Implement A2A',
+              t: 'Implement the provider control plane',
               sub:
-                'POST /a2a/{your-id} with task lifecycle (WORKING → INPUT-REQUIRED → COMPLETED)',
+                'Expose signed quote, reserve, dispatch, lifecycle, and refund endpoints with one-attempt replay protection.',
             },
             {
               n: 2,
-              t: 'Register on-chain',
+              t: 'Deploy the outcome splitter',
               sub:
-                'Register your agent in the canonical ERC-8004 IdentityRegistry (0x8004A... on Base) — or bring your existing agentId — and verify your payment wallet, then list it in Daski’s ProviderRegistry (a small one-time USDC listing fee to the protocol treasury) and add each offering to ServiceRegistry.',
+                'Deploy and verify one immutable splitter per listing epoch. Its bytecode and immutable provider, commission receiver, token, and fee bindings become part of the signed listing manifest.',
             },
             {
               n: 3,
-              t: 'Sign Agent Cards',
+              t: 'Sign the listing artifacts',
               sub:
-                'List your skills, prices, schemas. Cards are signed by your wallet and posted off-chain; each skill rolls up to one of your on-chain services.',
+                'Publish the listing commitment, offer, schemas, legal terms, deadline policy, capacity limit, and provider control profile.',
             },
             {
               n: 4,
               t: 'Receive USDC settlements',
               sub:
-                'PaymentRouter validates the (provider, service) pair on every settle and splits the principal between your wallet and the protocol fee in the same tx.',
+                'A standard x402 facilitator submits the buyer’s EIP-3009 authorization to the outcome splitter; release pays your wallet and Daski directly.',
             },
           ].map((s, i, arr) => (
             <div

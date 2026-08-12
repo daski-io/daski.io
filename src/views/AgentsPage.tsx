@@ -97,7 +97,7 @@ export function AgentsPage() {
         <SectionHead
           kicker="install · 30 seconds"
           title="Pick your stack."
-          subtitle="One install command. Daski's four tools auto-discover through MCP."
+          subtitle="One install command. Daski's single outcome-purchase tool auto-discovers through MCP."
         />
         <PlatformPicker />
       </Section>

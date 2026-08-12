@@ -1,4 +1,4 @@
-This Privacy Policy explains how Daski processes personal data through daski.io, Daski APIs, machine and AI Agent interfaces, service discovery, transaction routing, payment coordination, reputation features, support, and related marketplace technology (collectively, the "Daski Platform").
+This Privacy Policy explains how Daski processes personal data through daski.io, Daski APIs, machine and AI Agent interfaces, outcome discovery, transaction routing, payment coordination, support, and related marketplace technology (collectively, the "Daski Platform").
 
 The Daski Platform is designed for United States business use. An **Operator** is the natural person or legal entity that authorizes an AI agent, software agent, or other automated system (an **Agent**) to use the Daski Platform on its behalf. A **Provider** is an independent third party offering a service through the Daski Platform.
 
@@ -18,21 +18,21 @@ Daski does not ordinarily require a buyer's name, personal profile, postal addre
 - Operator, Agent, API, session, authentication, capability, and account identifiers;
 - wallet addresses, blockchain network, transaction identifiers, payment amount, settlement status, refunds, and reconciliation information;
 - service searches and requests, Provider selection, quotes, task status, routing events, error information, and delivery references;
-- Provider-attested outcomes, buyer confirmations, and reputation aggregates;
+- Provider task states, signed terminal attestations, confidential receipts, and refund records;
 - IP address, device or client information, timestamps, diagnostic events, security signals, and rate-limit events; and
 - authority, fraud-prevention, sanctions-screening, and compliance information when reasonably necessary.
 
 ### Service content
 
-The Daski gateway receives and forwards instructions, structured fields, task status, delivery references, or Provider responses needed to route a requested service. Daski may therefore process personal data contained in that content while it is in transit even when Daski does not store it.
+The Daski gateway receives, validates, and forwards instructions, structured fields, task status, delivery references, attachments, or Provider responses needed to route a requested service. It stores the minimum order and evidence records needed for recovery, refunds, security, and disputes. Private attachments use a short-lived, single-use upload capability and are bound to one order before payment.
 
-Daski is not intended to be a repository for Provider service content and does not routinely retain full task content after routing. A Provider may collect and retain service content under its own privacy notice. If a Provider legitimately requires sensitive personal data, use only the Provider's disclosed secure intake method rather than an ordinary Daski prompt or task payload.
+Daski is not intended to be a general repository for Provider service content. Unbound uploads expire, bound content follows the disclosed order-retention policy, and a Provider may separately retain service content under its own privacy notice. If a Provider legitimately requires sensitive personal data, use only the reviewed attachment or intake method declared for that outcome rather than an ordinary prompt.
 
 Do not place private keys, seed phrases, passwords, full payment-card data, Social Security numbers, government identification images, or similarly sensitive data in ordinary Agent prompts, support messages, public blockchain fields, or marketplace metadata.
 
-### Public blockchain and reputation data
+### Public blockchain data
 
-Supported transactions may create permanent public records, including wallet or Agent identifiers, transaction identifiers, amounts, timestamps, smart-contract interactions, Provider-attested outcomes, and buyer confirmations. Daski may index and aggregate those records to display transaction-linked reputation.
+Supported transactions create public records including payer wallets, transaction identifiers, amounts, timestamps, USDC transfers, and calls to outcome splitters or refund reserve wallets. Daski does not put request or attachment hashes, order identifiers, Provider task identifiers, confidential receipts, buyer identity records, outcomes, or confirmations on chain.
 
 Public records may be linkable to an individual even when they do not contain a name. Daski does not control public blockchains or public attestation systems and generally cannot alter or delete confirmed data.
 
@@ -56,7 +56,7 @@ We use personal data to:
 - operate, authenticate, secure, maintain, and improve the Daski Platform;
 - discover and rank Provider services and route requests, quotes, status, and delivery information;
 - coordinate, settle, reconcile, refund, and troubleshoot payments;
-- record, calculate, protect, and display transaction-linked reputation;
+- issue and protect payer-bound confidential receipts and retain recovery evidence;
 - communicate about transactions, support, incidents, security, and Platform changes;
 - verify authority where appropriate and prevent fraud, abuse, sanctions violations, and unlawful activity;
 - enforce agreements, protect rights, resolve disputes, and comply with law;
@@ -79,7 +79,7 @@ We may disclose personal data to:
 
 - **Providers**, as needed to quote, perform, deliver, support, or resolve a requested service;
 - **infrastructure and technology vendors**, such as hosting, monitoring, communications, semantic-search, security, fraud-prevention, and analytics vendors;
-- **payment and blockchain participants**, including wallet infrastructure, smart contracts, node providers, attestation systems, and public networks;
+- **payment and blockchain participants**, including wallet infrastructure, facilitators, smart contracts, independent node providers, and public networks;
 - **administrative and professional service providers**, such as accounting, audit, security, and operational vendors;
 - **government authorities or other parties**, when reasonably necessary to comply with law, valid process, investigations, or protection of rights and safety; and
 - **successors and transaction counterparties**, in connection with financing, reorganization, merger, acquisition, or sale of assets, subject to appropriate safeguards.
@@ -98,13 +98,13 @@ Daski retains personal data only for as long as reasonably necessary for the pur
 
 In applying those criteria:
 
-- full task content is ordinarily processed only long enough to route the request and response and is not routinely stored afterward;
+- unbound upload sessions and their objects expire automatically; bound instructions and attachments are retained only for the signed transaction, delivery, refund, support, and legal-hold periods that apply;
 - quote, operational, diagnostic, security, and abuse-prevention records are kept only while reasonably useful for reliability, investigation, and protection of the Platform;
 - settled transaction, payment, reconciliation, accounting, tax, sanctions, and compliance records may be retained for the periods required by applicable law and reasonably necessary for audits, disputes, and enforcement;
 - Provider relationship and support records are kept for the relationship or request and a reasonable period afterward for continuity, disputes, and compliance; and
 - backup copies are overwritten or deleted through Daski's ordinary backup cycle after the source data is deleted.
 
-Daski periodically reviews retained data and deletes or de-identifies it when it is no longer needed, subject to legal holds and documented exceptions. Properly de-identified information that no longer identifies a person may be retained indefinitely. Public blockchain and attestation records follow the operation of the applicable network and may be permanent.
+Daski periodically reviews retained data and deletes or de-identifies it when it is no longer needed, subject to legal holds and documented exceptions. Properly de-identified information that no longer identifies a person may be retained indefinitely. Public blockchain records follow the operation of the applicable network and may be permanent.
 
 ## 9. Security
 

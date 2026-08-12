@@ -20,22 +20,22 @@ const PROTOCOLS: Record<ProtocolKey, Protocol> = {
   x402: {
     title: 'x402 V2 · HTTP-native payments',
     desc:
-      'Standard clients answer Payment Required with an Exact-EVM payment. The Daski facilitator submits it through PaymentRouter; funds still move directly from buyer to provider and treasury.',
+      'Standard clients answer Payment Required with one ordinary Exact-EVM payload. The facilitator submits it to an immutable outcome splitter, which releases USDC directly to the provider and Daski.',
   },
   a2a: {
     title: 'A2A · Agent-to-Agent',
     desc:
-      'Buyers and providers talk directly. Pre-purchase questions ("do you support .io?") and post-payment fulfillment (submit task, poll status). No proxy in between.',
+      'After independently proving deposit and release, Daski sends the provider one signed, replay-safe dispatch. Payer-signed lifecycle actions remain bound to the same confidential order.',
   },
   register: {
     title: 'Provider registration · Agent Card',
     desc:
-      'Providers register their agent in ProviderRegistry and each marketable offering in ServiceRegistry, then publish a signed Agent Card URI on-chain. The gateway fetches and caches the card, health-probes the provider, and serves it to buyers during discovery.',
+      'Providers publish signed listing commitments, offers, schemas, terms, deadlines, and control profiles. A listing can survive a facilitator change because the facilitator is not part of its immutable payment route.',
   },
   erc8004: {
     title: 'ERC-8004 · Identity',
     desc:
-      'On-chain identity for every actor — buyer, gateway, provider — as an agent in the canonical ERC-8004 IdentityRegistry on Base. Services are a separate on-chain entity in ServiceRegistry, keyed to the provider that owns them. No central account system.',
+      'Provider identity can still use ERC-8004, but standard-rail payment admission is based on the payer signature and signed listing artifacts. A buyer does not register an identity during payment.',
   },
 };
 
@@ -107,7 +107,7 @@ function NetworkDiagram({ open, setOpen }: NetworkDiagramProps) {
     w: BW,
     h: BH + 50,
     label: 'Base Chain',
-    sub: 'Payment Router',
+    sub: 'Outcome Splitters',
   };
 
   const cx = (b: { x: number; w: number }) => b.x + b.w / 2;
@@ -470,7 +470,7 @@ function BoxActor({ box, tone, icon, identityStrip, identityActive, onIdentityCl
             textAnchor="middle"
             style={{ fontFamily: 'var(--font-mono)', fontSize: 10, fill: 'var(--pro-text-dim)', letterSpacing: '0.04em' }}
           >
-            Identity · Reputation
+            Provider identity
           </text>
         </g>
       )}
