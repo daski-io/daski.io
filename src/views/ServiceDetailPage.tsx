@@ -23,6 +23,16 @@ export function ServiceDetailPage({ service }: { service: ServiceDetail }) {
         <Caption><a href="/">outcomes</a> / {rail.outcomeId}</Caption>
       </Section>
 
+      <Section pad="12px 32px 0">
+        <SectionHead
+          kicker="provider and service history"
+          title="The broader operating record travels with this listing."
+          subtitle="Rates always carry their finalized sample size; a dash means the chain projection has no eligible signal yet."
+        />
+        <ScopeFacts title="Provider" rows={reputation.providerRows} />
+        <ScopeFacts title="Service" rows={reputation.serviceRows} />
+      </Section>
+
       <Section pad="28px 32px 36px">
         <Mono mint>{rail.bindingProfile} · standard x402 v2</Mono>
         <h1 style={{ fontSize: 48, margin: '18px 0 14px', color: 'var(--pro-text)' }}>
@@ -125,6 +135,17 @@ function Row({ label, value, link }: { label: string; value: string; link?: stri
     <div style={{ display: 'grid', gridTemplateColumns: '180px 1fr', gap: 16, padding: '11px 0', borderBottom: '1px solid var(--pro-border)' }}>
       <Caption>{label}</Caption>
       {link ? <Addr link={link}>{value}</Addr> : <Mono style={{ overflowWrap: 'anywhere' }}>{value}</Mono>}
+    </div>
+  );
+}
+
+function ScopeFacts({ title, rows }: { title: string; rows: Array<{ label: string; value: string }> }) {
+  return (
+    <div style={{ marginBottom: 20 }}>
+      <Caption>{title} aggregate</Caption>
+      <div className="dk-grid-3" style={{ marginTop: 10 }}>
+        {rows.map((row) => <Fact key={row.label} {...row} />)}
+      </div>
     </div>
   );
 }

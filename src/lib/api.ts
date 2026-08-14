@@ -1,5 +1,8 @@
 import type { CategoryFamily } from '../config/service-taxonomy';
 import { parseOutcomeIndex, parseRailMetadata } from './railMetadata';
+import { atomicUsdc, formatDuration, reputationRate } from './displayFormat';
+
+export { atomicUsdc, formatDuration, reputationRate } from './displayFormat';
 
 export const GATEWAY_URL =
   (import.meta.env.PUBLIC_GATEWAY_URL as string | undefined) ??
@@ -142,18 +145,6 @@ async function fetchJson<T>(path: string, signal?: AbortSignal): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-export function atomicUsdc(value: string): string {
-  if (!/^\d+$/.test(value)) return value;
-  const padded = value.padStart(7, '0');
-  const whole = padded.slice(0, -6);
-  const fraction = padded.slice(-6).replace(/0+$/, '');
-  return fraction ? `${whole}.${fraction}` : whole;
-}
-
-export function reputationRate(value: number | null): string {
-  if (value === null) return '–';
-  return `${Number.isInteger(value) ? value.toFixed(0) : value.toFixed(2)}%`;
-}
 
 function asService(outcome: StandardOutcome): PublicService {
   const basePrice = outcome.pricingMode === 'fixed'
@@ -246,11 +237,4 @@ export function serviceChips(service: PublicService): string[] {
 
 export function shortAddress(value: string, head = 8, tail = 6): string {
   return value.length > head + tail ? `${value.slice(0, head)}…${value.slice(-tail)}` : value;
-}
-
-export function formatDuration(seconds: number): string {
-  if (seconds < 60) return `${seconds}s`;
-  if (seconds < 3600) return `${Math.ceil(seconds / 60)}m`;
-  if (seconds < 86400) return `${Math.ceil(seconds / 3600)}h`;
-  return `${Math.ceil(seconds / 86400)}d`;
 }
