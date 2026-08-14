@@ -9,11 +9,13 @@ import {
   shortAddress,
   type ServiceDetail,
 } from '../lib/api';
+import { reputationPresentation } from '../lib/reputationPresentation';
 
 export function ServiceDetailPage({ service }: { service: ServiceDetail }) {
   const rail = service.standardRail;
   const price = priceDisplay(service);
   const providerShare = 10_000 - rail.commissionBps;
+  const reputation = reputationPresentation(rail);
 
   return (
     <div style={{ background: 'var(--pro-bg)' }}>
@@ -33,6 +35,32 @@ export function ServiceDetailPage({ service }: { service: ServiceDetail }) {
           <Fact label="Price" value={`${price.value} ${price.unit}`} />
           <Fact label="Settlement" value="USDC · Exact-EVM" />
           <Fact label="Delivery deadline" value={`≤ ${formatDuration(rail.deadlinePolicy.fulfillmentSeconds)}`} />
+        </div>
+      </Section>
+
+      <Section pad="12px 32px 0">
+        <SectionHead
+          kicker="finalized reputation"
+          title="Performance with its sample size attached."
+          subtitle="No observation is shown as no signal. Confirmations are wallet-signed, and the displayed projection only includes finalized standard-order records."
+        />
+        <div className="dk-grid-3">
+          {reputation.rows.map((row) => <Fact key={row.label} {...row} />)}
+        </div>
+      </Section>
+
+      <Section pad="48px 32px 0">
+        <SectionHead
+          kicker="recent purchases"
+          title="Redacted public activity."
+          subtitle="Only the outcome amount and time are shown; payer wallets and buyer identities are not published."
+        />
+        <div className="dk-card" style={{ padding: 22 }}>
+          {reputation.recentPurchases.length === 0 ? (
+            <Mono dim>No finalized purchase sample yet.</Mono>
+          ) : reputation.recentPurchases.map((purchase, index) => (
+            <Row key={`${purchase.label}:${index}`} {...purchase} />
+          ))}
         </div>
       </Section>
 

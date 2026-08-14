@@ -1,4 +1,8 @@
 import type { StandardOutcome, StandardRailMetadata } from './api';
+import {
+  SERVICE_CATEGORY_FAMILIES,
+  type CategoryFamily,
+} from '../config/service-taxonomy.ts';
 
 function record(value: unknown, label: string): Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -37,6 +41,32 @@ function hash(value: unknown, label: string): string {
   return found;
 }
 
+function decimal(value: unknown, label: string): string {
+  const found = text(value, label);
+  if (!/^(0|[1-9]\d*)$/.test(found)) throw new Error(`${label} is invalid`);
+  return found;
+}
+
+function nullableRate(value: unknown, label: string): number | null {
+  if (value === null) return null;
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 100) {
+    throw new Error(`${label} is invalid`);
+  }
+  return value;
+}
+
+function nullableInteger(value: unknown, label: string): number | null {
+  if (value === null) return null;
+  return integer(value, label);
+}
+
+function stringArray(value: unknown, label: string): string[] {
+  if (!Array.isArray(value) || value.some((item) => typeof item !== 'string' || item.length === 0)) {
+    throw new Error(`${label} is invalid`);
+  }
+  return value as string[];
+}
+
 function https(value: unknown, label: string): string {
   const found = text(value, label);
   const parsed = new URL(found);
@@ -61,14 +91,66 @@ function parseTerms(value: unknown): StandardOutcome['terms'] {
   };
 }
 
+function parseReputation(value: unknown, label: string): StandardOutcome['reputation'] {
+  const reputation = record(value, label);
+  exact(reputation, [
+    'transactionCount', 'completedCount', 'failedCount', 'canceledCount',
+    'completionSampleSize', 'completionRate', 'confirmedCount', 'notConfirmedCount',
+    'confirmationSampleSize', 'buyerSatisfactionRate',
+    'valueWeightedBuyerSatisfactionRate', 'totalPaid', 'totalRefunded',
+    'averageFulfillmentSeconds', 'fulfillmentSampleSize', 'recentPurchases',
+    'finalizedBlock',
+  ], label);
+  if (!Array.isArray(reputation.recentPurchases)) {
+    throw new Error(`${label} recent purchases are invalid`);
+  }
+  const recentPurchases = reputation.recentPurchases.map((value, index) => {
+    const purchase = record(value, `${label} recent purchase ${index}`);
+    exact(purchase, ['amount', 'timestamp'], `${label} recent purchase ${index}`);
+    const timestamp = text(purchase.timestamp, 'purchase timestamp');
+    if (Number.isNaN(Date.parse(timestamp))) throw new Error('purchase timestamp is invalid');
+    return { amount: decimal(purchase.amount, 'purchase amount'), timestamp };
+  });
+  return {
+    transactionCount: decimal(reputation.transactionCount, 'transaction count'),
+    completedCount: decimal(reputation.completedCount, 'completed count'),
+    failedCount: decimal(reputation.failedCount, 'failed count'),
+    canceledCount: decimal(reputation.canceledCount, 'canceled count'),
+    completionSampleSize: decimal(reputation.completionSampleSize, 'completion sample size'),
+    completionRate: nullableRate(reputation.completionRate, 'completion rate'),
+    confirmedCount: decimal(reputation.confirmedCount, 'confirmed count'),
+    notConfirmedCount: decimal(reputation.notConfirmedCount, 'not-confirmed count'),
+    confirmationSampleSize: decimal(reputation.confirmationSampleSize, 'confirmation sample size'),
+    buyerSatisfactionRate: nullableRate(reputation.buyerSatisfactionRate, 'buyer satisfaction rate'),
+    valueWeightedBuyerSatisfactionRate: nullableRate(
+      reputation.valueWeightedBuyerSatisfactionRate,
+      'value-weighted buyer satisfaction rate',
+    ),
+    totalPaid: decimal(reputation.totalPaid, 'total paid'),
+    totalRefunded: decimal(reputation.totalRefunded, 'total refunded'),
+    averageFulfillmentSeconds: nullableInteger(
+      reputation.averageFulfillmentSeconds,
+      'average fulfillment seconds',
+    ),
+    fulfillmentSampleSize: decimal(reputation.fulfillmentSampleSize, 'fulfillment sample size'),
+    recentPurchases,
+    finalizedBlock: reputation.finalizedBlock === null
+      ? null
+      : decimal(reputation.finalizedBlock, 'finalized block'),
+  };
+}
+
 function parseOutcome(value: unknown): StandardOutcome {
   const outcome = record(value, 'standard outcome');
   exact(outcome, [
-    'providerAgentId', 'outcomeId', 'title', 'description', 'bindingProfile',
+    'providerAgentId', 'serviceId', 'outcomeId', 'title', 'description', 'bindingProfile',
     'pricingMode', 'fixedGrossAmount', 'token', 'payTo', 'providerPayee',
     'daskiCommissionReceiver', 'commissionBps', 'providerAudience',
     'absoluteResourceUri', 'listingManifestHash', 'providerOfferHash', 'terms',
     'refundPolicy', 'deadlinePolicy', 'capacityPolicy', 'splitterDeploymentBlockNumber',
+    'categoryFamily', 'serviceType', 'jurisdictions', 'tags', 'persistentAsset',
+    'fulfillmentObligationHash', 'jurisdictionObligationHashes',
+    'providerReputation', 'serviceReputation', 'reputation',
   ], 'standard outcome');
   if (!['stock-fixed-v1', 'recipe-bound-v1'].includes(String(outcome.bindingProfile))) {
     throw new Error('outcome binding profile is invalid');
@@ -123,8 +205,26 @@ function parseOutcome(value: unknown): StandardOutcome {
     (outcome.pricingMode === 'fixed' && BigInt(fixedGrossAmount) <= 0n) ||
     (outcome.pricingMode === 'dynamic' && fixedGrossAmount !== '0')
   ) throw new Error('outcome price is inconsistent with its mode');
+  const categoryFamily = text(outcome.categoryFamily, 'category family');
+  if (!SERVICE_CATEGORY_FAMILIES.some((family) => family.slug === categoryFamily)) {
+    throw new Error('category family is invalid');
+  }
+  const jurisdictions = stringArray(outcome.jurisdictions, 'jurisdictions');
+  const jurisdictionHashes = record(
+    outcome.jurisdictionObligationHashes,
+    'jurisdiction obligation hashes',
+  );
+  exact(jurisdictionHashes, jurisdictions, 'jurisdiction obligation hashes');
+  const parsedJurisdictionHashes = Object.fromEntries(
+    jurisdictions.map((jurisdiction) => [
+      jurisdiction,
+      hash(jurisdictionHashes[jurisdiction], `jurisdiction obligation hash ${jurisdiction}`),
+    ]),
+  );
+  if (typeof outcome.persistentAsset !== 'boolean') throw new Error('persistent asset is invalid');
   return {
     providerAgentId: text(outcome.providerAgentId, 'provider agent ID'),
+    serviceId: hash(outcome.serviceId, 'service ID'),
     outcomeId: text(outcome.outcomeId, 'outcome ID'),
     title: text(outcome.title, 'outcome title'),
     description: text(outcome.description, 'outcome description'),
@@ -140,6 +240,16 @@ function parseOutcome(value: unknown): StandardOutcome {
     absoluteResourceUri: https(outcome.absoluteResourceUri, 'resource URI'),
     listingManifestHash: hash(outcome.listingManifestHash, 'listing manifest hash'),
     providerOfferHash: hash(outcome.providerOfferHash, 'provider offer hash'),
+    categoryFamily: categoryFamily as CategoryFamily,
+    serviceType: text(outcome.serviceType, 'service type'),
+    jurisdictions,
+    tags: stringArray(outcome.tags, 'tags'),
+    persistentAsset: outcome.persistentAsset,
+    fulfillmentObligationHash: hash(
+      outcome.fulfillmentObligationHash,
+      'fulfillment obligation hash',
+    ),
+    jurisdictionObligationHashes: parsedJurisdictionHashes,
     splitterDeploymentBlockNumber: String(outcome.splitterDeploymentBlockNumber),
     terms: parseTerms(outcome.terms),
     refundPolicy: {
@@ -149,6 +259,9 @@ function parseOutcome(value: unknown): StandardOutcome {
     },
     deadlinePolicy,
     capacityPolicy: { maxOpenOrders },
+    providerReputation: parseReputation(outcome.providerReputation, 'provider reputation'),
+    serviceReputation: parseReputation(outcome.serviceReputation, 'service reputation'),
+    reputation: parseReputation(outcome.reputation, 'outcome reputation'),
   };
 }
 

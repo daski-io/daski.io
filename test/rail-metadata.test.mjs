@@ -4,9 +4,33 @@ import { parseOutcomeIndex, parseRailMetadata } from '../src/lib/railMetadata.ts
 
 const USDC = '0x036CbD53842c5426634e7929541eC2318f3dCF7e';
 
+function validReputation(overrides = {}) {
+  return {
+    transactionCount: '2',
+    completedCount: '1',
+    failedCount: '1',
+    canceledCount: '0',
+    completionSampleSize: '2',
+    completionRate: 50,
+    confirmedCount: '1',
+    notConfirmedCount: '0',
+    confirmationSampleSize: '1',
+    buyerSatisfactionRate: 100,
+    valueWeightedBuyerSatisfactionRate: 100,
+    totalPaid: '9007199254740993000000',
+    totalRefunded: '5000000',
+    averageFulfillmentSeconds: 90,
+    fulfillmentSampleSize: '1',
+    recentPurchases: [{ amount: '5000000', timestamp: '2026-08-13T12:00:00.000Z' }],
+    finalizedBlock: '12345690',
+    ...overrides,
+  };
+}
+
 function validOutcome(overrides = {}) {
   return {
     providerAgentId: '11',
+    serviceId: `0x${'12'.repeat(32)}`,
     outcomeId: 'domain-registration',
     title: 'Domain registration',
     description: 'Registers one domain for a year.',
@@ -17,12 +41,19 @@ function validOutcome(overrides = {}) {
     payTo: '0x1111111111111111111111111111111111111111',
     providerPayee: '0x2222222222222222222222222222222222222222',
     daskiCommissionReceiver: '0x3333333333333333333333333333333333333333',
-    commissionBps: 250,
+    commissionBps: 500,
     providerAudience: 'https://provider.example/audience',
     absoluteResourceUri: 'https://gateway.example/outcomes/11/domain-registration',
     listingManifestHash: `0x${'ab'.repeat(32)}`,
     providerOfferHash: `0x${'cd'.repeat(32)}`,
     splitterDeploymentBlockNumber: '12345678',
+    categoryFamily: 'domains-web',
+    serviceType: 'domain-registration',
+    jurisdictions: ['US-CO'],
+    tags: ['domain', 'registration'],
+    persistentAsset: true,
+    fulfillmentObligationHash: `0x${'34'.repeat(32)}`,
+    jurisdictionObligationHashes: { 'US-CO': `0x${'56'.repeat(32)}` },
     terms: {
       marketplaceTermsUrl: 'https://daski.example/terms-of-use',
       marketplacePrivacyUrl: 'https://daski.example/privacy-policy',
@@ -50,6 +81,9 @@ function validOutcome(overrides = {}) {
       refundSeconds: 86400,
     },
     capacityPolicy: { maxOpenOrders: 5 },
+    providerReputation: validReputation(),
+    serviceReputation: validReputation(),
+    reputation: validReputation(),
     ...overrides,
   };
 }
@@ -86,7 +120,10 @@ test('admits a fully valid rail metadata document', () => {
   assert.equal(parsed.paymentRail.asset, USDC);
   assert.equal(parsed.outcomes.length, 2);
   assert.equal(parsed.outcomes[0].bindingProfile, 'stock-fixed-v1');
-  assert.equal(parsed.outcomes[0].commissionBps, 250);
+  assert.equal(parsed.outcomes[0].commissionBps, 500);
+  assert.equal(parsed.outcomes[0].serviceId, `0x${'12'.repeat(32)}`);
+  assert.equal(parsed.outcomes[0].reputation.transactionCount, '2');
+  assert.equal(parsed.outcomes[0].reputation.totalPaid, '9007199254740993000000');
   assert.deepEqual(parsed.outcomes[0].refundPolicy, {
     buyerRequested: true,
     requestDeadlineSeconds: 86400,
@@ -94,6 +131,28 @@ test('admits a fully valid rail metadata document', () => {
   });
   assert.equal(parsed.outcomes[1].pricingMode, 'dynamic');
   assert.equal(parsed.outcomes[1].fixedGrossAmount, '0');
+});
+
+test('preserves no-signal reputation and rejects malformed samples', () => {
+  const noSignal = validReputation({
+    transactionCount: '0', completedCount: '0', failedCount: '0',
+    completionSampleSize: '0', completionRate: null, confirmedCount: '0',
+    confirmationSampleSize: '0', buyerSatisfactionRate: null,
+    valueWeightedBuyerSatisfactionRate: null, averageFulfillmentSeconds: null,
+    fulfillmentSampleSize: '0', recentPurchases: [], finalizedBlock: null,
+  });
+  const parsed = parseOutcomeIndex({
+    version: 2,
+    outcomes: [validOutcome({ reputation: noSignal })],
+  });
+  assert.equal(parsed.outcomes[0].reputation.completionRate, null);
+  assert.equal(parsed.outcomes[0].reputation.finalizedBlock, null);
+  assert.throws(() => parseOutcomeIndex({
+    version: 2,
+    outcomes: [validOutcome({
+      reputation: validReputation({ completionRate: 101 }),
+    })],
+  }), /completion rate is invalid/);
 });
 
 test('admits a valid outcome index and rejects cross-asset outcomes', () => {

@@ -8,6 +8,7 @@ import { ServiceTaxonomyChips } from '../ServiceTaxonomyChips';
 import {
   formatDuration,
   priceRange,
+  reputationRate,
   serviceChips,
   serviceKey,
   servicePath,
@@ -313,6 +314,13 @@ function ServiceCard({ service }: { service: PublicService }) {
             <Mono dim style={{ fontSize: 11, letterSpacing: '0.02em' }}>
               {service.skills.length} skill{service.skills.length === 1 ? '' : 's'} ·{' '}
               {service.skills.filter((s) => s.paymentRequired).length} paid
+            </Mono>
+            <Mono dim style={{ fontSize: 11, letterSpacing: '0.02em' }}>
+              {service.standardRail.reputation.transactionCount} purchases ·{' '}
+              {reputationRate(
+                service.standardRail.reputation.valueWeightedBuyerSatisfactionRate ??
+                service.standardRail.reputation.buyerSatisfactionRate,
+              )} satisfaction ({service.standardRail.reputation.confirmationSampleSize})
             </Mono>
           </div>
           <span

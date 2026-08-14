@@ -7,6 +7,7 @@ export const GATEWAY_URL =
 
 export interface StandardOutcome {
   providerAgentId: string;
+  serviceId: string;
   outcomeId: string;
   title: string;
   description: string;
@@ -23,6 +24,13 @@ export interface StandardOutcome {
   absoluteResourceUri: string;
   listingManifestHash: string;
   providerOfferHash: string;
+  categoryFamily: CategoryFamily;
+  serviceType: string;
+  jurisdictions: string[];
+  tags: string[];
+  persistentAsset: boolean;
+  fulfillmentObligationHash: string;
+  jurisdictionObligationHashes: Record<string, string>;
   terms: PublicServiceLegal;
   refundPolicy: {
     buyerRequested: boolean;
@@ -38,6 +46,29 @@ export interface StandardOutcome {
     refundSeconds: number;
   };
   capacityPolicy: { maxOpenOrders: number };
+  providerReputation: StandardReputation;
+  serviceReputation: StandardReputation;
+  reputation: StandardReputation;
+}
+
+export interface StandardReputation {
+  transactionCount: string;
+  completedCount: string;
+  failedCount: string;
+  canceledCount: string;
+  completionSampleSize: string;
+  completionRate: number | null;
+  confirmedCount: string;
+  notConfirmedCount: string;
+  confirmationSampleSize: string;
+  buyerSatisfactionRate: number | null;
+  valueWeightedBuyerSatisfactionRate: number | null;
+  totalPaid: string;
+  totalRefunded: string;
+  averageFulfillmentSeconds: number | null;
+  fulfillmentSampleSize: string;
+  recentPurchases: Array<{ amount: string; timestamp: string }>;
+  finalizedBlock: string | null;
 }
 
 export interface PublicServiceLegal {
@@ -111,12 +142,17 @@ async function fetchJson<T>(path: string, signal?: AbortSignal): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-function atomicUsdc(value: string): string {
+export function atomicUsdc(value: string): string {
   if (!/^\d+$/.test(value)) return value;
   const padded = value.padStart(7, '0');
   const whole = padded.slice(0, -6);
   const fraction = padded.slice(-6).replace(/0+$/, '');
   return fraction ? `${whole}.${fraction}` : whole;
+}
+
+export function reputationRate(value: number | null): string {
+  if (value === null) return '–';
+  return `${Number.isInteger(value) ? value.toFixed(0) : value.toFixed(2)}%`;
 }
 
 function asService(outcome: StandardOutcome): PublicService {
@@ -128,9 +164,9 @@ function asService(outcome: StandardOutcome): PublicService {
     name: outcome.title,
     providerAddress: outcome.providerPayee,
     agentURI: outcome.providerAudience,
-    categoryFamily: 'other',
-    serviceType: 'signed-outcome',
-    jurisdictions: [],
+    categoryFamily: outcome.categoryFamily,
+    serviceType: outcome.serviceType,
+    jurisdictions: outcome.jurisdictions,
     serviceDescription: outcome.description,
     serviceLifecycle: 'standard-x402',
     turnaroundEstimate: `within ${formatDuration(outcome.deadlinePolicy.fulfillmentSeconds)}`,
@@ -139,7 +175,7 @@ function asService(outcome: StandardOutcome): PublicService {
     providerDescription: null,
     providerWebsite: null,
     iconUrl: null,
-    serviceId: outcome.listingManifestHash,
+    serviceId: outcome.serviceId,
     serviceSlug: outcome.outcomeId,
     serviceVersion: '1',
     legal: outcome.terms,
