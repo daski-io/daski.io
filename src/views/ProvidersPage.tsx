@@ -3,8 +3,16 @@ import { SectionHead } from '../components/ui/SectionHead';
 import { Caption, Mono } from '../components/ui/Mono';
 import { Icon, type IconName } from '../components/ui/Icon';
 import { Card } from '../components/ui/Card';
+import { ProviderDirectory } from '../components/providers/ProviderDirectory';
+import type { PublicService } from '../lib/api';
 
-export function ProvidersPage() {
+export function ProvidersPage({
+  services,
+  registryAvailable,
+}: {
+  services: PublicService[];
+  registryAvailable: boolean;
+}) {
   return (
     <div>
       <Section pad="88px 32px 48px">
@@ -143,6 +151,8 @@ export function ProvidersPage() {
           <NeedCard n="03" title="Buyer signal" body="Wallet-signed confirmations are revision-aware, revocable, and displayed only with their sample size." icon="user" />
         </div>
       </Section>
+
+      <ProviderDirectory services={services} registryAvailable={registryAvailable} />
 
     </div>
   );

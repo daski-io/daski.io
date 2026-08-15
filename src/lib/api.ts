@@ -1,6 +1,6 @@
 import type { CategoryFamily } from '../config/service-taxonomy';
 import { parseOutcomeIndex, parseRailMetadata } from './railMetadata';
-import { atomicUsdc, formatDuration, reputationRate } from './displayFormat';
+import { atomicUsdc, formatDuration } from './displayFormat';
 
 export { atomicUsdc, formatDuration, reputationRate } from './displayFormat';
 

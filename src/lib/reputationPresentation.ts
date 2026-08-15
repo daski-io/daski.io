@@ -20,17 +20,29 @@ function summary(scope: string, reputation: StandardReputation): ReputationPrese
       value: reputationRate(satisfaction),
     },
     { label: `${scope} sales`, value: `${atomicUsdc(reputation.totalPaid)} USDC` },
+    { label: `${scope} refunds`, value: `${atomicUsdc(reputation.totalRefunded)} USDC` },
+    {
+      label: `${scope} avg fulfillment (${reputation.fulfillmentSampleSize})`,
+      value: reputation.averageFulfillmentSeconds === null
+        ? '–'
+        : formatDuration(reputation.averageFulfillmentSeconds),
+    },
   ];
 }
 
 function purchaseTimestamp(value: string): string {
   const parsed = new Date(value);
   if (!Number.isFinite(parsed.getTime())) return value;
-  return `${new Intl.DateTimeFormat('en-US', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-    timeZone: 'UTC',
-  }).format(parsed)} UTC`;
+  const months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+  const hour = parsed.getUTCHours();
+  const minute = String(parsed.getUTCMinutes()).padStart(2, '0');
+  const clockHour = hour % 12 || 12;
+  const period = hour < 12 ? 'AM' : 'PM';
+  return `${months[parsed.getUTCMonth()]} ${parsed.getUTCDate()}, ${parsed.getUTCFullYear()}, `
+    + `${clockHour}:${minute} ${period} UTC`;
 }
 
 export function reputationPresentation(outcome: StandardOutcome): {

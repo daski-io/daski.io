@@ -88,5 +88,9 @@ test('keeps partial and revised confirmation samples explicit at every scope', (
   });
   assert.ok(presented.providerRows.some((row) => row.label === 'Provider completion (12)'));
   assert.ok(presented.providerRows.some((row) => row.value === '66.67%'));
+  assert.ok(presented.providerRows.some((row) => row.label === 'Provider refunds'));
+  assert.ok(presented.providerRows.some((row) => row.label === 'Provider avg fulfillment (0)'));
   assert.ok(presented.serviceRows.some((row) => row.label === 'Service satisfaction (1)'));
+  assert.ok(presented.serviceRows.some((row) => row.label === 'Service refunds'));
+  assert.ok(presented.serviceRows.some((row) => row.label === 'Service avg fulfillment (0)'));
 });
