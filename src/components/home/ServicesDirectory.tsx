@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Section } from '../ui/Section';
 import { SectionHead } from '../ui/SectionHead';
 import { Mono } from '../ui/Mono';
@@ -6,8 +6,9 @@ import { Icon } from '../ui/Icon';
 import { Card } from '../ui/Card';
 import { ServiceTaxonomyChips } from '../ServiceTaxonomyChips';
 import {
-  getServiceDetail,
+  formatDuration,
   priceRange,
+  reputationRate,
   serviceChips,
   serviceKey,
   servicePath,
@@ -177,19 +178,6 @@ function ServiceIcon({
 
 function ServiceCard({ service }: { service: PublicService }) {
   const chips = serviceChips(service);
-  const [avgSeconds, setAvgSeconds] = useState<number | null | undefined>(undefined);
-
-  useEffect(() => {
-    const ctrl = new AbortController();
-    // Pass the slug so a multi-service provider's second card shows ITS
-    // stats, not the primary service's.
-    getServiceDetail(service.agentId, service.serviceSlug, ctrl.signal)
-      .then((d) => setAvgSeconds(d.serviceReputation?.averageFulfillmentSeconds ?? null))
-      .catch(() => {
-        if (!ctrl.signal.aborted) setAvgSeconds(null);
-      });
-    return () => ctrl.abort();
-  }, [service.agentId, service.serviceSlug]);
 
   return (
     <Card
@@ -289,9 +277,11 @@ function ServiceCard({ service }: { service: PublicService }) {
             </Mono>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <Mono style={{ fontSize: 14 }}>{formatAvgCompletion(avgSeconds)}</Mono>
+            <Mono style={{ fontSize: 14 }}>
+              ≤ {formatDuration(service.standardRail.deadlinePolicy.fulfillmentSeconds)}
+            </Mono>
             <Mono dim style={{ display: 'block', fontSize: 11, marginTop: 2, letterSpacing: '0.04em' }}>
-              avg completion
+              signed deadline
             </Mono>
           </div>
         </div>
@@ -324,6 +314,13 @@ function ServiceCard({ service }: { service: PublicService }) {
             <Mono dim style={{ fontSize: 11, letterSpacing: '0.02em' }}>
               {service.skills.length} skill{service.skills.length === 1 ? '' : 's'} ·{' '}
               {service.skills.filter((s) => s.paymentRequired).length} paid
+            </Mono>
+            <Mono dim style={{ fontSize: 11, letterSpacing: '0.02em' }}>
+              {service.standardRail.reputation.transactionCount} purchases ·{' '}
+              {reputationRate(
+                service.standardRail.reputation.valueWeightedBuyerSatisfactionRate ??
+                service.standardRail.reputation.buyerSatisfactionRate,
+              )} satisfaction ({service.standardRail.reputation.confirmationSampleSize})
             </Mono>
           </div>
           <span
@@ -369,19 +366,6 @@ function ServiceCardSkeleton() {
  * (show em-dash placeholder); `null` = gateway returned no sample yet
  * (also em-dash); number = real seconds, formatted as e.g. "64s" or "2m".
  */
-function formatAvgCompletion(sec: number | null | undefined): string {
-  if (sec === undefined || sec === null || sec < 0) return '–';
-  if (sec < 60) return `~${sec}s`;
-  if (sec < 3600) {
-    const m = Math.floor(sec / 60);
-    const s = sec % 60;
-    return s === 0 ? `~${m}m` : `~${m}m ${s}s`;
-  }
-  const h = Math.floor(sec / 3600);
-  const m = Math.floor((sec % 3600) / 60);
-  return m === 0 ? `~${h}h` : `~${h}h ${m}m`;
-}
-
 function providerNameFromUri(uri: string): string | null {
   try {
     const u = new URL(uri);

@@ -204,7 +204,7 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 
 /* =====================================================================
    Composite "box" with stat tile rows and on-chain identity footers.
-   Used by ServiceDetailPage to bundle hero stats + reputation + on-chain
+   Used by ServiceDetailPage to bundle signed policy + payment-route
    identity into one cohesive card per entity (service / provider).
    ===================================================================== */
 .dk-box {
