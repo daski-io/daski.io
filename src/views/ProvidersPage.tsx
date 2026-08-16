@@ -54,19 +54,19 @@ export function ProvidersPage({
           <NeedCard
             n="01"
             title="An A2A endpoint"
-            body="A signed dispatch endpoint plus payer-authorized lifecycle, quote, reserve, and refund endpoints. Daski sends independently verified chain evidence before fulfillment."
+            body="A signed quote and dispatch endpoint plus payer-authorized lifecycle and persistent-asset actions. Daski sends finalized chain evidence before fulfillment."
             icon="plug"
           />
           <NeedCard
             n="02"
             title="A wallet for USDC"
-            body="A provider payee plus a separate refund-reserve wallet on Base. Immutable splitters release each payment directly."
+            body="A provider payee on Base. Immutable splitters release each payment directly to that wallet and Daski."
             icon="wallet"
           />
           <NeedCard
             n="03"
             title="Pricing for your skills"
-            body="A fixed USDC price or signed dynamic quote, plus signed schemas, terms, capacity, deadlines, refund policy, and key roles."
+            body="A fixed USDC price or signed dynamic quote, plus signed schemas, terms, capacity, deadlines, and key roles."
             icon="dollar"
           />
         </div>
@@ -87,7 +87,7 @@ export function ProvidersPage({
               n: 1,
               t: 'Implement the provider control plane',
               sub:
-                'Expose signed quote, reserve, dispatch, lifecycle, and refund endpoints with one-attempt replay protection.',
+                'Expose signed quote, dispatch, lifecycle, and persistent-asset endpoints with replay protection.',
             },
             {
               n: 2,
@@ -146,7 +146,7 @@ export function ProvidersPage({
           subtitle="Daski publishes finalized provider, service, and outcome aggregates with explicit sample sizes—never private payer identity or raw asset data."
         />
         <div className="dk-grid-3">
-          <NeedCard n="01" title="All-time volume" body="Finalized USDC sales and refunds are shown at provider, service, and outcome scope." icon="wallet" />
+          <NeedCard n="01" title="All-time volume" body="Finalized USDC sales are shown at provider, service, and outcome scope." icon="wallet" />
           <NeedCard n="02" title="Delivery record" body="Completed, failed, and canceled standard orders feed a transparent completion sample." icon="check" />
           <NeedCard n="03" title="Buyer signal" body="Wallet-signed confirmations are revision-aware, revocable, and displayed only with their sample size." icon="user" />
         </div>

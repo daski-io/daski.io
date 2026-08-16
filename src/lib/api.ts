@@ -35,18 +35,12 @@ export interface StandardOutcome {
   fulfillmentObligationHash: string;
   jurisdictionObligationHashes: Record<string, string>;
   terms: PublicServiceLegal;
-  refundPolicy: {
-    buyerRequested: boolean;
-    requestDeadlineSeconds: number;
-    executionReserveAddress: string;
-  };
   deadlinePolicy: {
     verificationSeconds: number;
     settlementEvidenceSeconds: number;
     releaseEvidenceSeconds: number;
     dispatchSeconds: number;
     fulfillmentSeconds: number;
-    refundSeconds: number;
   };
   capacityPolicy: { maxOpenOrders: number };
   providerReputation: StandardReputation;

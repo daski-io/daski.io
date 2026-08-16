@@ -147,7 +147,7 @@ function parseOutcome(value: unknown): StandardOutcome {
     'pricingMode', 'fixedGrossAmount', 'token', 'payTo', 'providerPayee',
     'daskiCommissionReceiver', 'commissionBps', 'providerAudience',
     'absoluteResourceUri', 'listingManifestHash', 'providerOfferHash', 'terms',
-    'refundPolicy', 'deadlinePolicy', 'capacityPolicy', 'splitterDeploymentBlockNumber',
+    'deadlinePolicy', 'capacityPolicy', 'splitterDeploymentBlockNumber',
     'categoryFamily', 'serviceType', 'jurisdictions', 'tags', 'persistentAsset',
     'fulfillmentObligationHash', 'jurisdictionObligationHashes',
     'providerReputation', 'serviceReputation', 'reputation',
@@ -162,41 +162,26 @@ function parseOutcome(value: unknown): StandardOutcome {
       !/^\d+$/.test(String(outcome.splitterDeploymentBlockNumber))) {
     throw new Error('outcome atomic or block value is invalid');
   }
-  const refund = record(outcome.refundPolicy, 'refund policy');
-  exact(refund, [
-    'buyerRequested', 'requestDeadlineSeconds', 'executionReserveAddress',
-    'releaseFailureDisposition', 'providerFailureDisposition',
-    'dispatchAmbiguityDisposition', 'kycFailureDisposition',
-  ], 'refund policy');
-  if (typeof refund.buyerRequested !== 'boolean') throw new Error('refund policy is invalid');
-  if (
-    refund.releaseFailureDisposition !== 'legal_hold' ||
-    refund.providerFailureDisposition !== 'refund_due' ||
-    refund.dispatchAmbiguityDisposition !== 'refund_due' ||
-    refund.kycFailureDisposition !== 'refund_due'
-  ) throw new Error('refund disposition is invalid');
   const deadline = record(outcome.deadlinePolicy, 'deadline policy');
   exact(deadline, [
     'draftSeconds', 'minimumPaymentWindowSeconds', 'verificationSeconds',
     'settlementEvidenceSeconds', 'releaseEvidenceSeconds', 'dispatchSeconds',
-    'fulfillmentSeconds', 'refundSeconds',
+    'fulfillmentSeconds',
   ], 'deadline policy');
   const capacity = record(outcome.capacityPolicy, 'capacity policy');
   exact(capacity, ['maxOpenOrders'], 'capacity policy');
   const commissionBps = integer(outcome.commissionBps, 'commission BPS');
   const maxOpenOrders = integer(capacity.maxOpenOrders, 'open-order capacity');
-  const requestDeadlineSeconds = integer(refund.requestDeadlineSeconds, 'refund deadline');
   const deadlinePolicy = {
     verificationSeconds: integer(deadline.verificationSeconds, 'verification deadline'),
     settlementEvidenceSeconds: integer(deadline.settlementEvidenceSeconds, 'settlement deadline'),
     releaseEvidenceSeconds: integer(deadline.releaseEvidenceSeconds, 'release deadline'),
     dispatchSeconds: integer(deadline.dispatchSeconds, 'dispatch deadline'),
     fulfillmentSeconds: integer(deadline.fulfillmentSeconds, 'fulfillment deadline'),
-    refundSeconds: integer(deadline.refundSeconds, 'refund execution deadline'),
   };
   if (
     commissionBps <= 0 || commissionBps >= 10_000 || maxOpenOrders <= 0 ||
-    requestDeadlineSeconds < 30 || Object.values(deadlinePolicy).some((seconds) => seconds < 30)
+    Object.values(deadlinePolicy).some((seconds) => seconds < 30)
   ) {
     throw new Error('outcome economics or capacity is invalid');
   }
@@ -252,11 +237,6 @@ function parseOutcome(value: unknown): StandardOutcome {
     jurisdictionObligationHashes: parsedJurisdictionHashes,
     splitterDeploymentBlockNumber: String(outcome.splitterDeploymentBlockNumber),
     terms: parseTerms(outcome.terms),
-    refundPolicy: {
-      buyerRequested: refund.buyerRequested,
-      requestDeadlineSeconds,
-      executionReserveAddress: address(refund.executionReserveAddress, 'refund reserve'),
-    },
     deadlinePolicy,
     capacityPolicy: { maxOpenOrders },
     providerReputation: parseReputation(outcome.providerReputation, 'provider reputation'),

@@ -9,41 +9,36 @@ Connect the MCP server at `https://sandbox-gateway.daski.io/mcp` and use the
 single `daski_buy_outcome` tool. The same tool call is used first to receive a
 402 challenge and again with the wallet-produced standard payment payload.
 There is no separate paid submit tool, payment-time identity registration, or
-buyer confirmation/reputation write.
+buyer ERC-8004 registration.
 
 Before signing, decode and verify the provider, outcome, request summary,
-gross amount, commission, legal terms, refund policy, deadline policy, listing
-manifest, and immutable splitter. Recipe-bound outcomes also commit the
-request and signed artifacts into the EIP-3009 nonce.
-
-Private or large attachments use a free, short-lived, single-use upload
-capability. The first 402-producing request consumes and binds the exact
-attachment set to one draft. Attachment IDs are not read capabilities.
+gross amount, commission, legal terms, deadline policy, listing manifest, and
+immutable splitter. Recipe-bound outcomes also commit the request and signed
+artifacts into the EIP-3009 nonce.
 
 ## Payment and fulfillment
 
 The buyer signs one standard EIP-3009 transfer authorization to the outcome's
-immutable splitter. Daski validates it locally, reserves Provider and Daski
-refund exposure, calls the configured standard facilitator once, and obtains
-independent finalized evidence from two RPC hosts. Anyone may then release the
-splitter, which pays the Provider and Daski directly.
+immutable splitter. Daski validates it locally, calls the configured standard
+facilitator, and reconstructs finalized chain evidence through the configured
+Base RPC endpoints. Anyone may then release the splitter, which pays the
+Provider and Daski directly.
 
 Only after deposit and release evidence agree does Daski send the Provider one
 signed, replay-safe dispatch. The Provider independently checks the listing,
-request, reserve, splitter bytecode and immutables, token code, finalized
-transfers, event logs, and traces before doing work.
+request, splitter bytecode and immutables, token code, finalized transfers, and
+event logs before doing work.
 
-Order status, input, cancel, refund, artifact, and support actions require a
-fresh EIP-712 signature from the original payer. Confidential receipts and
-buyer-linked histories are not public.
+Order status, input, cancel, artifact, support, reputation, and persistent-asset
+actions require a fresh EIP-712 signature from the original payer. Confidential
+receipts and buyer-linked histories are not public.
 
-## Refunds and recovery
+## Final payments and recovery
 
-Refunds are new USDC transfers from separately controlled reserve wallets; the
-original blockchain payment is not reversed. Each refund leg is journaled
-before broadcast and is never guessed or blindly retried. Signed deadlines
-move unresolved orders to refund, no-refund, or legal-hold dispositions so a
-paid state does not wait forever.
+Standard-rail payments are final at launch. Daski does not advertise a refund,
+guarantee, protected purchase, or independently verified service outcome.
+Recovery reconciles ambiguous settlement, release, dispatch, and reputation
+writes without guessing or blindly retrying them.
 
 ## Public metadata
 
@@ -53,7 +48,7 @@ paid state does not wait forever.
 - MCP metadata: `https://sandbox-gateway.daski.io/.well-known/mcp.json`
 - Base Sepolia chain ID: `84532`
 
-The active rail profile, runtime release, listings, Provider offers, terms,
-capacity, deadlines, screening policy, and control profiles are signed and
-epoch-fenced. The facilitator can be replaced without changing a listing or
-splitter because it is not part of the immutable financial route.
+The active rail profile, listings, Provider offers, terms, capacity, deadlines,
+screening policy, and control profiles are signed and epoch-fenced. The
+facilitator can be replaced without changing a listing or splitter because it
+is not part of the immutable financial route.

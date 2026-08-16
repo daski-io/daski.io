@@ -75,7 +75,7 @@ For every Provider Service:
 - Daski is not responsible for Provider statements, omissions, documents, performance, output, or legal compliance; and
 - disputes about the Provider Service must be addressed with the Provider.
 
-Daski may transmit communications or facilitate a Provider-authorized refund, but it has no duty to resolve a Provider dispute, perform the service, or fund a refund from its own assets.
+Daski may transmit communications, but it has no duty to resolve a Provider dispute, perform the service, reverse a payment, or fund a refund from its own assets.
 
 ## 6. Provider legal documents
 
@@ -98,25 +98,25 @@ Payment uses the canonical USDC contract on the disclosed Base network and a sta
 
 The payment is sent to the immutable outcome splitter identified in the final challenge. After finality, anyone may call its release function, which routes the disclosed Provider share and Daski commission directly to their respective wallets. The facilitator does not become a payee and Daski does not custody the gross payment. Daski does not guarantee the value of a digital asset or continuous availability of any network, wallet, smart contract, or payment system.
 
-Sending USDC directly to a splitter, token contract, payee, reserve, or other disclosed address outside the exact signed HTTP 402 purchase flow is not a Daski purchase. It creates no marketplace order, Provider fulfillment obligation, confidential receipt, or automatic refund right, even if the transfer resembles a supported payment.
+Sending USDC directly to a splitter, token contract, payee, or other disclosed address outside the exact signed HTTP 402 purchase flow is not a Daski purchase. It creates no marketplace order, Provider fulfillment obligation, confidential receipt, or reversal right, even if the transfer resembles a supported payment.
 
 The Operator is responsible for taxes, duties, reporting, and withholding arising from its purchases, except taxes imposed on Daski's own net income.
 
-## 8. Refunds and transaction problems
+## 8. Final payments and transaction problems
 
-The Provider's terms and final quote control whether a Provider Service is cancellable or refundable. Payment settlement does not itself establish service completion, and a public-blockchain payment is not itself reversible.
+Standard-rail payments are final at launch. Daski does not advertise or operate a Platform refund, guarantee, protected purchase, or independently verified service outcome. Payment settlement does not itself establish service completion, and a public-blockchain payment is not reversible by Daski.
 
-A Provider may require identity, business, sanctions, eligibility, or other compliance information after payment when the signed listing and Provider terms disclose that possibility. Failure or refusal to complete that review is handled only under the signed KYC disposition and refund policy; it does not make an on-chain payment self-reversing.
+A Provider may require identity, business, sanctions, eligibility, or other compliance information after payment when the signed listing and Provider terms disclose that possibility. Failure or refusal to complete that review does not make an on-chain payment reversible. Any cancellation, credit, or refund a Provider separately offers is governed and performed outside the launch payment rail under the Provider's own terms.
 
-Daski reserves exposure for both the Provider share and Daski commission before settlement when the signed refund policy requires it. A refund remains subject to that signed policy, its deadlines, independent chain evidence, screening, and any legal hold. A blockchain payment is not reversed; an approved refund is one new exact-gross USDC transfer from the disclosed execution reserve. The Operator must report service-delivery disputes to the Provider and may contact Daski for marketplace-routing or payment-coordination assistance.
+The Operator must report service-delivery disputes to the Provider and may contact Daski for marketplace-routing or payment-coordination assistance. Daski does not hold a reserve or retain the gross payment: release sends the disclosed shares directly to the Provider and Daski wallets.
 
-For a stock-fixed outcome, retrying the identical signed payment authorization is a transport retry of the same purchase. Creating a new signature or authorization nonce creates a distinct purchase, even when its request and price are identical. Distinct purchases are not merged by operator discretion and qualify for a refund only when the advertised signed refund policy independently allows one.
+For a stock-fixed outcome, retrying the identical signed payment authorization is a transport retry of the same purchase. Creating a new signature or authorization nonce creates a distinct final purchase, even when its request and price are identical. Distinct purchases are not merged or reversed by operator discretion.
 
 ## 9. Outcomes and confidential receipts
 
 Daski issues a signed confidential receipt bound to the payer wallet, order, listing, amount, settlement evidence, release evidence, and Provider task. The receipt is a technical record of the marketplace workflow, not an endorsement, certification, warranty, or public reputation statement.
 
-Daski does not publish buyer-linked order histories, request or attachment hashes, confidential receipts, or buyer confirmations. The public chain still shows ordinary USDC transfers to and from disclosed splitter and reserve addresses. The Operator must not use self-dealing, fabricated purchases, coordinated activity, or misleading claims to manipulate marketplace discovery or apparent demand.
+Daski does not publish buyer-linked order histories, request contents, confidential receipts, or private lifecycle and asset data. The public chain shows ordinary USDC transfers to disclosed splitters plus transaction-linked terminal outcomes and payer confirmation attestations. The Operator must not use self-dealing, fabricated purchases, coordinated activity, or misleading claims to manipulate marketplace discovery or apparent demand.
 
 ## 10. Acceptable use
 
@@ -149,7 +149,7 @@ Daski source code and documentation published in a repository under the MIT Lice
 
 Open-source licensing does not grant a right to use Daski's names, logos, trademarks, domain names, or branding, and it does not provide access to credentials, infrastructure, hosted data, Provider relationships, or Daski's operated instance of the Platform. Daski and its licensors retain their rights in those items and in website content, documentation, data compilations, and other materials that have not been released under an open-source license. Access to Daski's operated websites, APIs, and hosted services remains subject to these Terms.
 
-Provider terms determine rights in service inputs and outputs. The Operator grants Daski the limited rights needed to validate, store for the declared retention period, transmit, secure, and troubleshoot its instructions, attachments, and content. Daski may use voluntarily supplied ideas and suggestions that are not code, personal data, or confidential information without restriction or compensation, but will not identify the person providing them publicly without permission.
+Provider terms determine rights in service inputs and outputs. The Operator grants Daski the limited rights needed to validate, store for the declared retention period, transmit, secure, and troubleshoot its instructions and content. Daski may use voluntarily supplied ideas and suggestions that are not code, personal data, or confidential information without restriction or compensation, but will not identify the person providing them publicly without permission.
 
 ## 14. Third-party systems
 
@@ -167,7 +167,7 @@ Payment, ownership, disclaimers, liability, indemnity, disputes, and provisions 
 
 TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE DASKI PLATFORM IS PROVIDED "AS IS" AND "AS AVAILABLE." DASKI DISCLAIMS ALL EXPRESS, IMPLIED, AND STATUTORY WARRANTIES, INCLUDING MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, NON-INFRINGEMENT, ACCURACY, SECURITY, AVAILABILITY, AND RESULTS.
 
-DASKI DOES NOT WARRANT A PROVIDER; A PROVIDER'S LEGAL DOCUMENTS; THE ACCURACY, LEGALITY, COMPLETENESS, OR FITNESS OF A PROVIDER SERVICE OR OUTPUT; THE AUTHORITY OR PERFORMANCE OF AN AGENT; PAYMENT SETTLEMENT; REFUND COMPLETION; OR UNINTERRUPTED OR ERROR-FREE OPERATION.
+DASKI DOES NOT WARRANT A PROVIDER; A PROVIDER'S LEGAL DOCUMENTS; THE ACCURACY, LEGALITY, COMPLETENESS, OR FITNESS OF A PROVIDER SERVICE OR OUTPUT; THE AUTHORITY OR PERFORMANCE OF AN AGENT; PAYMENT SETTLEMENT; OR UNINTERRUPTED OR ERROR-FREE OPERATION.
 
 These disclaimers apply only to the extent permitted by law.
 

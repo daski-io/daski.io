@@ -28,7 +28,7 @@ export function ActivityPage({ initialMetadata = null }: { initialMetadata?: Sta
         </h1>
         <p style={{ color: 'var(--pro-text-dim)', fontSize: 17, lineHeight: 1.6, maxWidth: 760 }}>
           Standard x402 transfers remain visible on Base Sepolia. Daski does not publish a buyer-linked
-          activity feed, request hashes, attachments, or confidential receipts.
+          activity feed, request contents, private asset data, or confidential receipts.
         </p>
       </Section>
 

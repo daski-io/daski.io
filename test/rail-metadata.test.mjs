@@ -61,15 +61,6 @@ function validOutcome(overrides = {}) {
       providerTermsUrl: 'https://provider.example/terms-of-use',
       providerPrivacyUrl: 'https://provider.example/privacy-policy',
     },
-    refundPolicy: {
-      buyerRequested: true,
-      requestDeadlineSeconds: 86400,
-      executionReserveAddress: '0x4444444444444444444444444444444444444444',
-      releaseFailureDisposition: 'legal_hold',
-      providerFailureDisposition: 'refund_due',
-      dispatchAmbiguityDisposition: 'refund_due',
-      kycFailureDisposition: 'refund_due',
-    },
     deadlinePolicy: {
       draftSeconds: 600,
       minimumPaymentWindowSeconds: 120,
@@ -78,7 +69,6 @@ function validOutcome(overrides = {}) {
       releaseEvidenceSeconds: 600,
       dispatchSeconds: 900,
       fulfillmentSeconds: 172800,
-      refundSeconds: 86400,
     },
     capacityPolicy: { maxOpenOrders: 5 },
     providerReputation: validReputation(),
@@ -124,11 +114,6 @@ test('admits a fully valid rail metadata document', () => {
   assert.equal(parsed.outcomes[0].serviceId, `0x${'12'.repeat(32)}`);
   assert.equal(parsed.outcomes[0].reputation.transactionCount, '2');
   assert.equal(parsed.outcomes[0].reputation.totalPaid, '9007199254740993000000');
-  assert.deepEqual(parsed.outcomes[0].refundPolicy, {
-    buyerRequested: true,
-    requestDeadlineSeconds: 86400,
-    executionReserveAddress: '0x4444444444444444444444444444444444444444',
-  });
   assert.equal(parsed.outcomes[1].pricingMode, 'dynamic');
   assert.equal(parsed.outcomes[1].fixedGrossAmount, '0');
 });

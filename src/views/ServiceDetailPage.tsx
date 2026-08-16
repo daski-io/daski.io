@@ -93,27 +93,6 @@ export function ServiceDetailPage({ service }: { service: ServiceDetail }) {
       </Section>
 
       <Section pad="48px 32px 0">
-        <SectionHead kicker="refund policy" title="Reserved before settlement." />
-        <div className="dk-card" style={{ padding: 22 }}>
-          <p style={{ color: 'var(--pro-text-dim)', lineHeight: 1.6, marginTop: 0 }}>
-            Provider and Daski contributions are reserved before the facilitator is called.
-            Buyer-requested refunds are {rail.refundPolicy.buyerRequested ? 'available' : 'not offered'}
-            {rail.refundPolicy.buyerRequested
-              ? ` for ${formatDuration(rail.refundPolicy.requestDeadlineSeconds)} after purchase.`
-              : '.'}
-          </p>
-          {rail.bindingProfile === 'stock-fixed-v1' && (
-            <p style={{ color: 'var(--pro-text-dim)', lineHeight: 1.6 }}>
-              Replaying the identical signed authorization is a retry of the same purchase. A newly
-              signed authorization is a separate purchase and is refundable only under this policy.
-            </p>
-          )}
-          <Row label="Refund execution reserve" value={rail.refundPolicy.executionReserveAddress} link={basescanAddress(rail.refundPolicy.executionReserveAddress)} />
-          <Row label="Refund evidence deadline" value={formatDuration(rail.deadlinePolicy.refundSeconds)} />
-        </div>
-      </Section>
-
-      <Section pad="48px 32px 0">
         <SectionHead kicker="terms" title="Contracting parties and policies." />
         <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap' }}>
           <a href={service.legal.providerTermsUrl}>Provider terms</a>
