@@ -5,6 +5,7 @@ import {
   reputationRate,
   type PublicSkill,
   type ServiceDetail,
+  type StandardReputation,
 } from '../../lib/api';
 import { Mono } from '../ui/Mono';
 import { Section } from '../ui/Section';
@@ -36,9 +37,8 @@ export function ServiceSkillsTable({ service }: { service: ServiceDetail }) {
                   <div style={{ display: 'grid', gridTemplateColumns: COLUMNS, gap: 16, padding: '16px 20px', alignItems: 'center', color: 'var(--pro-text)' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                       <Mono mint style={{ fontSize: 13 }}>{skill.id}</Mono>
-                      <SkillTags service={service} />
                     </div>
-                    <Mono style={{ fontSize: 13 }}>{skillPrice(skill)}</Mono>
+                    <Mono style={{ fontSize: 13 }}>{skillPrice(skill, reputation)}</Mono>
                     <Mono style={{ fontSize: 13 }}>{atomicUsdc(reputation.totalPaid)} <DimUnit>USDC</DimUnit></Mono>
                     <Mono style={{ fontSize: 13 }}>
                       {reputation.averageFulfillmentSeconds === null
@@ -49,7 +49,7 @@ export function ServiceSkillsTable({ service }: { service: ServiceDetail }) {
                     <Mono style={{ fontSize: 13 }}>{reputationRate(satisfaction)}</Mono>
                     <ExpandButton isOpen={isOpen} onClick={() => setOpen((value) => ({ ...value, [skill.id]: !isOpen }))} />
                   </div>
-                  {isOpen && <SkillDescription skill={skill} service={service} />}
+                  {isOpen && <SkillDescription skill={skill} />}
                 </div>
               );
             })}
@@ -60,29 +60,26 @@ export function ServiceSkillsTable({ service }: { service: ServiceDetail }) {
   );
 }
 
-function skillPrice(skill: PublicSkill): string {
+function skillPrice(skill: PublicSkill, reputation: StandardReputation): string {
   if (!skill.paymentRequired) return 'free';
-  if (skill.variable) return 'dynamic quote';
-  return skill.basePrice ? `$${skill.basePrice}` : 'dynamic quote';
+  if (skill.variable) {
+    const transactions = BigInt(reputation.transactionCount);
+    if (transactions > 1n) {
+      return `variable · avg. $${atomicUsdc(
+        (BigInt(reputation.totalPaid) / transactions).toString(),
+      )}`;
+    }
+    return 'variable';
+  }
+  return skill.basePrice ? `$${skill.basePrice}` : 'variable';
 }
 
-function SkillTags({ service }: { service: ServiceDetail }) {
-  const tags = [
-    service.standardRail.bindingProfile,
-    service.standardRail.persistentAsset ? 'persistent asset' : null,
-  ].filter((value): value is string => value !== null);
-  return <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>{tags.map((tag) => <span key={tag} style={tagStyle}>{tag}</span>)}</div>;
-}
-
-function SkillDescription({ skill, service }: { skill: PublicSkill; service: ServiceDetail }) {
+function SkillDescription({ skill }: { skill: PublicSkill }) {
   return (
     <div style={{ padding: '0 20px 18px' }}>
       <div style={descriptionCardStyle}>
         <Mono dim style={{ fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>description</Mono>
         {skill.description ?? '–'}
-        <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--pro-border)', fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--pro-text-dim)' }}>
-          signed deadline: ≤ {formatDuration(service.standardRail.deadlinePolicy.fulfillmentSeconds)} · settlement: USDC Exact-EVM
-        </div>
       </div>
     </div>
   );
@@ -100,5 +97,4 @@ function DimUnit({ children }: { children: string }) {
   return <span style={{ color: 'var(--pro-text-dim)', marginLeft: 6, fontSize: 11 }}>{children}</span>;
 }
 
-const tagStyle = { fontFamily: 'var(--font-mono)', fontSize: 10, padding: '2px 6px', borderRadius: 4, border: '1px solid var(--pro-border)', color: 'var(--pro-text-dim)', letterSpacing: '0.04em' };
 const descriptionCardStyle = { padding: '14px 16px', borderRadius: 8, background: '#06070b', border: '1px solid var(--pro-border)', color: 'var(--pro-text)', fontSize: 13.5, lineHeight: 1.6 };

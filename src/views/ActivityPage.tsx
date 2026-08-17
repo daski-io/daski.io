@@ -1,18 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Section } from '../components/ui/Section';
-import { SectionHead } from '../components/ui/SectionHead';
 import { Caption, Mono } from '../components/ui/Mono';
 import { Icon } from '../components/ui/Icon';
+import { Section } from '../components/ui/Section';
+import { SectionHead } from '../components/ui/SectionHead';
 import {
   basescanAddress,
+  basescanTx,
+  buyerDisplay,
   getRailMetadata,
   servicePath,
   type StandardRailMetadata,
 } from '../lib/api';
-import {
-  marketplacePresentation,
-  relativeTime,
-} from '../lib/marketplacePresentation';
+import { marketplacePresentation, relativeTime } from '../lib/marketplacePresentation';
 
 const REFRESH_MS = 30_000;
 
@@ -59,8 +58,8 @@ export function ActivityPage({
             What&apos;s happening on <span style={{ color: 'var(--mint-400)' }}>the marketplace.</span>
           </h1>
           <p style={introStyle}>
-            Live finalized numbers from the marketplace and its standard x402 settlement layer.
-            Honest small numbers: they grow as agents start buying.
+            Live numbers from the marketplace and the settlement layer underneath. Honest small
+            numbers: they grow as agents start buying.
           </p>
         </div>
       </Section>
@@ -80,12 +79,13 @@ export function ActivityPage({
         <SectionHead
           kicker="recent purchases"
           title="Latest agent transactions."
-          subtitle="Finalized standard-rail purchases, with buyer identities and private receipts redacted."
+          subtitle="The most recent settlements through Daski. Each available receipt links to Basescan."
           action={<RefreshStatus seconds={tickSeconds} />}
         />
         <div className="dk-table" style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>
-          <div className="dk-table-head dk-activity-public-row">
-            <span>Service</span><span>Paid</span><span>Outcome</span><span>When</span>
+          <div className="dk-table-head dk-activity-row">
+            <span>Agent</span><span>Service</span><span>Paid</span>
+            <span>Skill</span><span>When</span><span>Receipt</span>
           </div>
           {loading && presentation.purchases.length === 0 ? (
             <EmptyRow>loading…</EmptyRow>
@@ -93,10 +93,11 @@ export function ActivityPage({
             <EmptyRow>No finalized paid activity yet.</EmptyRow>
           ) : presentation.purchases.slice(0, 50).map((purchase, index, rows) => (
             <div
-              key={`${purchase.outcome.outcomeId}:${purchase.timestamp}:${index}`}
-              className="dk-activity-public-row"
+              key={purchase.orderKey}
+              className="dk-activity-row"
               style={tableRowStyle(index < rows.length - 1)}
             >
+              <Mono>{buyerDisplay(purchase)}</Mono>
               <a className="dk-service-link" href={servicePath({
                 agentId: purchase.outcome.providerAgentId,
                 serviceSlug: purchase.outcome.outcomeId,
@@ -106,8 +107,13 @@ export function ActivityPage({
               <span style={{ color: 'var(--mint-400)' }}>
                 {formatAtomicPurchase(purchase.amount)} <span style={{ color: 'var(--pro-text-dim)' }}>USDC</span>
               </span>
-              <span style={ellipsisStyle}>{purchase.outcome.outcomeId}</span>
+              <span style={ellipsisStyle}>{purchase.outcomeId}</span>
               <span style={{ color: 'var(--pro-text-dim)' }}>{relativeTime(purchase.timestamp)}</span>
+              {purchase.txHash ? (
+                <a href={basescanTx(purchase.txHash)} target="_blank" rel="noreferrer" className="dk-basescan-link" style={receiptStyle}>
+                  tx <Icon name="external" size={11} />
+                </a>
+              ) : <Mono dim>–</Mono>}
             </div>
           ))}
         </div>
@@ -117,12 +123,12 @@ export function ActivityPage({
         <SectionHead
           kicker="settlement layer"
           title="The chain underneath."
-          subtitle="The same immutable payment routes agents verify before signing a standard x402 purchase."
+          subtitle="The same data that you'd see on Basescan, surfaced here for anyone digging into how settlement works."
         />
         <div className="dk-card" style={{ padding: 0, overflow: 'hidden' }}>
           <div className="dk-stat-row dk-stat-cols-3">
             <BigStat label="network" value={networkLabel(metadata)} hint={metadata ? `testnet · ${metadata.chainId}` : 'testnet · 84532'} mono={false} />
-            <BigStat label="finalized block" value={formatBlock(presentation.finalizedBlock)} hint="reputation projection" />
+            <BigStat label="block height" value={formatBlock(presentation.finalizedBlock)} hint="finalized" />
             <BigStat label="on-chain volume" value={`${presentation.totalPaid} USDC`} hint="settled · all-time" last />
           </div>
         </div>
@@ -147,21 +153,27 @@ function BigStat({ label, value, hint, last, mono = true }: {
 }
 
 function ContractRows({ metadata }: { metadata: StandardRailMetadata | null }) {
-  const rows = metadata ? [
-    { name: 'USDC (Base Sepolia)', address: metadata.paymentRail.asset },
-    ...metadata.outcomes.map((outcome) => ({ name: `${outcome.title} splitter`, address: outcome.payTo })),
+  const contracts = metadata?.contracts;
+  const rows = contracts ? [
+    { name: 'Standard-order ReputationStorage', address: contracts.reputationStorage },
+    { name: 'Ethereum Attestation Service', address: contracts.eas },
+    { name: 'IdentityRegistry (canonical ERC-8004)', address: contracts.identityRegistry },
+    { name: 'ProviderRegistry', address: contracts.providerRegistry },
+    { name: 'ServiceRegistry', address: contracts.serviceRegistry },
+    { name: 'ValidationRegistry', address: contracts.validationRegistry },
+    { name: 'USDC (Base Sepolia)', address: contracts.usdc },
   ] : [];
   return (
     <div style={{ marginTop: 20 }}>
       <Caption style={{ marginBottom: 10 }}>contract addresses · base sepolia</Caption>
       <div className="dk-card" style={{ padding: 0, overflow: 'hidden' }}>
         {rows.length === 0 ? <EmptyRow>Verified contract metadata unavailable.</EmptyRow> : rows.map((row, index) => (
-          <div key={`${row.name}:${row.address}`} className="dk-contracts-row" style={tableRowStyle(index < rows.length - 1)}>
+          <div key={row.name} className="dk-contracts-row" style={tableRowStyle(index < rows.length - 1)}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <Icon name="file" size={14} color="var(--pro-text-dim)" />
               <span style={{ fontWeight: 500, fontSize: 14 }}>{row.name}</span>
             </div>
-            <code style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--mint-400)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.address}</code>
+            <code style={contractStyle}>{row.address}</code>
             <a href={basescanAddress(row.address)} target="_blank" rel="noreferrer" className="dk-basescan-link">
               basescan <Icon name="external" size={11} />
             </a>
@@ -203,3 +215,5 @@ function tableRowStyle(hasBorder: boolean) {
 const heroStyle = { fontSize: 56, fontWeight: 700, color: 'var(--pro-text)', letterSpacing: '-0.03em', lineHeight: 1.04, margin: 0 };
 const introStyle = { color: 'var(--pro-text-dim)', fontSize: 17, lineHeight: 1.6, margin: '22px 0 0', maxWidth: 700 };
 const ellipsisStyle = { color: 'var(--pro-text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } as const;
+const receiptStyle = { color: 'var(--mint-400)', textTransform: 'none', letterSpacing: 0, fontSize: 11 } as const;
+const contractStyle = { fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--mint-400)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } as const;

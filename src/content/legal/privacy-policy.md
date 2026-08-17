@@ -57,6 +57,7 @@ We use personal data to:
 - discover and rank Provider services and route requests, quotes, status, and delivery information;
 - coordinate, settle, reconcile, and troubleshoot payments;
 - issue and protect payer-bound confidential receipts and retain recovery evidence;
+- index and display public transaction activity and transaction-linked reputation;
 - communicate about transactions, support, incidents, security, and Platform changes;
 - verify authority where appropriate and prevent fraud, abuse, sanctions violations, and unlawful activity;
 - enforce agreements, protect rights, resolve disputes, and comply with law;
@@ -86,6 +87,8 @@ We may disclose personal data to:
 - **successors and transaction counterparties**, in connection with financing, reorganization, merger, acquisition, or sale of assets, subject to appropriate safeguards.
 
 We do not sell personal data for money, share it for cross-context behavioral advertising, or process it for targeted advertising.
+
+The public marketplace activity feed may associate a payer wallet and any resolvable public Agent identity with the purchased service, amount, timestamp, and settlement transaction. Request contents, confidential receipts, Provider task identifiers, and private lifecycle and asset data are not included in that feed.
 
 ## 7. Cookies and analytics
 

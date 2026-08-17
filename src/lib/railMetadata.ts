@@ -24,6 +24,10 @@ function text(value: unknown, label: string): string {
   return value;
 }
 
+function nullableText(value: unknown, label: string): string | null {
+  return value === null ? null : text(value, label);
+}
+
 function integer(value: unknown, label: string): number {
   if (!Number.isSafeInteger(value) || Number(value) < 0) throw new Error(`${label} is invalid`);
   return Number(value);
@@ -106,10 +110,26 @@ function parseReputation(value: unknown, label: string): StandardOutcome['reputa
   }
   const recentPurchases = reputation.recentPurchases.map((value, index) => {
     const purchase = record(value, `${label} recent purchase ${index}`);
-    exact(purchase, ['amount', 'timestamp'], `${label} recent purchase ${index}`);
+    exact(purchase, [
+      'orderKey', 'txHash', 'payer', 'buyerAgentId', 'buyerName',
+      'amount', 'outcomeId', 'timestamp',
+    ], `${label} recent purchase ${index}`);
     const timestamp = text(purchase.timestamp, 'purchase timestamp');
     if (Number.isNaN(Date.parse(timestamp))) throw new Error('purchase timestamp is invalid');
-    return { amount: decimal(purchase.amount, 'purchase amount'), timestamp };
+    const buyerAgentId = nullableText(purchase.buyerAgentId, 'buyer agent ID');
+    if (buyerAgentId !== null && !/^(0|[1-9]\d*)$/.test(buyerAgentId)) {
+      throw new Error('buyer agent ID is invalid');
+    }
+    return {
+      orderKey: hash(purchase.orderKey, 'purchase order key'),
+      txHash: purchase.txHash === null ? null : hash(purchase.txHash, 'purchase transaction hash'),
+      payer: address(purchase.payer, 'purchase payer'),
+      buyerAgentId,
+      buyerName: nullableText(purchase.buyerName, 'buyer name'),
+      amount: decimal(purchase.amount, 'purchase amount'),
+      outcomeId: text(purchase.outcomeId, 'purchase outcome ID'),
+      timestamp,
+    };
   });
   return {
     transactionCount: decimal(reputation.transactionCount, 'transaction count'),
@@ -254,7 +274,9 @@ export function parseOutcomeIndex(value: unknown): { version: number; outcomes: 
 
 export function parseRailMetadata(value: unknown): StandardRailMetadata {
   const metadata = record(value, 'rail metadata');
-  exact(metadata, ['version', 'chainId', 'network', 'paymentRail', 'outcomes'], 'rail metadata');
+  exact(metadata, [
+    'version', 'chainId', 'network', 'paymentRail', 'contracts', 'outcomes',
+  ], 'rail metadata');
   if (metadata.version !== 2 || !Array.isArray(metadata.outcomes)) throw new Error('rail metadata is invalid');
   const rail = record(metadata.paymentRail, 'payment rail');
   exact(rail, [
@@ -267,6 +289,24 @@ export function parseRailMetadata(value: unknown): StandardRailMetadata {
     throw new Error('payment rail identity is invalid');
   }
   const asset = address(rail.asset, 'payment asset');
+  const contracts = record(metadata.contracts, 'contracts');
+  exact(contracts, [
+    'identityRegistry', 'agentIndex', 'providerRegistry', 'serviceRegistry',
+    'validationRegistry', 'reputationStorage', 'eas', 'usdc',
+  ], 'contracts');
+  const parsedContracts = {
+    identityRegistry: address(contracts.identityRegistry, 'identity registry'),
+    agentIndex: address(contracts.agentIndex, 'agent index'),
+    providerRegistry: address(contracts.providerRegistry, 'provider registry'),
+    serviceRegistry: address(contracts.serviceRegistry, 'service registry'),
+    validationRegistry: address(contracts.validationRegistry, 'validation registry'),
+    reputationStorage: address(contracts.reputationStorage, 'reputation storage'),
+    eas: address(contracts.eas, 'EAS'),
+    usdc: address(contracts.usdc, 'USDC'),
+  };
+  if (parsedContracts.usdc.toLowerCase() !== asset.toLowerCase()) {
+    throw new Error('contract USDC differs from the canonical payment asset');
+  }
   const outcomes = metadata.outcomes.map(parseOutcome);
   if (outcomes.some((outcome) => outcome.token.toLowerCase() !== asset.toLowerCase())) {
     throw new Error('outcome token differs from the canonical payment asset');
@@ -283,6 +323,7 @@ export function parseRailMetadata(value: unknown): StandardRailMetadata {
       activeRailProfileHash: hash(rail.activeRailProfileHash, 'active rail profile'),
       activeRailProfileUrl: https(rail.activeRailProfileUrl, 'active rail profile URL'),
     },
+    contracts: parsedContracts,
     outcomes,
   };
 }
