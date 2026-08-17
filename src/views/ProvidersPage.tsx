@@ -3,16 +3,8 @@ import { SectionHead } from '../components/ui/SectionHead';
 import { Caption, Mono } from '../components/ui/Mono';
 import { Icon, type IconName } from '../components/ui/Icon';
 import { Card } from '../components/ui/Card';
-import { ProviderDirectory } from '../components/providers/ProviderDirectory';
-import type { PublicService } from '../lib/api';
 
-export function ProvidersPage({
-  services,
-  registryAvailable,
-}: {
-  services: PublicService[];
-  registryAvailable: boolean;
-}) {
+export function ProvidersPage() {
   return (
     <div>
       <Section pad="88px 32px 48px">
@@ -138,21 +130,6 @@ export function ProvidersPage({
           ))}
         </div>
       </Section>
-
-      <Section pad="48px 32px 0">
-        <SectionHead
-          kicker="public operating record"
-          title="Every sale can strengthen the listing you control."
-          subtitle="Daski publishes finalized provider, service, and outcome aggregates with explicit sample sizes—never private payer identity or raw asset data."
-        />
-        <div className="dk-grid-3">
-          <NeedCard n="01" title="All-time volume" body="Finalized USDC sales are shown at provider, service, and outcome scope." icon="wallet" />
-          <NeedCard n="02" title="Delivery record" body="Completed, failed, and canceled standard orders feed a transparent completion sample." icon="check" />
-          <NeedCard n="03" title="Buyer signal" body="Wallet-signed confirmations are revision-aware, revocable, and displayed only with their sample size." icon="user" />
-        </div>
-      </Section>
-
-      <ProviderDirectory services={services} registryAvailable={registryAvailable} />
 
     </div>
   );

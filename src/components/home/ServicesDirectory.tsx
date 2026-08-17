@@ -6,9 +6,7 @@ import { Icon } from '../ui/Icon';
 import { Card } from '../ui/Card';
 import { ServiceTaxonomyChips } from '../ServiceTaxonomyChips';
 import {
-  formatDuration,
   priceRange,
-  reputationRate,
   serviceChips,
   serviceKey,
   servicePath,
@@ -277,11 +275,11 @@ function ServiceCard({ service }: { service: PublicService }) {
             </Mono>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <Mono style={{ fontSize: 14 }}>
-              ≤ {formatDuration(service.standardRail.deadlinePolicy.fulfillmentSeconds)}
-            </Mono>
+            <Mono style={{ fontSize: 14 }}>{formatAvgCompletion(
+              service.standardRail.reputation.averageFulfillmentSeconds,
+            )}</Mono>
             <Mono dim style={{ display: 'block', fontSize: 11, marginTop: 2, letterSpacing: '0.04em' }}>
-              signed deadline
+              avg completion
             </Mono>
           </div>
         </div>
@@ -314,13 +312,6 @@ function ServiceCard({ service }: { service: PublicService }) {
             <Mono dim style={{ fontSize: 11, letterSpacing: '0.02em' }}>
               {service.skills.length} skill{service.skills.length === 1 ? '' : 's'} ·{' '}
               {service.skills.filter((s) => s.paymentRequired).length} paid
-            </Mono>
-            <Mono dim style={{ fontSize: 11, letterSpacing: '0.02em' }}>
-              {service.standardRail.reputation.transactionCount} purchases ·{' '}
-              {reputationRate(
-                service.standardRail.reputation.valueWeightedBuyerSatisfactionRate ??
-                service.standardRail.reputation.buyerSatisfactionRate,
-              )} satisfaction ({service.standardRail.reputation.confirmationSampleSize})
             </Mono>
           </div>
           <span
@@ -361,11 +352,19 @@ function ServiceCardSkeleton() {
   );
 }
 
-/**
- * Format on-chain measured fulfillment time. `undefined` = still loading
- * (show em-dash placeholder); `null` = gateway returned no sample yet
- * (also em-dash); number = real seconds, formatted as e.g. "64s" or "2m".
- */
+function formatAvgCompletion(sec: number | null): string {
+  if (sec === null || sec < 0) return '–';
+  if (sec < 60) return `~${sec}s`;
+  if (sec < 3600) {
+    const minutes = Math.floor(sec / 60);
+    const seconds = sec % 60;
+    return seconds === 0 ? `~${minutes}m` : `~${minutes}m ${seconds}s`;
+  }
+  const hours = Math.floor(sec / 3600);
+  const minutes = Math.floor((sec % 3600) / 60);
+  return minutes === 0 ? `~${hours}h` : `~${hours}h ${minutes}m`;
+}
+
 function providerNameFromUri(uri: string): string | null {
   try {
     const u = new URL(uri);
