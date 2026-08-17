@@ -79,6 +79,19 @@ test('retains the established marketplace hierarchy while using rail data', asyn
   assert.match(purchases, /buyerDisplay/);
   assert.doesNotMatch(hero, /signed delivery deadline|x402-v2|exact-evm|bindingProfile/i);
   assert.doesNotMatch(skills, /signed deadline|exact-evm|bindingProfile/i);
-  assert.match(activity, /Standard-order ReputationStorage/);
+  const rowsSource = activity.match(/const rows = contracts \? \[([\s\S]*?)\] : \[\];/);
+  assert.ok(rowsSource, 'Activity contract rows were not found');
+  const contractRows = [
+    ...rowsSource[1].matchAll(
+      /\{\s*name:\s*['"]([^'"]+)['"],\s*address:\s*contracts\.([A-Za-z]\w*)\s*\}/g,
+    ),
+  ].map(([, name, field]) => ({ name, field }));
+  assert.deepEqual(contractRows, [
+    { name: 'AgentIndex', field: 'agentIndex' },
+    { name: 'ProviderRegistry', field: 'providerRegistry' },
+    { name: 'ServiceRegistry', field: 'serviceRegistry' },
+    { name: 'ValidationRegistry', field: 'validationRegistry' },
+    { name: 'ReputationStorage', field: 'reputationStorage' },
+  ]);
   assert.doesNotMatch(activity, /splitter/i);
 });

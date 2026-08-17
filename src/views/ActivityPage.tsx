@@ -155,13 +155,11 @@ function BigStat({ label, value, hint, last, mono = true }: {
 function ContractRows({ metadata }: { metadata: StandardRailMetadata | null }) {
   const contracts = metadata?.contracts;
   const rows = contracts ? [
-    { name: 'Standard-order ReputationStorage', address: contracts.reputationStorage },
-    { name: 'Ethereum Attestation Service', address: contracts.eas },
-    { name: 'IdentityRegistry (canonical ERC-8004)', address: contracts.identityRegistry },
+    { name: 'AgentIndex', address: contracts.agentIndex },
     { name: 'ProviderRegistry', address: contracts.providerRegistry },
     { name: 'ServiceRegistry', address: contracts.serviceRegistry },
     { name: 'ValidationRegistry', address: contracts.validationRegistry },
-    { name: 'USDC (Base Sepolia)', address: contracts.usdc },
+    { name: 'ReputationStorage', address: contracts.reputationStorage },
   ] : [];
   return (
     <div style={{ marginTop: 20 }}>
