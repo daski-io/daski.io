@@ -272,6 +272,15 @@ export function parseOutcomeIndex(value: unknown): { version: number; outcomes: 
   return { version: 2, outcomes: index.outcomes.map(parseOutcome) };
 }
 
+export function parseProviderAgentUri(value: unknown, expectedAgentId: string): string | null {
+  const provider = record(value, 'provider registration');
+  if (text(provider.agentId, 'provider agent ID') !== expectedAgentId) {
+    throw new Error('provider registration agent ID does not match');
+  }
+  const identity = record(provider.identity, 'provider identity');
+  return identity.agentUri === '' ? null : https(identity.agentUri, 'provider agent URI');
+}
+
 export function parseRailMetadata(value: unknown): StandardRailMetadata {
   const metadata = record(value, 'rail metadata');
   exact(metadata, [

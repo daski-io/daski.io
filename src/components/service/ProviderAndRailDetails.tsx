@@ -28,13 +28,12 @@ export function ProviderAndRailDetails({ service }: { service: ServiceDetail }) 
             )}
             <div style={linkRowStyle}>
               {service.providerWebsite && <ExternalLink href={service.providerWebsite}>Website</ExternalLink>}
-              <ExternalLink href={service.agentURI}>Provider Card</ExternalLink>
+              {service.agentURI && <ExternalLink href={service.agentURI}>Provider Card</ExternalLink>}
               <Addr link={basescanAddress(service.providerAddress)} style={{ fontSize: 12 }}>
                 {service.providerAddress}
               </Addr>
             </div>
             <div style={{ ...linkRowStyle, marginTop: 14 }}>
-              <span style={{ color: 'var(--pro-text)' }}>Contracting party: {service.legal.providerLegalName}</span>
               <ExternalLink href={service.legal.providerTermsUrl}>Provider Terms</ExternalLink>
               <ExternalLink href={service.legal.providerPrivacyUrl}>Provider Privacy</ExternalLink>
               <a href={service.legal.marketplaceTermsUrl} className="dk-link-mint">Daski Terms</a>

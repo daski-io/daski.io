@@ -365,7 +365,8 @@ function formatAvgCompletion(sec: number | null): string {
   return minutes === 0 ? `~${hours}h` : `~${hours}h ${minutes}m`;
 }
 
-function providerNameFromUri(uri: string): string | null {
+function providerNameFromUri(uri: string | null): string | null {
+  if (!uri) return null;
   try {
     const u = new URL(uri);
     const host = u.hostname;

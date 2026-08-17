@@ -1,5 +1,5 @@
 import type { CategoryFamily } from '../config/service-taxonomy';
-import { parseOutcomeIndex, parseRailMetadata } from './railMetadata';
+import { parseOutcomeIndex, parseProviderAgentUri, parseRailMetadata } from './railMetadata';
 import { atomicUsdc, formatDuration } from './displayFormat';
 
 export { atomicUsdc, formatDuration, reputationRate } from './displayFormat';
@@ -100,7 +100,7 @@ export interface PublicService {
   agentId: string;
   name: string;
   providerAddress: string;
-  agentURI: string;
+  agentURI: string | null;
   categoryFamily: CategoryFamily;
   serviceType: string;
   jurisdictions: string[];
@@ -161,7 +161,7 @@ async function fetchJson<T>(path: string, signal?: AbortSignal): Promise<T> {
 }
 
 
-function asService(outcome: StandardOutcome): PublicService {
+function asService(outcome: StandardOutcome, agentURI: string | null): PublicService {
   const basePrice = outcome.pricingMode === 'fixed'
     ? atomicUsdc(outcome.fixedGrossAmount)
     : null;
@@ -169,7 +169,7 @@ function asService(outcome: StandardOutcome): PublicService {
     agentId: outcome.providerAgentId,
     name: outcome.title,
     providerAddress: outcome.providerPayee,
-    agentURI: outcome.providerAudience,
+    agentURI,
     categoryFamily: outcome.categoryFamily,
     serviceType: outcome.serviceType,
     jurisdictions: outcome.jurisdictions,
@@ -206,7 +206,21 @@ function asService(outcome: StandardOutcome): PublicService {
 
 export async function getServices(signal?: AbortSignal) {
   const response = parseOutcomeIndex(await fetchJson<unknown>('/public/v2/outcomes', signal));
-  return { services: response.outcomes.map(asService), cachedAt: null };
+  const agentIds = [...new Set(response.outcomes.map((outcome) => outcome.providerAgentId))];
+  const agentUris = new Map(await Promise.all(agentIds.map(async (agentId) => [
+    agentId,
+    parseProviderAgentUri(
+      await fetchJson<unknown>(`/public/v2/registry/providers/${encodeURIComponent(agentId)}`, signal),
+      agentId,
+    ),
+  ] as const)));
+  return {
+    services: response.outcomes.map((outcome) => asService(
+      outcome,
+      agentUris.get(outcome.providerAgentId) ?? null,
+    )),
+    cachedAt: null,
+  };
 }
 
 export async function getServiceDetail(agentId: string, outcomeId?: string | null, signal?: AbortSignal) {

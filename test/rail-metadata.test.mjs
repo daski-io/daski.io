@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { parseOutcomeIndex, parseRailMetadata } from '../src/lib/railMetadata.ts';
+import {
+  parseOutcomeIndex,
+  parseProviderAgentUri,
+  parseRailMetadata,
+} from '../src/lib/railMetadata.ts';
 
 const USDC = '0x036CbD53842c5426634e7929541eC2318f3dCF7e';
 const CONTRACTS = {
@@ -167,6 +171,25 @@ test('admits a valid outcome index and rejects cross-asset outcomes', () => {
   assert.throws(() => parseRailMetadata(validMetadata([
     validOutcome({ token: '0x5555555555555555555555555555555555555555' }),
   ])), /differs from the canonical payment asset/);
+});
+
+test('reads the registered provider card URI from provider identity', () => {
+  const registration = {
+    agentId: '11',
+    identity: {
+      owner: '0x1111111111111111111111111111111111111111',
+      agentWallet: '0x2222222222222222222222222222222222222222',
+      agentUri: 'https://provider.example/.well-known/agent.json',
+    },
+  };
+  assert.equal(
+    parseProviderAgentUri(registration, '11'),
+    'https://provider.example/.well-known/agent.json',
+  );
+  assert.throws(
+    () => parseProviderAgentUri(registration, '12'),
+    /agent ID does not match/,
+  );
 });
 
 test('fails closed on malformed live rail metadata', () => {
