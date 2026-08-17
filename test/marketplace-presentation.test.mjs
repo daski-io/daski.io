@@ -17,7 +17,7 @@ function outcome(outcomeId, outcomeReputation) {
   return { outcomeId, title: outcomeId, providerAgentId: '1', reputation: outcomeReputation };
 }
 
-test('derives marketplace totals and redacted recent purchases from the new rail', () => {
+test('derives marketplace totals and public purchase rows from the new rail', () => {
   const presented = marketplacePresentation({
     outcomes: [
       outcome('domain', reputation({
@@ -44,11 +44,12 @@ test('derives marketplace totals and redacted recent purchases from the new rail
 test('retains the established marketplace hierarchy while using rail data', async () => {
   const root = new URL('../', import.meta.url);
   const read = (path) => readFile(new URL(path, root), 'utf8');
-  const [activity, service, hero, details, purchases] = await Promise.all([
+  const [activity, service, hero, details, skills, purchases] = await Promise.all([
     read('src/views/ActivityPage.tsx'),
     read('src/views/ServiceDetailPage.tsx'),
     read('src/components/service/ServiceHero.tsx'),
     read('src/components/service/ProviderAndRailDetails.tsx'),
+    read('src/components/service/ServiceSkillsTable.tsx'),
     read('src/components/service/ServicePurchasesAndUsage.tsx'),
   ]);
 
@@ -59,8 +60,12 @@ test('retains the established marketplace hierarchy while using rail data', asyn
   assert.match(service, /ServiceHero/);
   assert.match(service, /ProviderAndRailDetails/);
   assert.match(hero, /All-time Purchases/);
-  assert.match(details, /The payment route\./);
+  assert.doesNotMatch(details, /The payment route\.|Outcome splitter|listing manifest/i);
   assert.match(purchases, /how to use this service from your agent/);
-  assert.doesNotMatch(activity, /buyerDisplay|buyerAgentId|payerAddress/);
-  assert.doesNotMatch(purchases, /buyerDisplay|buyerAgentId|payerAddress/);
+  assert.match(activity, /buyerDisplay/);
+  assert.match(purchases, /buyerDisplay/);
+  assert.doesNotMatch(hero, /signed delivery deadline|x402-v2|exact-evm|bindingProfile/i);
+  assert.doesNotMatch(skills, /signed deadline|exact-evm|bindingProfile/i);
+  assert.match(activity, /Standard-order ReputationStorage/);
+  assert.doesNotMatch(activity, /splitter/i);
 });

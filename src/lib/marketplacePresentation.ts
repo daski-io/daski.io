@@ -1,15 +1,17 @@
-import type { StandardOutcome, StandardRailMetadata } from './api.ts';
+import type {
+  PublicMarketplacePurchase,
+  StandardOutcome,
+  StandardRailMetadata,
+} from './api.ts';
 import { atomicUsdc } from './displayFormat.ts';
 
-export interface PublicMarketplacePurchase {
-  amount: string;
+export interface MarketplacePurchase extends PublicMarketplacePurchase {
   outcome: StandardOutcome;
-  timestamp: string;
 }
 
 export interface MarketplacePresentation {
   finalizedBlock: string | null;
-  purchases: PublicMarketplacePurchase[];
+  purchases: MarketplacePurchase[];
   serviceCount: number;
   totalPaid: string;
   transactionCount: string;

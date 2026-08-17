@@ -3,6 +3,16 @@ import test from 'node:test';
 import { parseOutcomeIndex, parseRailMetadata } from '../src/lib/railMetadata.ts';
 
 const USDC = '0x036CbD53842c5426634e7929541eC2318f3dCF7e';
+const CONTRACTS = {
+  identityRegistry: '0x1111111111111111111111111111111111111111',
+  agentIndex: '0x2222222222222222222222222222222222222222',
+  providerRegistry: '0x3333333333333333333333333333333333333333',
+  serviceRegistry: '0x4444444444444444444444444444444444444444',
+  validationRegistry: '0x5555555555555555555555555555555555555555',
+  reputationStorage: '0x6666666666666666666666666666666666666666',
+  eas: '0x7777777777777777777777777777777777777777',
+  usdc: USDC,
+};
 
 function validReputation(overrides = {}) {
   return {
@@ -21,7 +31,16 @@ function validReputation(overrides = {}) {
     totalRefunded: '5000000',
     averageFulfillmentSeconds: 90,
     fulfillmentSampleSize: '1',
-    recentPurchases: [{ amount: '5000000', timestamp: '2026-08-13T12:00:00.000Z' }],
+    recentPurchases: [{
+      orderKey: `0x${'89'.repeat(32)}`,
+      txHash: `0x${'90'.repeat(32)}`,
+      payer: '0x8888888888888888888888888888888888888888',
+      buyerAgentId: '42',
+      buyerName: 'Test Buyer',
+      amount: '5000000',
+      outcomeId: 'domain-registration',
+      timestamp: '2026-08-13T12:00:00.000Z',
+    }],
     finalizedBlock: '12345690',
     ...overrides,
   };
@@ -91,6 +110,7 @@ function validMetadata(outcomes = [validOutcome()]) {
       activeRailProfileHash: `0x${'ef'.repeat(32)}`,
       activeRailProfileUrl: 'https://gateway.example/public/v2/artifacts/profile',
     },
+    contracts: CONTRACTS,
     outcomes,
   };
 }
@@ -108,6 +128,7 @@ test('admits a fully valid rail metadata document', () => {
   assert.equal(parsed.version, 2);
   assert.equal(parsed.chainId, 84532);
   assert.equal(parsed.paymentRail.asset, USDC);
+  assert.equal(parsed.contracts.reputationStorage, CONTRACTS.reputationStorage);
   assert.equal(parsed.outcomes.length, 2);
   assert.equal(parsed.outcomes[0].bindingProfile, 'stock-fixed-v1');
   assert.equal(parsed.outcomes[0].commissionBps, 500);
@@ -154,6 +175,7 @@ test('fails closed on malformed live rail metadata', () => {
     chainId: 84532,
     network: 'base-sepolia',
     paymentRail: true,
+    contracts: CONTRACTS,
     outcomes: [],
   }), /payment rail must be an object/);
   assert.throws(() => parseRailMetadata({
@@ -161,6 +183,7 @@ test('fails closed on malformed live rail metadata', () => {
     chainId: 84532,
     network: 'base-sepolia',
     paymentRail: {},
+    contracts: CONTRACTS,
     outcomes: [],
     injected: true,
   }), /unexpected shape/);

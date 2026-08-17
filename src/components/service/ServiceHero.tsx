@@ -10,7 +10,6 @@ import {
 } from '../../lib/api';
 import { ServiceTaxonomyChips } from '../ServiceTaxonomyChips';
 import { Icon, type IconName } from '../ui/Icon';
-import { Mono } from '../ui/Mono';
 import { Section } from '../ui/Section';
 
 export function ServiceHero({ service }: { service: ServiceDetail }) {
@@ -44,34 +43,27 @@ export function ServiceHero({ service }: { service: ServiceDetail }) {
         />
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 18 }}>
           {serviceChips(service).map((chip) => <span key={chip} className="dk-skill-chip">{chip}</span>)}
-          {service.skills.filter((skill) => skill.paymentRequired).map((skill) => (
-            <span key={skill.id} className="dk-skill-chip">{skill.id}</span>
-          ))}
         </div>
         <p style={descriptionStyle}>
           {service.serviceDescription ?? 'A real service offered to AI agents on the Daski marketplace.'}
         </p>
-        <Mono dim style={{ display: 'block', marginTop: 12, fontSize: 11 }}>
-          signed delivery deadline · ≤ {formatDuration(service.standardRail.deadlinePolicy.fulfillmentSeconds)}
-        </Mono>
-
         <div style={statsFrameStyle}>
           <div className="dk-stat-grid dk-collapse-6-to-3" style={{ gridTemplateColumns: 'repeat(6, 1fr)' }}>
             <StatCell label="Price" value={price.value} unit={price.unit} mint />
             <StatCell label="All-time Purchases" value={reputation.transactionCount} />
             <StatCell label="All-time Sales" value={atomicUsdc(reputation.totalPaid)} unit="USDC" />
             <StatCell
-              label={`Avg Completion (${reputation.fulfillmentSampleSize})`}
+              label="Avg Completion Time"
               value={reputation.averageFulfillmentSeconds === null
                 ? '–'
                 : formatDuration(reputation.averageFulfillmentSeconds)}
             />
             <StatCell
-              label={`Completion Rate (${reputation.completionSampleSize})`}
+              label="Completion Rate"
               value={reputationRate(reputation.completionRate)}
             />
             <StatCell
-              label={`Buyer Satisfaction (${reputation.confirmationSampleSize})`}
+              label="Buyer Satisfaction"
               value={reputationRate(satisfaction)}
             />
           </div>

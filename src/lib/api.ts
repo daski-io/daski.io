@@ -64,8 +64,19 @@ export interface StandardReputation {
   totalRefunded: string;
   averageFulfillmentSeconds: number | null;
   fulfillmentSampleSize: string;
-  recentPurchases: Array<{ amount: string; timestamp: string }>;
+  recentPurchases: PublicMarketplacePurchase[];
   finalizedBlock: string | null;
+}
+
+export interface PublicMarketplacePurchase {
+  orderKey: string;
+  txHash: string | null;
+  payer: string;
+  buyerAgentId: string | null;
+  buyerName: string | null;
+  amount: string;
+  outcomeId: string;
+  timestamp: string;
 }
 
 export interface PublicServiceLegal {
@@ -129,6 +140,16 @@ export interface StandardRailMetadata {
     transferMethod: string;
     activeRailProfileHash: string;
     activeRailProfileUrl: string;
+  };
+  contracts: {
+    identityRegistry: string;
+    agentIndex: string;
+    providerRegistry: string;
+    serviceRegistry: string;
+    validationRegistry: string;
+    reputationStorage: string;
+    eas: string;
+    usdc: string;
   };
   outcomes: StandardOutcome[];
 }
@@ -214,6 +235,10 @@ export function basescanAddress(address: string) {
   return `https://sepolia.basescan.org/address/${address}`;
 }
 
+export function basescanTx(hash: string) {
+  return `https://sepolia.basescan.org/tx/${hash}`;
+}
+
 export function priceDisplay(service: Pick<PublicService, 'pricing'>) {
   return service.pricing.basePrice
     ? { value: service.pricing.basePrice, unit: 'USDC' }
@@ -226,7 +251,17 @@ export function priceRange(service: Pick<PublicService, 'pricing'>): string {
 }
 
 export function serviceChips(service: PublicService): string[] {
-  return [service.standardRail.bindingProfile, 'x402-v2', 'exact-evm'];
+  return service.skills
+    .filter((skill) => skill.paymentRequired)
+    .slice(0, 4)
+    .map((skill) => skill.id);
+}
+
+export function buyerDisplay(purchase: PublicMarketplacePurchase): string {
+  const name = purchase.buyerName?.trim();
+  if (name) return name;
+  if (purchase.buyerAgentId) return `agent#${purchase.buyerAgentId}`;
+  return shortAddress(purchase.payer, 8, 6);
 }
 
 export function shortAddress(value: string, head = 8, tail = 6): string {

@@ -310,8 +310,9 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   display: grid;
   grid-template-columns: 1.2fr 2fr 1fr;
 }
-/* Legacy marketplace table grids remain for older static content. The public
-   standard-rail projections use the redacted variants below. */
+/* Recent purchases on a service omit the Service column; the activity page
+   includes it. Both retain the established Agent / Paid / Skill / Receipt
+   presentation while sourcing rows from Standard Rail reputation records. */
 .dk-recent-row {
   display: grid;
   grid-template-columns: 170px 100px 1.2fr 100px 80px;
@@ -320,22 +321,13 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   display: grid;
   grid-template-columns: 170px 1.4fr 100px 1.2fr 100px 80px;
 }
-.dk-recent-public-row {
-  display: grid;
-  grid-template-columns: 140px 1.4fr 120px 100px;
-}
-.dk-activity-public-row {
-  display: grid;
-  grid-template-columns: 1.5fr 140px 1.2fr 110px;
-}
 .dk-contracts-row {
   display: grid;
   grid-template-columns: 200px 1fr 120px;
 }
 
 @media (max-width: 720px) {
-  .dk-skills-row, .dk-recent-row, .dk-activity-row,
-  .dk-recent-public-row, .dk-activity-public-row {
+  .dk-skills-row, .dk-recent-row, .dk-activity-row {
     grid-template-columns: 1fr;
   }
   .dk-contracts-row { grid-template-columns: 1fr auto; }

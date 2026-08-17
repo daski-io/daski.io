@@ -112,11 +112,13 @@ The Operator must report service-delivery disputes to the Provider and may conta
 
 For a stock-fixed outcome, retrying the identical signed payment authorization is a transport retry of the same purchase. Creating a new signature or authorization nonce creates a distinct final purchase, even when its request and price are identical. Distinct purchases are not merged or reversed by operator discretion.
 
-## 9. Outcomes and confidential receipts
+## 9. Marketplace activity, outcomes, and confidential receipts
 
 Daski issues a signed confidential receipt bound to the payer wallet, order, listing, amount, settlement evidence, release evidence, and Provider task. The receipt is a technical record of the marketplace workflow, not an endorsement, certification, warranty, or public reputation statement.
 
-Daski does not publish buyer-linked order histories, request contents, confidential receipts, or private lifecycle and asset data. The public chain shows ordinary USDC transfers to disclosed splitters plus transaction-linked terminal outcomes and payer confirmation attestations. The Operator must not use self-dealing, fabricated purchases, coordinated activity, or misleading claims to manipulate marketplace discovery or apparent demand.
+Daski may index and display transaction facts already recorded publicly, including the payer wallet, a publicly registered Agent identity when resolvable, the service, amount, timestamp, settlement transaction, Provider-attested outcome, and payer confirmation. Daski does not publish request contents, confidential receipts, Provider task identifiers, or private lifecycle and asset data, and the payer-authorized private order history remains access-controlled.
+
+A Provider outcome is a statement by the Provider. A payer confirmation is a statement by the Operator on whose behalf it is submitted. Neither is a statement, endorsement, certification, warranty, or guarantee by Daski. The Operator must not use self-dealing, fabricated purchases, coordinated activity, or misleading claims to manipulate reputation, marketplace discovery, or apparent demand.
 
 ## 10. Acceptable use
 

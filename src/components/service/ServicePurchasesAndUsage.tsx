@@ -1,5 +1,10 @@
 import { useState } from 'react';
-import { atomicUsdc, type ServiceDetail } from '../../lib/api';
+import {
+  atomicUsdc,
+  basescanTx,
+  buyerDisplay,
+  type ServiceDetail,
+} from '../../lib/api';
 import { relativeTime } from '../../lib/marketplacePresentation';
 import { Icon } from '../ui/Icon';
 import { Caption, Mono } from '../ui/Mono';
@@ -14,23 +19,27 @@ export function ServicePurchasesAndUsage({ service }: { service: ServiceDetail }
         <SectionHead
           kicker="recent purchases of this service"
           title={null}
-          subtitle="Finalized amounts and times are public. Buyer identity and private order receipts remain redacted."
         />
         {purchases.length === 0 ? <EmptyPurchases /> : (
           <div className="dk-table" style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>
-            <div className="dk-table-head dk-recent-public-row">
-              <span>Paid</span><span>Outcome</span><span>When</span><span>State</span>
+            <div className="dk-table-head dk-recent-row">
+              <span>Agent</span><span>Paid</span><span>Skill</span><span>When</span><span>Receipt</span>
             </div>
             {purchases.map((purchase, index) => (
               <div
-                key={`${purchase.timestamp}:${index}`}
-                className="dk-recent-public-row"
+                key={purchase.orderKey}
+                className="dk-recent-row"
                 style={{ padding: '12px 16px', gap: 16, borderBottom: index < purchases.length - 1 ? '1px solid var(--pro-border)' : 'none', alignItems: 'center', color: 'var(--pro-text)' }}
               >
+                <Mono>{buyerDisplay(purchase)}</Mono>
                 <span style={{ color: 'var(--mint-400)' }}>{atomicUsdc(purchase.amount)} <span style={{ color: 'var(--pro-text-dim)' }}>USDC</span></span>
-                <span style={ellipsisStyle}>{service.standardRail.outcomeId}</span>
+                <span style={ellipsisStyle}>{purchase.outcomeId}</span>
                 <span style={{ color: 'var(--pro-text-dim)' }}>{relativeTime(purchase.timestamp)}</span>
-                <Mono mint>finalized</Mono>
+                {purchase.txHash ? (
+                  <a href={basescanTx(purchase.txHash)} target="_blank" rel="noreferrer" className="dk-basescan-link" style={receiptStyle}>
+                    tx <Icon name="external" size={11} />
+                  </a>
+                ) : <Mono dim>–</Mono>}
               </div>
             ))}
           </div>
@@ -59,7 +68,7 @@ export function ServicePurchasesAndUsage({ service }: { service: ServiceDetail }
 function EmptyPurchases() {
   return (
     <div style={{ border: '1px solid var(--pro-border)', borderRadius: 12, background: 'var(--pro-surface)', padding: 28, textAlign: 'center', color: 'var(--pro-text-dim)', fontSize: 14, lineHeight: 1.6 }}>
-      <Mono dim style={{ display: 'block', fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>0 finalized purchases in the public sample</Mono>
+      <Mono dim style={{ display: 'block', fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>0 recent purchases</Mono>
       Activity will appear here as agents use this service.
     </div>
   );
@@ -94,4 +103,5 @@ function CopySmall({ text }: { text: string }) {
 }
 
 const ellipsisStyle = { color: 'var(--pro-text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } as const;
+const receiptStyle = { color: 'var(--mint-400)', textTransform: 'none', letterSpacing: 0, fontSize: 11 } as const;
 const helpTextStyle = { color: 'var(--pro-text-dim)', fontSize: 13, marginTop: 12, lineHeight: 1.55 };

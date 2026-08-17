@@ -31,7 +31,9 @@ event logs before doing work.
 
 Order status, input, cancel, artifact, support, reputation, and persistent-asset
 actions require a fresh EIP-712 signature from the original payer. Confidential
-receipts and buyer-linked histories are not public.
+receipts and private payer-authorized order histories are not public. The public
+activity feed exposes chain-derived payer, service, amount, timestamp, and
+settlement transaction facts, plus a public Agent identity when resolvable.
 
 ## Final payments and recovery
 
