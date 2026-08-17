@@ -95,6 +95,44 @@ function parseTerms(value: unknown): StandardOutcome['terms'] {
   };
 }
 
+function parseServicePresentation(value: unknown): StandardOutcome['service'] {
+  const service = record(value, 'provider service presentation');
+  exact(service, [
+    'id', 'slug', 'version', 'name', 'description', 'categoryFamily', 'serviceType',
+    'jurisdictions', 'turnaroundEstimate', 'serviceLifecycle', 'agentCardUrl',
+    'providerA2AUrl',
+  ], 'provider service presentation');
+  const categoryFamily = text(service.categoryFamily, 'provider category family');
+  if (!SERVICE_CATEGORY_FAMILIES.some((family) => family.slug === categoryFamily)) {
+    throw new Error('provider category family is invalid');
+  }
+  return {
+    id: hash(service.id, 'provider service ID'),
+    slug: text(service.slug, 'provider service slug'),
+    version: text(service.version, 'provider service version'),
+    name: text(service.name, 'provider service name'),
+    description: text(service.description, 'provider service description'),
+    categoryFamily: categoryFamily as CategoryFamily,
+    serviceType: text(service.serviceType, 'provider service type'),
+    jurisdictions: stringArray(service.jurisdictions, 'provider jurisdictions'),
+    turnaroundEstimate: text(service.turnaroundEstimate, 'provider turnaround estimate'),
+    serviceLifecycle: text(service.serviceLifecycle, 'provider service lifecycle'),
+    agentCardUrl: https(service.agentCardUrl, 'provider Agent Card URL'),
+    providerA2AUrl: https(service.providerA2AUrl, 'provider A2A URL'),
+  };
+}
+
+function parseSkillPresentation(value: unknown): StandardOutcome['skill'] {
+  const skill = record(value, 'provider skill presentation');
+  exact(skill, ['id', 'name', 'description', 'tags'], 'provider skill presentation');
+  return {
+    id: text(skill.id, 'provider skill ID'),
+    name: text(skill.name, 'provider skill name'),
+    description: text(skill.description, 'provider skill description'),
+    tags: stringArray(skill.tags, 'provider skill tags'),
+  };
+}
+
 function parseReputation(value: unknown, label: string): StandardOutcome['reputation'] {
   const reputation = record(value, label);
   exact(reputation, [
@@ -163,7 +201,7 @@ function parseReputation(value: unknown, label: string): StandardOutcome['reputa
 function parseOutcome(value: unknown): StandardOutcome {
   const outcome = record(value, 'standard outcome');
   exact(outcome, [
-    'providerAgentId', 'serviceId', 'outcomeId', 'title', 'description', 'bindingProfile',
+    'providerAgentId', 'serviceId', 'outcomeId', 'skillId', 'service', 'skill', 'bindingProfile',
     'pricingMode', 'fixedGrossAmount', 'token', 'payTo', 'providerPayee',
     'daskiCommissionReceiver', 'commissionBps', 'providerAudience',
     'absoluteResourceUri', 'listingManifestHash', 'providerOfferHash', 'terms',
@@ -227,12 +265,20 @@ function parseOutcome(value: unknown): StandardOutcome {
     ]),
   );
   if (typeof outcome.persistentAsset !== 'boolean') throw new Error('persistent asset is invalid');
+  const serviceId = hash(outcome.serviceId, 'service ID');
+  const skillId = text(outcome.skillId, 'skill ID');
+  const service = parseServicePresentation(outcome.service);
+  const skill = parseSkillPresentation(outcome.skill);
+  if (service.id.toLowerCase() !== serviceId.toLowerCase() || skill.id !== skillId) {
+    throw new Error('provider presentation does not match the admitted outcome');
+  }
   return {
     providerAgentId: text(outcome.providerAgentId, 'provider agent ID'),
-    serviceId: hash(outcome.serviceId, 'service ID'),
+    serviceId,
     outcomeId: text(outcome.outcomeId, 'outcome ID'),
-    title: text(outcome.title, 'outcome title'),
-    description: text(outcome.description, 'outcome description'),
+    skillId,
+    service,
+    skill,
     bindingProfile: outcome.bindingProfile as StandardOutcome['bindingProfile'],
     pricingMode: outcome.pricingMode as StandardOutcome['pricingMode'],
     fixedGrossAmount,

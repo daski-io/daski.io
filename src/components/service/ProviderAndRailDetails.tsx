@@ -1,6 +1,7 @@
 import {
   atomicUsdc,
   basescanAddress,
+  primaryOutcome,
   reputationRate,
   type ServiceDetail,
 } from '../../lib/api';
@@ -10,7 +11,7 @@ import { Section } from '../ui/Section';
 import { SectionHead } from '../ui/SectionHead';
 
 export function ProviderAndRailDetails({ service }: { service: ServiceDetail }) {
-  const reputation = service.standardRail.providerReputation;
+  const reputation = primaryOutcome(service).providerReputation;
   const satisfaction = reputation.valueWeightedBuyerSatisfactionRate
     ?? reputation.buyerSatisfactionRate;
 

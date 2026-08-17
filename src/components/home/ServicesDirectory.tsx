@@ -7,6 +7,7 @@ import { Card } from '../ui/Card';
 import { ServiceTaxonomyChips } from '../ServiceTaxonomyChips';
 import {
   priceRange,
+  primaryOutcome,
   serviceChips,
   serviceKey,
   servicePath,
@@ -276,7 +277,7 @@ function ServiceCard({ service }: { service: PublicService }) {
           </div>
           <div style={{ textAlign: 'right' }}>
             <Mono style={{ fontSize: 14 }}>{formatAvgCompletion(
-              service.standardRail.reputation.averageFulfillmentSeconds,
+              primaryOutcome(service).reputation.averageFulfillmentSeconds,
             )}</Mono>
             <Mono dim style={{ display: 'block', fontSize: 11, marginTop: 2, letterSpacing: '0.04em' }}>
               avg completion

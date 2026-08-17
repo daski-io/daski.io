@@ -25,7 +25,15 @@ export function marketplacePresentation(
   metadata: StandardRailMetadata | null,
 ): MarketplacePresentation {
   const outcomes = metadata?.outcomes ?? [];
-  const finalizedBlocks = outcomes
+  const services = [...new Map(outcomes.map((outcome) => [
+    outcome.serviceId.toLowerCase(),
+    outcome,
+  ])).values()];
+  const outcomesById = new Map(outcomes.map((outcome) => [
+    `${outcome.providerAgentId}:${outcome.outcomeId}`,
+    outcome,
+  ]));
+  const finalizedBlocks = services
     .map((outcome) => outcome.reputation.finalizedBlock)
     .filter((value): value is string => value !== null)
     .map(BigInt);
@@ -33,20 +41,20 @@ export function marketplacePresentation(
     (latest, block) => latest === null || block > latest ? block : latest,
     null,
   );
-  const purchases = outcomes
+  const purchases = services
     .flatMap((outcome) => outcome.reputation.recentPurchases.map((purchase) => ({
       ...purchase,
-      outcome,
+      outcome: outcomesById.get(`${outcome.providerAgentId}:${purchase.outcomeId}`) ?? outcome,
     })))
     .sort((left, right) => Date.parse(right.timestamp) - Date.parse(left.timestamp));
 
   return {
     finalizedBlock: finalizedBlock?.toString() ?? null,
     purchases,
-    serviceCount: outcomes.length,
-    totalPaid: atomicUsdc(addDecimalStrings(outcomes.map((outcome) => outcome.reputation.totalPaid))),
+    serviceCount: services.length,
+    totalPaid: atomicUsdc(addDecimalStrings(services.map((outcome) => outcome.reputation.totalPaid))),
     transactionCount: addDecimalStrings(
-      outcomes.map((outcome) => outcome.reputation.transactionCount),
+      services.map((outcome) => outcome.reputation.transactionCount),
     ),
   };
 }

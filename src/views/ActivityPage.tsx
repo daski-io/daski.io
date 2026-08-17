@@ -100,14 +100,14 @@ export function ActivityPage({
               <Mono>{buyerDisplay(purchase)}</Mono>
               <a className="dk-service-link" href={servicePath({
                 agentId: purchase.outcome.providerAgentId,
-                serviceSlug: purchase.outcome.outcomeId,
+                serviceSlug: purchase.outcome.service.slug,
               })}>
-                {purchase.outcome.title}
+                {purchase.outcome.service.name}
               </a>
               <span style={{ color: 'var(--mint-400)' }}>
                 {formatAtomicPurchase(purchase.amount)} <span style={{ color: 'var(--pro-text-dim)' }}>USDC</span>
               </span>
-              <span style={ellipsisStyle}>{purchase.outcomeId}</span>
+              <span style={ellipsisStyle}>{purchase.outcome.skill.name}</span>
               <span style={{ color: 'var(--pro-text-dim)' }}>{relativeTime(purchase.timestamp)}</span>
               {purchase.txHash ? (
                 <a href={basescanTx(purchase.txHash)} target="_blank" rel="noreferrer" className="dk-basescan-link" style={receiptStyle}>

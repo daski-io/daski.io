@@ -51,12 +51,32 @@ function validReputation(overrides = {}) {
 }
 
 function validOutcome(overrides = {}) {
+  const serviceId = `0x${'12'.repeat(32)}`;
   return {
     providerAgentId: '11',
-    serviceId: `0x${'12'.repeat(32)}`,
+    serviceId,
     outcomeId: 'domain-registration',
-    title: 'Domain registration',
-    description: 'Registers one domain for a year.',
+    skillId: 'register-domain',
+    service: {
+      id: serviceId,
+      slug: 'domain-management',
+      version: '1',
+      name: 'Domain Management',
+      description: 'Register and manage domain names.',
+      categoryFamily: 'domains-web',
+      serviceType: 'domain-management',
+      jurisdictions: ['global'],
+      turnaroundEstimate: '5-10 minutes',
+      serviceLifecycle: 'asset-lifecycle',
+      agentCardUrl: 'https://provider.example/agent-cards/domain-management.json',
+      providerA2AUrl: 'https://provider.example/a2a/domain-management',
+    },
+    skill: {
+      id: 'register-domain',
+      name: 'Register Domain',
+      description: 'Register a new domain.',
+      tags: ['domains'],
+    },
     bindingProfile: 'stock-fixed-v1',
     pricingMode: 'fixed',
     fixedGrossAmount: '5000000',
@@ -137,6 +157,8 @@ test('admits a fully valid rail metadata document', () => {
   assert.equal(parsed.outcomes[0].bindingProfile, 'stock-fixed-v1');
   assert.equal(parsed.outcomes[0].commissionBps, 500);
   assert.equal(parsed.outcomes[0].serviceId, `0x${'12'.repeat(32)}`);
+  assert.equal(parsed.outcomes[0].service.name, 'Domain Management');
+  assert.equal(parsed.outcomes[0].skill.name, 'Register Domain');
   assert.equal(parsed.outcomes[0].reputation.transactionCount, '2');
   assert.equal(parsed.outcomes[0].reputation.totalPaid, '9007199254740993000000');
   assert.equal(parsed.outcomes[1].pricingMode, 'dynamic');
@@ -171,6 +193,13 @@ test('admits a valid outcome index and rejects cross-asset outcomes', () => {
   assert.throws(() => parseRailMetadata(validMetadata([
     validOutcome({ token: '0x5555555555555555555555555555555555555555' }),
   ])), /differs from the canonical payment asset/);
+});
+
+test('rejects provider presentation that does not match the admitted identifiers', () => {
+  assert.throws(() => parseOutcomeIndex({
+    version: 2,
+    outcomes: [validOutcome({ skillId: 'different-skill' })],
+  }), /does not match the admitted outcome/);
 });
 
 test('reads the registered provider card URI from provider identity', () => {

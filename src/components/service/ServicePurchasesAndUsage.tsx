@@ -3,6 +3,7 @@ import {
   atomicUsdc,
   basescanTx,
   buyerDisplay,
+  primaryOutcome,
   type ServiceDetail,
 } from '../../lib/api';
 import { relativeTime } from '../../lib/marketplacePresentation';
@@ -12,7 +13,7 @@ import { Section } from '../ui/Section';
 import { SectionHead } from '../ui/SectionHead';
 
 export function ServicePurchasesAndUsage({ service }: { service: ServiceDetail }) {
-  const purchases = service.standardRail.reputation.recentPurchases;
+  const purchases = primaryOutcome(service).reputation.recentPurchases;
   return (
     <>
       <Section pad="40px 32px 0">

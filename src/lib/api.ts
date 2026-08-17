@@ -1,19 +1,20 @@
 import type { CategoryFamily } from '../config/service-taxonomy';
 import { parseOutcomeIndex, parseProviderAgentUri, parseRailMetadata } from './railMetadata';
-import { atomicUsdc, formatDuration } from './displayFormat';
+import { atomicUsdc } from './displayFormat';
 
 export { atomicUsdc, formatDuration, reputationRate } from './displayFormat';
 
 export const GATEWAY_URL =
-  (import.meta.env.PUBLIC_GATEWAY_URL as string | undefined) ??
+  (import.meta.env?.PUBLIC_GATEWAY_URL as string | undefined) ??
   'https://sandbox-gateway.daski.io';
 
 export interface StandardOutcome {
   providerAgentId: string;
   serviceId: string;
   outcomeId: string;
-  title: string;
-  description: string;
+  skillId: string;
+  service: StandardServicePresentation;
+  skill: StandardSkillPresentation;
   bindingProfile: 'stock-fixed-v1' | 'recipe-bound-v1';
   pricingMode: 'fixed' | 'dynamic';
   fixedGrossAmount: string;
@@ -46,6 +47,28 @@ export interface StandardOutcome {
   providerReputation: StandardReputation;
   serviceReputation: StandardReputation;
   reputation: StandardReputation;
+}
+
+export interface StandardServicePresentation {
+  id: string;
+  slug: string;
+  version: string;
+  name: string;
+  description: string;
+  categoryFamily: CategoryFamily;
+  serviceType: string;
+  jurisdictions: string[];
+  turnaroundEstimate: string;
+  serviceLifecycle: string;
+  agentCardUrl: string;
+  providerA2AUrl: string;
+}
+
+export interface StandardSkillPresentation {
+  id: string;
+  name: string;
+  description: string;
+  tags: string[];
 }
 
 export interface StandardReputation {
@@ -89,6 +112,7 @@ export interface PublicServiceLegal {
 
 export interface PublicSkill {
   id: string;
+  skillId: string;
   name: string;
   description: string | null;
   basePrice: string | null;
@@ -124,7 +148,7 @@ export interface PublicService {
     billingModel: string;
   };
   skills: PublicSkill[];
-  standardRail: StandardOutcome;
+  standardOutcomes: StandardOutcome[];
 }
 
 export type ServiceDetail = PublicService;
@@ -161,47 +185,71 @@ async function fetchJson<T>(path: string, signal?: AbortSignal): Promise<T> {
 }
 
 
-function asService(outcome: StandardOutcome, agentURI: string | null): PublicService {
-  const basePrice = outcome.pricingMode === 'fixed'
-    ? atomicUsdc(outcome.fixedGrossAmount)
+function asService(outcomes: StandardOutcome[], agentURI: string | null): PublicService {
+  const outcome = outcomes[0];
+  if (!outcome) throw new Error('service has no admitted outcomes');
+  const fixedPrices = outcomes
+    .filter((item) => item.pricingMode === 'fixed')
+    .map((item) => item.fixedGrossAmount);
+  const variable = outcomes.some((item) => item.pricingMode === 'dynamic') ||
+    new Set(fixedPrices).size > 1;
+  const basePrice = outcomes.length === 1 && fixedPrices[0]
+    ? atomicUsdc(fixedPrices[0])
     : null;
   return {
     agentId: outcome.providerAgentId,
-    name: outcome.title,
+    name: outcome.service.name,
     providerAddress: outcome.providerPayee,
     agentURI,
-    categoryFamily: outcome.categoryFamily,
-    serviceType: outcome.serviceType,
-    jurisdictions: outcome.jurisdictions,
-    serviceDescription: outcome.description,
-    serviceLifecycle: 'standard-x402',
-    turnaroundEstimate: `within ${formatDuration(outcome.deadlinePolicy.fulfillmentSeconds)}`,
-    providerA2AUrl: outcome.providerAudience,
+    categoryFamily: outcome.service.categoryFamily,
+    serviceType: outcome.service.serviceType,
+    jurisdictions: outcome.service.jurisdictions,
+    serviceDescription: outcome.service.description,
+    serviceLifecycle: outcome.service.serviceLifecycle,
+    turnaroundEstimate: outcome.service.turnaroundEstimate,
+    providerA2AUrl: outcome.service.providerA2AUrl,
     providerName: outcome.terms.providerLegalName,
     providerDescription: null,
     providerWebsite: null,
     iconUrl: null,
     serviceId: outcome.serviceId,
-    serviceSlug: outcome.outcomeId,
-    serviceVersion: '1',
+    serviceSlug: outcome.service.slug,
+    serviceVersion: outcome.service.version,
     legal: outcome.terms,
     pricing: {
       currency: 'USDC',
       basePrice,
-      pricingModel: outcome.pricingMode,
-      variable: outcome.pricingMode === 'dynamic',
+      pricingModel: variable ? 'variable' : 'fixed',
+      variable,
       billingModel: 'per outcome',
     },
-    skills: [{
-      id: outcome.outcomeId,
-      name: outcome.title,
-      description: outcome.description,
-      basePrice,
-      variable: outcome.pricingMode === 'dynamic',
+    skills: outcomes.map((item) => ({
+      id: item.outcomeId,
+      skillId: item.skill.id,
+      name: item.skill.name,
+      description: item.skill.description,
+      basePrice: item.pricingMode === 'fixed' ? atomicUsdc(item.fixedGrossAmount) : null,
+      variable: item.pricingMode === 'dynamic',
       paymentRequired: true,
-    }],
-    standardRail: outcome,
+    })),
+    standardOutcomes: outcomes,
   };
+}
+
+export function groupServices(
+  outcomes: StandardOutcome[],
+  agentUris: ReadonlyMap<string, string | null>,
+): PublicService[] {
+  const groups = new Map<string, StandardOutcome[]>();
+  for (const outcome of outcomes) {
+    const group = groups.get(outcome.serviceId) ?? [];
+    group.push(outcome);
+    groups.set(outcome.serviceId, group);
+  }
+  return [...groups.values()].map((group) => asService(
+    group,
+    agentUris.get(group[0]!.providerAgentId) ?? null,
+  ));
 }
 
 export async function getServices(signal?: AbortSignal) {
@@ -215,18 +263,15 @@ export async function getServices(signal?: AbortSignal) {
     ),
   ] as const)));
   return {
-    services: response.outcomes.map((outcome) => asService(
-      outcome,
-      agentUris.get(outcome.providerAgentId) ?? null,
-    )),
+    services: groupServices(response.outcomes, agentUris),
     cachedAt: null,
   };
 }
 
-export async function getServiceDetail(agentId: string, outcomeId?: string | null, signal?: AbortSignal) {
+export async function getServiceDetail(agentId: string, serviceSlug?: string | null, signal?: AbortSignal) {
   const response = await getServices(signal);
   const service = response.services.find((item) =>
-    item.agentId === agentId && (!outcomeId || item.serviceSlug === outcomeId),
+    item.agentId === agentId && (!serviceSlug || item.serviceSlug === serviceSlug),
   );
   if (!service) throw new Error('outcome not found');
   return service;
@@ -268,7 +313,13 @@ export function serviceChips(service: PublicService): string[] {
   return service.skills
     .filter((skill) => skill.paymentRequired)
     .slice(0, 4)
-    .map((skill) => skill.id);
+    .map((skill) => skill.skillId);
+}
+
+export function primaryOutcome(service: Pick<PublicService, 'standardOutcomes'>): StandardOutcome {
+  const outcome = service.standardOutcomes[0];
+  if (!outcome) throw new Error('service has no admitted outcomes');
+  return outcome;
 }
 
 export function buyerDisplay(purchase: PublicMarketplacePurchase): string {
