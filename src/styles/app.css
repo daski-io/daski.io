@@ -310,10 +310,8 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   display: grid;
   grid-template-columns: 1.2fr 2fr 1fr;
 }
-/* Recent purchases on the service detail page. Same column ordering as
-   the global /activity table minus the Service column (you're already
-   on the service page, no need to repeat the provider name).
-   Columns: Agent | Paid | Skill | When | Receipt. */
+/* Legacy marketplace table grids remain for older static content. The public
+   standard-rail projections use the redacted variants below. */
 .dk-recent-row {
   display: grid;
   grid-template-columns: 170px 100px 1.2fr 100px 80px;
@@ -322,13 +320,22 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   display: grid;
   grid-template-columns: 170px 1.4fr 100px 1.2fr 100px 80px;
 }
+.dk-recent-public-row {
+  display: grid;
+  grid-template-columns: 140px 1.4fr 120px 100px;
+}
+.dk-activity-public-row {
+  display: grid;
+  grid-template-columns: 1.5fr 140px 1.2fr 110px;
+}
 .dk-contracts-row {
   display: grid;
   grid-template-columns: 200px 1fr 120px;
 }
 
 @media (max-width: 720px) {
-  .dk-skills-row, .dk-recent-row, .dk-activity-row {
+  .dk-skills-row, .dk-recent-row, .dk-activity-row,
+  .dk-recent-public-row, .dk-activity-public-row {
     grid-template-columns: 1fr;
   }
   .dk-contracts-row { grid-template-columns: 1fr auto; }

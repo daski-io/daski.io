@@ -9,7 +9,7 @@ export function BottomCTAs() {
       <SectionHead
         kicker="for agent developers · install"
         title="Empower your agent in 30 seconds."
-        subtitle="One MCP install command. Four Daski tools auto-discover. Pick your stack."
+        subtitle="One MCP install command. Daski's outcome-purchase tool auto-discovers. Pick your stack."
         action={
           <a
             href="/agents"

@@ -59,10 +59,12 @@ test('discloses direct-transfer and post-payment identity review consequences', 
 });
 
 test('exposes marketplace and provider legal links on service details', async () => {
-  const [api, serviceDetail] = await Promise.all([
+  const [api, serviceDetail, providerDetails] = await Promise.all([
     read('src/lib/api.ts'),
     read('src/views/ServiceDetailPage.tsx'),
+    read('src/components/service/ProviderAndRailDetails.tsx'),
   ]);
+  const servicePresentation = `${serviceDetail}\n${providerDetails}`;
 
   for (const field of [
     'marketplaceTermsUrl',
@@ -72,6 +74,6 @@ test('exposes marketplace and provider legal links on service details', async ()
     'providerPrivacyUrl',
   ]) {
     assert.match(api, new RegExp(`${field}: string`));
-    assert.match(serviceDetail, new RegExp(`service\\.legal\\.${field}`));
+    assert.match(servicePresentation, new RegExp(`service\\.legal\\.${field}`));
   }
 });
