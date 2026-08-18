@@ -7,8 +7,8 @@ standards (MCP, x402 V2, A2A, ERC-8004). This repo is the marketing site, live a
 [sandbox.daski.io](https://sandbox.daski.io). For the full protocol design,
 read the [whitepaper](https://sandbox.daski.io/MarketplaceProtocolWhitePaper.pdf).
 
-Stack: Astro 6 (SSR) + React islands, served through Railway on the Node
-adapter. Requires Node >= 22.12 (Astro 6 floor; the Docker image runs node:22).
+Stack: Astro 7 (SSR) + React islands, served through Railway on the Node
+adapter. Requires Node >= 22.12; the Docker image runs node:22.
 Every page renders real HTML on the first byte so AI crawlers (ChatGPT, Claude,
 Perplexity) can read the service catalog without executing JavaScript.
 
