@@ -45,7 +45,7 @@ function validReputation(overrides = {}) {
       outcomeId: 'domain-registration',
       timestamp: '2026-08-13T12:00:00.000Z',
     }],
-    finalizedBlock: '12345690',
+    safeBlock: '12345690',
     ...overrides,
   };
 }
@@ -171,14 +171,14 @@ test('preserves no-signal reputation and rejects malformed samples', () => {
     completionSampleSize: '0', completionRate: null, confirmedCount: '0',
     confirmationSampleSize: '0', buyerSatisfactionRate: null,
     valueWeightedBuyerSatisfactionRate: null, averageFulfillmentSeconds: null,
-    fulfillmentSampleSize: '0', recentPurchases: [], finalizedBlock: null,
+    fulfillmentSampleSize: '0', recentPurchases: [], safeBlock: null,
   });
   const parsed = parseOutcomeIndex({
     version: 2,
     outcomes: [validOutcome({ reputation: noSignal })],
   });
   assert.equal(parsed.outcomes[0].reputation.completionRate, null);
-  assert.equal(parsed.outcomes[0].reputation.finalizedBlock, null);
+  assert.equal(parsed.outcomes[0].reputation.safeBlock, null);
   assert.throws(() => parseOutcomeIndex({
     version: 2,
     outcomes: [validOutcome({

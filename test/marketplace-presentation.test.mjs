@@ -8,7 +8,7 @@ import {
 
 function reputation(overrides = {}) {
   return {
-    transactionCount: '0', totalPaid: '0', recentPurchases: [], finalizedBlock: null,
+    transactionCount: '0', totalPaid: '0', recentPurchases: [], safeBlock: null,
     ...overrides,
   };
 }
@@ -23,7 +23,7 @@ function outcome(outcomeId, outcomeReputation) {
 }
 
 const domainReputation = reputation({
-  transactionCount: '9007199254740993', totalPaid: '5000000', finalizedBlock: '100',
+  transactionCount: '9007199254740993', totalPaid: '5000000', safeBlock: '100',
   recentPurchases: [{
     amount: '5000000', outcomeId: 'domain', timestamp: '2026-08-16T12:00:00.000Z',
   }],
@@ -36,7 +36,7 @@ test('derives marketplace totals and public purchase rows from the new rail', ()
       domain,
       { ...outcome('domain-renewal', domainReputation), serviceId: domain.serviceId },
       outcome('mailbox', reputation({
-        transactionCount: '2', totalPaid: '1250000', finalizedBlock: '101',
+        transactionCount: '2', totalPaid: '1250000', safeBlock: '101',
         recentPurchases: [{
           amount: '1250000', outcomeId: 'mailbox', timestamp: '2026-08-17T12:00:00.000Z',
         }],
@@ -47,7 +47,7 @@ test('derives marketplace totals and public purchase rows from the new rail', ()
   assert.equal(presented.serviceCount, 2);
   assert.equal(presented.transactionCount, '9007199254740995');
   assert.equal(presented.totalPaid, '6.25');
-  assert.equal(presented.finalizedBlock, '101');
+  assert.equal(presented.safeBlock, '101');
   assert.deepEqual(presented.purchases.map((purchase) => purchase.outcome.outcomeId), [
     'mailbox', 'domain',
   ]);

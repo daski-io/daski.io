@@ -10,7 +10,7 @@ export interface MarketplacePurchase extends PublicMarketplacePurchase {
 }
 
 export interface MarketplacePresentation {
-  finalizedBlock: string | null;
+  safeBlock: string | null;
   purchases: MarketplacePurchase[];
   serviceCount: number;
   totalPaid: string;
@@ -33,11 +33,11 @@ export function marketplacePresentation(
     `${outcome.providerAgentId}:${outcome.outcomeId}`,
     outcome,
   ]));
-  const finalizedBlocks = services
-    .map((outcome) => outcome.reputation.finalizedBlock)
+  const safeBlocks = services
+    .map((outcome) => outcome.reputation.safeBlock)
     .filter((value): value is string => value !== null)
     .map(BigInt);
-  const finalizedBlock = finalizedBlocks.reduce<bigint | null>(
+  const safeBlock = safeBlocks.reduce<bigint | null>(
     (latest, block) => latest === null || block > latest ? block : latest,
     null,
   );
@@ -49,7 +49,7 @@ export function marketplacePresentation(
     .sort((left, right) => Date.parse(right.timestamp) - Date.parse(left.timestamp));
 
   return {
-    finalizedBlock: finalizedBlock?.toString() ?? null,
+    safeBlock: safeBlock?.toString() ?? null,
     purchases,
     serviceCount: services.length,
     totalPaid: atomicUsdc(addDecimalStrings(services.map((outcome) => outcome.reputation.totalPaid))),

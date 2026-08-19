@@ -141,7 +141,7 @@ function parseReputation(value: unknown, label: string): StandardOutcome['reputa
     'confirmationSampleSize', 'buyerSatisfactionRate',
     'valueWeightedBuyerSatisfactionRate', 'totalPaid', 'totalRefunded',
     'averageFulfillmentSeconds', 'fulfillmentSampleSize', 'recentPurchases',
-    'finalizedBlock',
+    'safeBlock',
   ], label);
   if (!Array.isArray(reputation.recentPurchases)) {
     throw new Error(`${label} recent purchases are invalid`);
@@ -192,9 +192,9 @@ function parseReputation(value: unknown, label: string): StandardOutcome['reputa
     ),
     fulfillmentSampleSize: decimal(reputation.fulfillmentSampleSize, 'fulfillment sample size'),
     recentPurchases,
-    finalizedBlock: reputation.finalizedBlock === null
+    safeBlock: reputation.safeBlock === null
       ? null
-      : decimal(reputation.finalizedBlock, 'finalized block'),
+      : decimal(reputation.safeBlock, 'safe block'),
   };
 }
 

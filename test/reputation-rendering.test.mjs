@@ -23,7 +23,7 @@ function reputation(overrides = {}) {
     notConfirmedCount: '0', confirmationSampleSize: '0', buyerSatisfactionRate: null,
     valueWeightedBuyerSatisfactionRate: null, totalPaid: '0', totalRefunded: '0',
     averageFulfillmentSeconds: null, fulfillmentSampleSize: '0', recentPurchases: [],
-    finalizedBlock: null, ...overrides,
+    safeBlock: null, ...overrides,
   };
 }
 
@@ -51,14 +51,14 @@ test('presents no sample as no signal rather than zero percent', () => {
   assert.deepEqual(presented.recentPurchases, []);
 });
 
-test('presents finalized samples, revisions, refunds, and large numeric values', () => {
+test('presents safe block, revisions, refunds, and large numeric values', () => {
   const presented = reputationPresentation(outcome(reputation({
     transactionCount: '3', completedCount: '2', failedCount: '1',
     completionSampleSize: '3', completionRate: 66.67, confirmedCount: '1',
     notConfirmedCount: '1', confirmationSampleSize: '2', buyerSatisfactionRate: 50,
     valueWeightedBuyerSatisfactionRate: 75, totalPaid: '9007199254740993000000',
     totalRefunded: '5000000', averageFulfillmentSeconds: 90,
-    fulfillmentSampleSize: '2', finalizedBlock: '9999999999999999',
+    fulfillmentSampleSize: '2', safeBlock: '9999999999999999',
     recentPurchases: [{ amount: '5000000', timestamp: '2026-08-13T12:00:00.000Z' }],
   })));
   assert.ok(presented.rows.some((row) => row.value === '66.67%'));
