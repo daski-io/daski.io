@@ -88,7 +88,7 @@ export interface StandardReputation {
   averageFulfillmentSeconds: number | null;
   fulfillmentSampleSize: string;
   recentPurchases: PublicMarketplacePurchase[];
-  finalizedBlock: string | null;
+  safeBlock: string | null;
 }
 
 export interface PublicMarketplacePurchase {

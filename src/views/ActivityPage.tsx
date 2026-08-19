@@ -128,7 +128,7 @@ export function ActivityPage({
         <div className="dk-card" style={{ padding: 0, overflow: 'hidden' }}>
           <div className="dk-stat-row dk-stat-cols-3">
             <BigStat label="network" value={networkLabel(metadata)} hint={metadata ? `testnet · ${metadata.chainId}` : 'testnet · 84532'} mono={false} />
-            <BigStat label="block height" value={formatBlock(presentation.finalizedBlock)} hint="finalized" />
+            <BigStat label="block height" value={formatBlock(presentation.safeBlock)} hint="safe" />
             <BigStat label="on-chain volume" value={`${presentation.totalPaid} USDC`} hint="settled · all-time" last />
           </div>
         </div>

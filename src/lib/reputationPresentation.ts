@@ -75,7 +75,7 @@ export function reputationPresentation(outcome: StandardOutcome): {
       },
       { label: 'All-time sales', value: `${atomicUsdc(reputation.totalPaid)} USDC` },
       { label: 'All-time refunds', value: `${atomicUsdc(reputation.totalRefunded)} USDC` },
-      { label: 'Finalized block', value: reputation.finalizedBlock ?? '–' },
+      { label: 'Safe block', value: reputation.safeBlock ?? '–' },
     ],
     recentPurchases: reputation.recentPurchases.map((purchase) => ({
       label: purchaseTimestamp(purchase.timestamp),
