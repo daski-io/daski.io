@@ -14,19 +14,32 @@ function reputation(overrides = {}) {
 }
 
 function outcome(outcomeId, outcomeReputation) {
-  return { outcomeId, title: outcomeId, providerAgentId: '1', reputation: outcomeReputation };
+  return {
+    outcomeId,
+    serviceId: `0x${(outcomeId === 'domain' ? '11' : '22').repeat(32)}`,
+    providerAgentId: '1',
+    reputation: outcomeReputation,
+  };
 }
 
+const domainReputation = reputation({
+  transactionCount: '9007199254740993', totalPaid: '5000000', finalizedBlock: '100',
+  recentPurchases: [{
+    amount: '5000000', outcomeId: 'domain', timestamp: '2026-08-16T12:00:00.000Z',
+  }],
+});
+
 test('derives marketplace totals and public purchase rows from the new rail', () => {
+  const domain = outcome('domain', domainReputation);
   const presented = marketplacePresentation({
     outcomes: [
-      outcome('domain', reputation({
-        transactionCount: '9007199254740993', totalPaid: '5000000', finalizedBlock: '100',
-        recentPurchases: [{ amount: '5000000', timestamp: '2026-08-16T12:00:00.000Z' }],
-      })),
+      domain,
+      { ...outcome('domain-renewal', domainReputation), serviceId: domain.serviceId },
       outcome('mailbox', reputation({
         transactionCount: '2', totalPaid: '1250000', finalizedBlock: '101',
-        recentPurchases: [{ amount: '1250000', timestamp: '2026-08-17T12:00:00.000Z' }],
+        recentPurchases: [{
+          amount: '1250000', outcomeId: 'mailbox', timestamp: '2026-08-17T12:00:00.000Z',
+        }],
       })),
     ],
   });
@@ -66,6 +79,19 @@ test('retains the established marketplace hierarchy while using rail data', asyn
   assert.match(purchases, /buyerDisplay/);
   assert.doesNotMatch(hero, /signed delivery deadline|x402-v2|exact-evm|bindingProfile/i);
   assert.doesNotMatch(skills, /signed deadline|exact-evm|bindingProfile/i);
-  assert.match(activity, /Standard-order ReputationStorage/);
+  const rowsSource = activity.match(/const rows = contracts \? \[([\s\S]*?)\] : \[\];/);
+  assert.ok(rowsSource, 'Activity contract rows were not found');
+  const contractRows = [
+    ...rowsSource[1].matchAll(
+      /\{\s*name:\s*['"]([^'"]+)['"],\s*address:\s*contracts\.([A-Za-z]\w*)\s*\}/g,
+    ),
+  ].map(([, name, field]) => ({ name, field }));
+  assert.deepEqual(contractRows, [
+    { name: 'AgentIndex', field: 'agentIndex' },
+    { name: 'ProviderRegistry', field: 'providerRegistry' },
+    { name: 'ServiceRegistry', field: 'serviceRegistry' },
+    { name: 'ValidationRegistry', field: 'validationRegistry' },
+    { name: 'ReputationStorage', field: 'reputationStorage' },
+  ]);
   assert.doesNotMatch(activity, /splitter/i);
 });

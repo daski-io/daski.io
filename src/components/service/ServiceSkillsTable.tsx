@@ -2,6 +2,7 @@ import { useState } from 'react';
 import {
   atomicUsdc,
   formatDuration,
+  primaryOutcome,
   reputationRate,
   type PublicSkill,
   type ServiceDetail,
@@ -15,7 +16,7 @@ const COLUMNS = '1.1fr 1.4fr 1fr 1fr 1fr 1fr 76px';
 
 export function ServiceSkillsTable({ service }: { service: ServiceDetail }) {
   const [open, setOpen] = useState<Record<string, boolean>>({});
-  const reputation = service.standardRail.reputation;
+  const reputation = primaryOutcome(service).reputation;
   const satisfaction = reputation.valueWeightedBuyerSatisfactionRate
     ?? reputation.buyerSatisfactionRate;
 
@@ -36,7 +37,8 @@ export function ServiceSkillsTable({ service }: { service: ServiceDetail }) {
                 <div key={skill.id} style={{ borderBottom: index < service.skills.length - 1 ? '1px solid var(--pro-border)' : 'none' }}>
                   <div style={{ display: 'grid', gridTemplateColumns: COLUMNS, gap: 16, padding: '16px 20px', alignItems: 'center', color: 'var(--pro-text)' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                      <Mono mint style={{ fontSize: 13 }}>{skill.id}</Mono>
+                      <span style={{ fontSize: 13, fontWeight: 500 }}>{skill.name}</span>
+                      <Mono mint style={{ fontSize: 11 }}>{skill.id}</Mono>
                     </div>
                     <Mono style={{ fontSize: 13 }}>{skillPrice(skill, reputation)}</Mono>
                     <Mono style={{ fontSize: 13 }}>{atomicUsdc(reputation.totalPaid)} <DimUnit>USDC</DimUnit></Mono>

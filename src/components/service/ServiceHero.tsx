@@ -4,6 +4,7 @@ import {
   atomicUsdc,
   formatDuration,
   priceDisplay,
+  primaryOutcome,
   reputationRate,
   serviceChips,
   type ServiceDetail,
@@ -14,7 +15,7 @@ import { Section } from '../ui/Section';
 
 export function ServiceHero({ service }: { service: ServiceDetail }) {
   const family = categoryFamilyConfig(service.categoryFamily);
-  const reputation = service.standardRail.reputation;
+  const reputation = primaryOutcome(service).reputation;
   const price = priceDisplay(service);
   const satisfaction = reputation.valueWeightedBuyerSatisfactionRate
     ?? reputation.buyerSatisfactionRate;

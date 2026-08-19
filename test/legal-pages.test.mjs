@@ -77,3 +77,14 @@ test('exposes marketplace and provider legal links on service details', async ()
     assert.match(servicePresentation, new RegExp(`service\\.legal\\.${field}`));
   }
 });
+
+test('links the registered provider card without repeating the contracting party', async () => {
+  const [api, providerDetails] = await Promise.all([
+    read('src/lib/api.ts'),
+    read('src/components/service/ProviderAndRailDetails.tsx'),
+  ]);
+  assert.match(api, /parseProviderAgentUri/);
+  assert.doesNotMatch(api, /agentURI: outcome\.providerAudience/);
+  assert.match(providerDetails, /href=\{service\.agentURI\}>Provider Card/);
+  assert.doesNotMatch(providerDetails, /Contracting party:/);
+});
