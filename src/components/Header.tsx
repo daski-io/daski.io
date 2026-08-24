@@ -15,40 +15,6 @@ const ITEMS: NavItem[] = [
   { to: '/activity', label: 'Activity' },
 ];
 
-function NetworkBadge() {
-  return (
-    <a
-      href="https://sepolia.basescan.org/"
-      target="_blank"
-      rel="noreferrer"
-      title="Open Basescan"
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 6,
-        height: 24,
-        fontFamily: 'var(--font-mono)',
-        fontSize: 11,
-        color: 'var(--pro-text-dim)',
-        letterSpacing: '0.04em',
-        borderBottom: 'none',
-      }}
-    >
-      <span
-        style={{
-          width: 6,
-          height: 6,
-          borderRadius: '50%',
-          background: 'var(--mint-400)',
-          animation: 'dk-pulse 1.6s ease-in-out infinite',
-        }}
-      />
-      <span>base sepolia</span>
-      <Icon name="external" size={11} color="var(--pro-text-dim)" />
-    </a>
-  );
-}
-
 interface HeaderProps {
   pathname: string;
 }
@@ -157,25 +123,6 @@ export function Header({ pathname }: HeaderProps) {
             <Icon name="github" size={15} />
             <span>GitHub</span>
           </a>
-        </div>
-
-        {/* Always-visible: SANDBOX + Base Sepolia */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginLeft: 'auto' }}>
-          <span
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 10,
-              color: 'var(--pro-text-dim)',
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-              border: '1px solid var(--pro-border)',
-              borderRadius: 4,
-              padding: '2px 6px',
-            }}
-          >
-            sandbox
-          </span>
-          <NetworkBadge />
         </div>
 
         {/* Mobile hamburger toggle */}
