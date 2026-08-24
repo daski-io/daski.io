@@ -96,7 +96,7 @@ export function Footer() {
           title="Protocol"
           links={[
             { label: 'GitHub', href: 'https://github.com/daski-io', external: true },
-            { label: 'Whitepaper', href: '/MarketplaceProtocolWhitePaper.pdf', external: true },
+            { label: 'Whitepaper', href: '/agentic-procurement-protocol-whitepaper.pdf', external: true },
           ]}
         />
         <FooterCol
