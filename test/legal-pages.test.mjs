@@ -78,13 +78,19 @@ test('exposes marketplace and provider legal links on service details', async ()
   }
 });
 
-test('links the registered provider card without repeating the contracting party', async () => {
+test('links provider details and the registered provider card without repeating the contracting party', async () => {
   const [api, providerDetails] = await Promise.all([
     read('src/lib/api.ts'),
     read('src/components/service/ProviderAndRailDetails.tsx'),
   ]);
   assert.match(api, /parseProviderAgentUri/);
   assert.doesNotMatch(api, /agentURI: outcome\.providerAudience/);
+  assert.match(providerDetails, /href=\{outcome\.service\.agentCardUrl\}[^>]*>Details<\/a>/);
   assert.match(providerDetails, /href=\{service\.agentURI\}>Provider Card/);
+  assert.ok(
+    providerDetails.indexOf('>Provider Card</ExternalLink>')
+      < providerDetails.indexOf('>Provider Terms</ExternalLink>'),
+    'Provider Card must appear before Provider Terms',
+  );
   assert.doesNotMatch(providerDetails, /Contracting party:/);
 });

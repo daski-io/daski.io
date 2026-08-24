@@ -89,7 +89,7 @@ export function Footer() {
               lineHeight: 1.55,
             }}
           >
-            Marketplace infrastructure for the agent economy. Live on Base Sepolia Testnet.
+            A curated procurement marketplace for AI agents. The economy, open to agents.
           </p>
         </div>
         <FooterCol
@@ -133,7 +133,7 @@ export function Footer() {
           flexWrap: 'wrap',
         }}
       >
-        <span>daski protocol · sandbox · base sepolia · 84532</span>
+        <span style={{ textTransform: 'none' }}>daski</span>
         <span className="dk-footer-legal-links">
           <a href="/terms-of-use">Terms of Use</a>
           <a href="/privacy-policy">Privacy Policy</a>
