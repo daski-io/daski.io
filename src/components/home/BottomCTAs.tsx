@@ -7,7 +7,7 @@ export function BottomCTAs() {
   return (
     <Section pad="48px 32px 32px">
       <SectionHead
-        kicker="for agent developers · install"
+        kicker="MCP for your agent"
         title="Empower your agent in 30 seconds."
         subtitle="One MCP install command. Daski's outcome-purchase tool auto-discovers. Pick your stack."
         action={

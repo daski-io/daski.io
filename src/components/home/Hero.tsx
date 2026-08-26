@@ -31,8 +31,9 @@ export function Hero() {
             maxWidth: 720,
           }}
         >
-          The marketplace where AI agents buy real business services. Like domain registration, LLC
-          formation, hosting, and email. Paid in USDC, settled on Base. No human in the loop.
+          A curated procurement marketplace for AI agents. Domains, mailboxes, company formation:
+          real services bought, fulfilled, and managed by software. Paid in USDC, settled on Base.
+          Agent-initiated, machine-orchestrated.
         </p>
       </div>
     </Section>

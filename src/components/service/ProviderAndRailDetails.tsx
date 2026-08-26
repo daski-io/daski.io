@@ -11,7 +11,8 @@ import { Section } from '../ui/Section';
 import { SectionHead } from '../ui/SectionHead';
 
 export function ProviderAndRailDetails({ service }: { service: ServiceDetail }) {
-  const reputation = primaryOutcome(service).providerReputation;
+  const outcome = primaryOutcome(service);
+  const reputation = outcome.providerReputation;
   const satisfaction = reputation.valueWeightedBuyerSatisfactionRate
     ?? reputation.buyerSatisfactionRate;
 
@@ -29,12 +30,13 @@ export function ProviderAndRailDetails({ service }: { service: ServiceDetail }) 
             )}
             <div style={linkRowStyle}>
               {service.providerWebsite && <ExternalLink href={service.providerWebsite}>Website</ExternalLink>}
-              {service.agentURI && <ExternalLink href={service.agentURI}>Provider Card</ExternalLink>}
+              <a href={outcome.service.agentCardUrl} target="_blank" rel="noreferrer" className="dk-link-mint">Details</a>
               <Addr link={basescanAddress(service.providerAddress)} style={{ fontSize: 12 }}>
                 {service.providerAddress}
               </Addr>
             </div>
             <div style={{ ...linkRowStyle, marginTop: 14 }}>
+              {service.agentURI && <ExternalLink href={service.agentURI}>Provider Card</ExternalLink>}
               <ExternalLink href={service.legal.providerTermsUrl}>Provider Terms</ExternalLink>
               <ExternalLink href={service.legal.providerPrivacyUrl}>Provider Privacy</ExternalLink>
               <a href={service.legal.marketplaceTermsUrl} className="dk-link-mint">Daski Terms</a>

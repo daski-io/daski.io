@@ -74,7 +74,7 @@ test('retains the established marketplace hierarchy while using rail data', asyn
   assert.match(service, /ProviderAndRailDetails/);
   assert.match(hero, /All-time Purchases/);
   assert.doesNotMatch(details, /The payment route\.|Outcome splitter|listing manifest/i);
-  assert.match(purchases, /how to use this service from your agent/);
+  assert.doesNotMatch(purchases, /how to use this service from your agent/);
   assert.match(activity, /buyerDisplay/);
   assert.match(purchases, /buyerDisplay/);
   assert.doesNotMatch(hero, /signed delivery deadline|x402-v2|exact-evm|bindingProfile/i);
