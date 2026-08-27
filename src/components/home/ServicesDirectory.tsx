@@ -125,10 +125,8 @@ export function ServicesDirectory({ services, loading, error }: ServicesDirector
   );
 }
 
-// Renders the provider's brand mark when the AgentCard advertises an
-// iconUrl (A2A v1.0); otherwise falls back to a category-family glyph.
-// On image load failure (broken URL, hot-link block) we also fall back —
-// the cell never goes blank.
+// Renders a category-family glyph for the service. Provider brand marks
+// return once the v3 catalog exposes a validated iconUrl.
 function ServiceIcon({ categoryFamily }: { categoryFamily: CategoryFamily }) {
   const family = categoryFamilyConfig(categoryFamily);
   return (
