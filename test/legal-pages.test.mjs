@@ -78,19 +78,19 @@ test('exposes marketplace and provider legal links on service details', async ()
   }
 });
 
-test('links provider details and the registered provider card without repeating the contracting party', async () => {
+test('links gateway-supplied provider details without a secondary card lookup', async () => {
   const [api, providerDetails] = await Promise.all([
     read('src/lib/api.ts'),
     read('src/components/service/ProviderAndRailDetails.tsx'),
   ]);
-  assert.match(api, /parseProviderAgentUri/);
-  assert.doesNotMatch(api, /agentURI: outcome\.providerAudience/);
-  assert.match(providerDetails, /href=\{outcome\.service\.agentCardUrl\}[^>]*>Details<\/a>/);
-  assert.match(providerDetails, /href=\{service\.agentURI\}>Provider Card/);
+  assert.match(api, /agentCardUrl: httpsUrl\(item\.agentCardUrl/);
+  assert.doesNotMatch(api, /parseProviderAgentUri|fetchProviderCard/);
+  assert.match(providerDetails, /href=\{service\.agentCardUrl\}>Service card<\/ExternalLink>/);
+  assert.match(providerDetails, /href=\{service\.providerA2AUrl\}>Provider origin<\/ExternalLink>/);
   assert.ok(
-    providerDetails.indexOf('>Provider Card</ExternalLink>')
+    providerDetails.indexOf('>Service card</ExternalLink>')
       < providerDetails.indexOf('>Provider Terms</ExternalLink>'),
-    'Provider Card must appear before Provider Terms',
+    'Service card must appear before Provider Terms',
   );
   assert.doesNotMatch(providerDetails, /Contracting party:/);
 });

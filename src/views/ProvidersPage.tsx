@@ -77,27 +77,27 @@ export function ProvidersPage() {
           {[
             {
               n: 1,
-              t: 'Implement the provider control plane',
+              t: 'Register and publish',
               sub:
-                'Expose signed quote, dispatch, lifecycle, and persistent-asset endpoints with replay protection.',
+                'Register your ERC-8004 provider identity and service on chain with your wallet, then publish the service card and skill contracts at the service URI.',
             },
             {
               n: 2,
-              t: 'Deploy the outcome splitter',
+              t: 'Sign one registration intent',
               sub:
-                'Deploy and verify one immutable splitter per listing epoch. Its bytecode and immutable provider, commission receiver, token, and fee bindings become part of the signed listing manifest.',
+                'Run the provider registration script. The gateway reads the finalized on-chain URI and verifies your authority, service contract, skills, and current rail policy.',
             },
             {
               n: 3,
-              t: 'Sign the listing artifacts',
+              t: 'Broadcast the prepared transactions',
               sub:
-                'Publish the listing commitment, offer, schemas, legal terms, deadline policy, capacity limit, and provider control profile.',
+                'Your provider wallet signs any deterministic splitter deployments. The script can resume safely and submits finalized transaction evidence back to the gateway.',
             },
             {
               n: 4,
-              t: 'Receive USDC settlements',
+              t: 'Appear in the catalog',
               sub:
-                'A standard x402 facilitator submits the buyer’s EIP-3009 authorization to the outcome splitter; release pays your wallet and Daski directly.',
+                'The gateway activates and indexes the service. Testnet listings are visible by default; Mainnet listings remain hidden until the marketplace operator enables them.',
             },
           ].map((s, i, arr) => (
             <div

@@ -1,35 +1,26 @@
 import { useState } from 'react';
 import {
-  atomicUsdc,
-  formatDuration,
-  primaryOutcome,
-  reputationRate,
   type PublicSkill,
   type ServiceDetail,
-  type StandardReputation,
 } from '../../lib/api';
 import { Mono } from '../ui/Mono';
 import { Section } from '../ui/Section';
 import { SectionHead } from '../ui/SectionHead';
 
-const COLUMNS = '1.1fr 1.4fr 1fr 1fr 1fr 1fr 76px';
+const COLUMNS = '1.5fr 1fr 1fr 1fr 1fr 76px';
 
 export function ServiceSkillsTable({ service }: { service: ServiceDetail }) {
   const [open, setOpen] = useState<Record<string, boolean>>({});
-  const reputation = primaryOutcome(service).reputation;
-  const satisfaction = reputation.valueWeightedBuyerSatisfactionRate
-    ?? reputation.buyerSatisfactionRate;
 
   return (
     <Section pad="40px 32px 0">
       <SectionHead kicker="skills offered" title={null} />
       <div className="dk-table" style={{ overflow: 'hidden' }}>
         <div style={{ overflowX: 'auto' }}>
-          <div style={{ minWidth: 880 }}>
+          <div style={{ minWidth: 780 }}>
             <div className="dk-table-head" style={{ display: 'grid', gridTemplateColumns: COLUMNS, gap: 16, padding: '12px 20px' }}>
-              <span>Skill</span><span>Price</span><span>All-time Sales</span>
-              <span>Avg Completion</span><span>Completion Rate</span>
-              <span>Buyer Satisfaction</span><span />
+              <span>Skill</span><span>Price</span><span>Fulfillment</span>
+              <span>Availability</span><span>Asset type</span><span />
             </div>
             {service.skills.map((skill, index) => {
               const isOpen = !!open[skill.id];
@@ -38,17 +29,14 @@ export function ServiceSkillsTable({ service }: { service: ServiceDetail }) {
                   <div style={{ display: 'grid', gridTemplateColumns: COLUMNS, gap: 16, padding: '16px 20px', alignItems: 'center', color: 'var(--pro-text)' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                       <span style={{ fontSize: 13, fontWeight: 500 }}>{skill.name}</span>
-                      <Mono mint style={{ fontSize: 11 }}>{skill.id}</Mono>
+                      <Mono mint style={{ fontSize: 11 }}>{skill.skillId}</Mono>
                     </div>
-                    <Mono style={{ fontSize: 13 }}>{skillPrice(skill, reputation)}</Mono>
-                    <Mono style={{ fontSize: 13 }}>{atomicUsdc(reputation.totalPaid)} <DimUnit>USDC</DimUnit></Mono>
+                    <Mono style={{ fontSize: 13 }}>{skillPrice(skill)}</Mono>
+                    <Mono style={{ fontSize: 13 }}>{skill.fulfillmentMode}</Mono>
                     <Mono style={{ fontSize: 13 }}>
-                      {reputation.averageFulfillmentSeconds === null
-                        ? '–'
-                        : formatDuration(reputation.averageFulfillmentSeconds)}
+                      {skill.acceptingNewOrders ? 'open' : 'paused'}
                     </Mono>
-                    <Mono style={{ fontSize: 13 }}>{reputationRate(reputation.completionRate)}</Mono>
-                    <Mono style={{ fontSize: 13 }}>{reputationRate(satisfaction)}</Mono>
+                    <Mono style={{ fontSize: 13 }}>{skill.assetType ?? 'none'}</Mono>
                     <ExpandButton isOpen={isOpen} onClick={() => setOpen((value) => ({ ...value, [skill.id]: !isOpen }))} />
                   </div>
                   {isOpen && <SkillDescription skill={skill} />}
@@ -62,18 +50,10 @@ export function ServiceSkillsTable({ service }: { service: ServiceDetail }) {
   );
 }
 
-function skillPrice(skill: PublicSkill, reputation: StandardReputation): string {
+function skillPrice(skill: PublicSkill): string {
   if (!skill.paymentRequired) return 'free';
-  if (skill.variable) {
-    const transactions = BigInt(reputation.transactionCount);
-    if (transactions > 1n) {
-      return `variable · avg. $${atomicUsdc(
-        (BigInt(reputation.totalPaid) / transactions).toString(),
-      )}`;
-    }
-    return 'variable';
-  }
-  return skill.basePrice ? `$${skill.basePrice}` : 'variable';
+  if (skill.variable) return 'variable';
+  return skill.basePrice ? `${skill.basePrice} USDC` : 'variable';
 }
 
 function SkillDescription({ skill }: { skill: PublicSkill }) {
@@ -81,7 +61,10 @@ function SkillDescription({ skill }: { skill: PublicSkill }) {
     <div style={{ padding: '0 20px 18px' }}>
       <div style={descriptionCardStyle}>
         <Mono dim style={{ fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>description</Mono>
-        {skill.description ?? '–'}
+        <div>{skill.description}</div>
+        <a href={skill.documentationUrl} target="_blank" rel="noreferrer" className="dk-link-mint" style={{ display: 'inline-block', marginTop: 10 }}>
+          Provider documentation
+        </a>
       </div>
     </div>
   );
@@ -93,10 +76,6 @@ function ExpandButton({ isOpen, onClick }: { isOpen: boolean; onClick: () => voi
       {isOpen ? 'Less' : 'More'}<span aria-hidden style={{ transform: isOpen ? 'rotate(180deg)' : 'none' }}>▾</span>
     </button>
   );
-}
-
-function DimUnit({ children }: { children: string }) {
-  return <span style={{ color: 'var(--pro-text-dim)', marginLeft: 6, fontSize: 11 }}>{children}</span>;
 }
 
 const descriptionCardStyle = { padding: '14px 16px', borderRadius: 8, background: '#06070b', border: '1px solid var(--pro-border)', color: 'var(--pro-text)', fontSize: 13.5, lineHeight: 1.6 };

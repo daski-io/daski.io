@@ -64,3 +64,26 @@ test('filters services by category family', () => {
   ]);
   assert.deepEqual(filterServicesByCategory(services, 'all'), services);
 });
+
+test('keeps previously unseen provider categories discoverable', () => {
+  const services = [
+    { id: 'domain-registration', categoryFamily: 'domains-web' },
+    { id: 'lab-analysis', categoryFamily: 'scientific-services' },
+  ];
+
+  assert.deepEqual(
+    populatedCategoryFamilies(services).map(({ slug, label, count }) => ({
+      slug,
+      label,
+      count,
+    })),
+    [
+      { slug: 'domains-web', label: 'Domains & Web', count: 1 },
+      {
+        slug: 'scientific-services',
+        label: 'Scientific Services',
+        count: 1,
+      },
+    ],
+  );
+});
