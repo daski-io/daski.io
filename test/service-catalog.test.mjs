@@ -3,6 +3,7 @@ import test from 'node:test';
 import {
   parseServiceIndex,
   priceRange,
+  reputationRates,
   servicePath,
 } from '../src/lib/api.ts';
 
@@ -103,5 +104,46 @@ test('rejects unsafe provider URLs', () => {
       services: [{ ...service, agentCardUrl: 'http://provider.example/card' }],
     }),
     /Agent Card URL is invalid/,
+  );
+});
+
+test('parses nullable reputation blocks and derives display rates', () => {
+  const enriched = {
+    ...service,
+    serviceReputation: {
+      completed: '8', failed: '1', canceled: '1', confirmed: '6',
+      notConfirmed: '2', refundedAmount: '2500000', transactions: '10',
+      safeBlock: '4575440',
+    },
+    providerReputation: {
+      completed: '12', failed: '2', canceled: '2', confirmed: '9',
+      notConfirmed: '3', transactions: '16', safeBlock: '4575440',
+    },
+  };
+  const parsed = parseServiceIndex({ services: [enriched] }).services[0];
+  assert.equal(parsed.serviceReputation.refundedAmount, '2500000');
+  assert.equal(parsed.providerReputation.refundedAmount, null);
+  const rates = reputationRates(parsed.serviceReputation);
+  assert.equal(rates.purchases, 10);
+  assert.equal(rates.completionRate, 80);
+  assert.equal(rates.buyerSatisfaction, 75);
+
+  const bare = parseServiceIndex({ services: [service] }).services[0];
+  assert.equal(bare.serviceReputation, null);
+  assert.equal(bare.providerReputation, null);
+});
+
+test('rejects malformed reputation counters', () => {
+  assert.throws(
+    () => parseServiceIndex({
+      services: [{
+        ...service,
+        serviceReputation: {
+          completed: '8', failed: '1', canceled: '1', confirmed: '6',
+          notConfirmed: '2', transactions: 'many', safeBlock: '4575440',
+        },
+      }],
+    }),
+    /transactions is invalid/,
   );
 });

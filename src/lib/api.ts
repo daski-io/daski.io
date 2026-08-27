@@ -156,6 +156,38 @@ export interface PublicService {
     presentationStaleAfterSeconds: number;
     commerceFreshnessSeconds: number;
   };
+  providerReputation: ReputationStats | null;
+  serviceReputation: ReputationStats | null;
+}
+
+// On-chain reputation aggregates at a safe block. Nullable on the wire: the
+// gateway degrades them to null on read failure, and the list endpoint omits
+// them entirely.
+export interface ReputationStats {
+  completed: string;
+  failed: string;
+  canceled: string;
+  confirmed: string;
+  notConfirmed: string;
+  transactions: string;
+  refundedAmount: string | null;
+  safeBlock: string;
+}
+
+export function reputationRates(stats: ReputationStats): {
+  purchases: number;
+  completionRate: number | null;
+  buyerSatisfaction: number | null;
+} {
+  const completed = Number(stats.completed);
+  const terminal = completed + Number(stats.failed) + Number(stats.canceled);
+  const confirmed = Number(stats.confirmed);
+  const confirmations = confirmed + Number(stats.notConfirmed);
+  return {
+    purchases: Number(stats.transactions),
+    completionRate: terminal > 0 ? (completed / terminal) * 100 : null,
+    buyerSatisfaction: confirmations > 0 ? (confirmed / confirmations) * 100 : null,
+  };
 }
 
 export type ServiceDetail = PublicService;
@@ -320,6 +352,22 @@ function parsePublicSkill(value: unknown): PublicSkill {
   };
 }
 
+function parseReputationStats(value: unknown, label: string): ReputationStats {
+  const item = record(value, label);
+  return {
+    completed: decimal(item.completed, `${label} completed`),
+    failed: decimal(item.failed, `${label} failed`),
+    canceled: decimal(item.canceled, `${label} canceled`),
+    confirmed: decimal(item.confirmed, `${label} confirmed`),
+    notConfirmed: decimal(item.notConfirmed, `${label} not confirmed`),
+    transactions: decimal(item.transactions, `${label} transactions`),
+    refundedAmount: item.refundedAmount === undefined || item.refundedAmount === null
+      ? null
+      : decimal(item.refundedAmount, `${label} refunded amount`),
+    safeBlock: decimal(item.safeBlock, `${label} safe block`),
+  };
+}
+
 function parsePublicService(value: unknown): PublicService {
   const item = record(value, 'service');
   const service = record(item.service, 'service contract');
@@ -390,6 +438,12 @@ function parsePublicService(value: unknown): PublicService {
         'commerce freshness interval',
       ),
     },
+    providerReputation: item.providerReputation === undefined || item.providerReputation === null
+      ? null
+      : parseReputationStats(item.providerReputation, 'provider reputation'),
+    serviceReputation: item.serviceReputation === undefined || item.serviceReputation === null
+      ? null
+      : parseReputationStats(item.serviceReputation, 'service reputation'),
   };
 }
 
