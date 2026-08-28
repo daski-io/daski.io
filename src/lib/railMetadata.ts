@@ -1,8 +1,6 @@
 import type { StandardOutcome, StandardRailMetadata } from './api';
-import {
-  SERVICE_CATEGORY_FAMILIES,
-  type CategoryFamily,
-} from '../config/service-taxonomy.ts';
+
+const reportedUnknownShapes = new Set<string>();
 
 function record(value: unknown, label: string): Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -11,12 +9,23 @@ function record(value: unknown, label: string): Record<string, unknown> {
   return value as Record<string, unknown>;
 }
 
-function exact(value: Record<string, unknown>, keys: string[], label: string): void {
-  const actual = Object.keys(value).sort();
-  const expected = [...keys].sort();
-  if (actual.length !== expected.length || actual.some((key, index) => key !== expected[index])) {
-    throw new Error(`${label} has an unexpected shape`);
+function shape(
+  value: Record<string, unknown>,
+  required: readonly string[],
+  label: string,
+  optional: readonly string[] = [],
+): void {
+  const missing = required.filter((key) => !Object.hasOwn(value, key));
+  if (missing.length > 0) {
+    throw new Error(`${label} is missing required fields: ${missing.join(', ')}`);
   }
+  const known = new Set([...required, ...optional]);
+  const unknown = Object.keys(value).filter((key) => !known.has(key)).sort();
+  if (unknown.length === 0) return;
+  const fingerprint = `${label}:${unknown.join(',')}`;
+  if (reportedUnknownShapes.has(fingerprint)) return;
+  reportedUnknownShapes.add(fingerprint);
+  console.warn(`[daski-chain] ${label} ignored unknown fields: ${unknown.join(', ')}`);
 }
 
 function text(value: unknown, label: string): string {
@@ -64,13 +73,6 @@ function nullableInteger(value: unknown, label: string): number | null {
   return integer(value, label);
 }
 
-function stringArray(value: unknown, label: string): string[] {
-  if (!Array.isArray(value) || value.some((item) => typeof item !== 'string' || item.length === 0)) {
-    throw new Error(`${label} is invalid`);
-  }
-  return value as string[];
-}
-
 function https(value: unknown, label: string): string {
   const found = text(value, label);
   const parsed = new URL(found);
@@ -80,62 +82,31 @@ function https(value: unknown, label: string): string {
   return found;
 }
 
-function parseTerms(value: unknown): StandardOutcome['terms'] {
-  const terms = record(value, 'outcome terms');
-  exact(terms, [
-    'marketplaceTermsUrl', 'marketplacePrivacyUrl', 'providerLegalName',
-    'providerTermsUrl', 'providerPrivacyUrl',
-  ], 'outcome terms');
-  return {
-    marketplaceTermsUrl: https(terms.marketplaceTermsUrl, 'marketplace terms URL'),
-    marketplacePrivacyUrl: https(terms.marketplacePrivacyUrl, 'marketplace privacy URL'),
-    providerLegalName: text(terms.providerLegalName, 'provider legal name'),
-    providerTermsUrl: https(terms.providerTermsUrl, 'provider terms URL'),
-    providerPrivacyUrl: https(terms.providerPrivacyUrl, 'provider privacy URL'),
-  };
-}
-
 function parseServicePresentation(value: unknown): StandardOutcome['service'] {
   const service = record(value, 'provider service presentation');
-  exact(service, [
-    'id', 'slug', 'version', 'name', 'description', 'categoryFamily', 'serviceType',
+  shape(service, ['id', 'name'], 'provider service presentation', [
+    'slug', 'version', 'description', 'categoryFamily', 'serviceType',
     'jurisdictions', 'turnaroundEstimate', 'serviceLifecycle', 'agentCardUrl',
     'providerA2AUrl',
-  ], 'provider service presentation');
-  const categoryFamily = text(service.categoryFamily, 'provider category family');
-  if (!SERVICE_CATEGORY_FAMILIES.some((family) => family.slug === categoryFamily)) {
-    throw new Error('provider category family is invalid');
-  }
+  ]);
   return {
     id: hash(service.id, 'provider service ID'),
-    slug: text(service.slug, 'provider service slug'),
-    version: text(service.version, 'provider service version'),
     name: text(service.name, 'provider service name'),
-    description: text(service.description, 'provider service description'),
-    categoryFamily: categoryFamily as CategoryFamily,
-    serviceType: text(service.serviceType, 'provider service type'),
-    jurisdictions: stringArray(service.jurisdictions, 'provider jurisdictions'),
-    turnaroundEstimate: text(service.turnaroundEstimate, 'provider turnaround estimate'),
-    serviceLifecycle: text(service.serviceLifecycle, 'provider service lifecycle'),
-    agentCardUrl: https(service.agentCardUrl, 'provider Agent Card URL'),
-    providerA2AUrl: https(service.providerA2AUrl, 'provider A2A URL'),
   };
 }
 
 function parseSkillPresentation(value: unknown): StandardOutcome['skill'] {
   const skill = record(value, 'provider skill presentation');
-  exact(skill, ['id', 'name', 'description', 'tags'], 'provider skill presentation');
+  shape(skill, ['id', 'name'], 'provider skill presentation', ['description', 'tags']);
   return {
     id: text(skill.id, 'provider skill ID'),
     name: text(skill.name, 'provider skill name'),
-    description: text(skill.description, 'provider skill description'),
-    tags: stringArray(skill.tags, 'provider skill tags'),
   };
 }
 
 function parseReputation(value: unknown, label: string): StandardOutcome['reputation'] {
   const reputation = record(value, label);
-  exact(reputation, [
+  shape(reputation, [
     'transactionCount', 'completedCount', 'failedCount', 'canceledCount',
     'completionSampleSize', 'completionRate', 'confirmedCount', 'notConfirmedCount',
     'confirmationSampleSize', 'buyerSatisfactionRate',
@@ -147,11 +118,12 @@ function parseReputation(value: unknown, label: string): StandardOutcome['reputa
     throw new Error(`${label} recent purchases are invalid`);
   }
   const recentPurchases = reputation.recentPurchases.map((value, index) => {
-    const purchase = record(value, `${label} recent purchase ${index}`);
-    exact(purchase, [
+    const purchaseLabel = `${label} recent purchase ${index}`;
+    const purchase = record(value, purchaseLabel);
+    shape(purchase, [
       'orderKey', 'txHash', 'payer', 'buyerAgentId', 'buyerName',
       'amount', 'outcomeId', 'timestamp',
-    ], `${label} recent purchase ${index}`);
+    ], purchaseLabel);
     const timestamp = text(purchase.timestamp, 'purchase timestamp');
     if (Number.isNaN(Date.parse(timestamp))) throw new Error('purchase timestamp is invalid');
     const buyerAgentId = nullableText(purchase.buyerAgentId, 'buyer agent ID');
@@ -200,72 +172,21 @@ function parseReputation(value: unknown, label: string): StandardOutcome['reputa
 
 function parseOutcome(value: unknown): StandardOutcome {
   const outcome = record(value, 'standard outcome');
-  exact(outcome, [
-    'providerAgentId', 'serviceId', 'outcomeId', 'skillId', 'service', 'skill', 'bindingProfile',
-    'pricingMode', 'fixedGrossAmount', 'token', 'payTo', 'providerPayee',
-    'daskiCommissionReceiver', 'commissionBps', 'providerAudience',
-    'absoluteResourceUri', 'listingManifestHash', 'providerOfferHash', 'terms',
-    'deadlinePolicy', 'capacityPolicy', 'splitterDeploymentBlockNumber',
-    'categoryFamily', 'serviceType', 'jurisdictions', 'tags', 'persistentAsset',
-    'fulfillmentObligationHash', 'jurisdictionObligationHashes',
+  shape(outcome, [
+    'providerAgentId', 'serviceId', 'outcomeId', 'skillId', 'service', 'skill',
     'providerReputation', 'serviceReputation', 'reputation',
-  ], 'standard outcome');
-  if (!['stock-fixed-v1', 'recipe-bound-v1'].includes(String(outcome.bindingProfile))) {
-    throw new Error('outcome binding profile is invalid');
-  }
-  if (!['fixed', 'dynamic'].includes(String(outcome.pricingMode))) {
-    throw new Error('outcome pricing mode is invalid');
-  }
-  if (!/^\d+$/.test(String(outcome.fixedGrossAmount)) ||
-      !/^\d+$/.test(String(outcome.splitterDeploymentBlockNumber))) {
-    throw new Error('outcome atomic or block value is invalid');
-  }
-  const deadline = record(outcome.deadlinePolicy, 'deadline policy');
-  exact(deadline, [
-    'draftSeconds', 'minimumPaymentWindowSeconds', 'verificationSeconds',
-    'settlementEvidenceSeconds', 'releaseEvidenceSeconds', 'dispatchSeconds',
-    'fulfillmentSeconds',
-  ], 'deadline policy');
-  const capacity = record(outcome.capacityPolicy, 'capacity policy');
-  exact(capacity, ['maxOpenOrders'], 'capacity policy');
-  const commissionBps = integer(outcome.commissionBps, 'commission BPS');
-  const maxOpenOrders = integer(capacity.maxOpenOrders, 'open-order capacity');
-  const deadlinePolicy = {
-    verificationSeconds: integer(deadline.verificationSeconds, 'verification deadline'),
-    settlementEvidenceSeconds: integer(deadline.settlementEvidenceSeconds, 'settlement deadline'),
-    releaseEvidenceSeconds: integer(deadline.releaseEvidenceSeconds, 'release deadline'),
-    dispatchSeconds: integer(deadline.dispatchSeconds, 'dispatch deadline'),
-    fulfillmentSeconds: integer(deadline.fulfillmentSeconds, 'fulfillment deadline'),
-  };
-  if (
-    commissionBps <= 0 || commissionBps >= 10_000 || maxOpenOrders <= 0 ||
-    Object.values(deadlinePolicy).some((seconds) => seconds < 30)
-  ) {
-    throw new Error('outcome economics or capacity is invalid');
-  }
-  const fixedGrossAmount = String(outcome.fixedGrossAmount);
-  if (
-    (outcome.pricingMode === 'fixed' && BigInt(fixedGrossAmount) <= 0n) ||
-    (outcome.pricingMode === 'dynamic' && fixedGrossAmount !== '0')
-  ) throw new Error('outcome price is inconsistent with its mode');
-  const categoryFamily = text(outcome.categoryFamily, 'category family');
-  if (!SERVICE_CATEGORY_FAMILIES.some((family) => family.slug === categoryFamily)) {
-    throw new Error('category family is invalid');
-  }
-  const jurisdictions = stringArray(outcome.jurisdictions, 'jurisdictions');
-  const jurisdictionHashes = record(
-    outcome.jurisdictionObligationHashes,
-    'jurisdiction obligation hashes',
-  );
-  exact(jurisdictionHashes, jurisdictions, 'jurisdiction obligation hashes');
-  const parsedJurisdictionHashes = Object.fromEntries(
-    jurisdictions.map((jurisdiction) => [
-      jurisdiction,
-      hash(jurisdictionHashes[jurisdiction], `jurisdiction obligation hash ${jurisdiction}`),
-    ]),
-  );
-  if (typeof outcome.persistentAsset !== 'boolean') throw new Error('persistent asset is invalid');
+  ], 'standard outcome', [
+    'bindingProfile', 'pricingMode', 'fixedGrossAmount', 'token', 'payTo',
+    'providerPayee', 'daskiCommissionReceiver', 'commissionBps', 'providerAudience',
+    'absoluteResourceUri', 'listingManifestHash', 'providerOfferHash',
+    'runtimeCommitmentHash', 'providerIntentHash', 'splitter',
+    'splitterDeploymentBlockNumber', 'categoryFamily', 'serviceType',
+    'jurisdictions', 'tags', 'persistentAsset', 'fulfillmentObligationHash',
+    'jurisdictionObligationHashes', 'terms', 'deadlinePolicy', 'capacityPolicy',
+  ]);
+  const providerAgentId = decimal(outcome.providerAgentId, 'provider agent ID');
   const serviceId = hash(outcome.serviceId, 'service ID');
+  const outcomeId = text(outcome.outcomeId, 'outcome ID');
   const skillId = text(outcome.skillId, 'skill ID');
   const service = parseServicePresentation(outcome.service);
   const skill = parseSkillPresentation(outcome.skill);
@@ -273,38 +194,12 @@ function parseOutcome(value: unknown): StandardOutcome {
     throw new Error('provider presentation does not match the admitted outcome');
   }
   return {
-    providerAgentId: text(outcome.providerAgentId, 'provider agent ID'),
+    providerAgentId,
     serviceId,
-    outcomeId: text(outcome.outcomeId, 'outcome ID'),
+    outcomeId,
     skillId,
     service,
     skill,
-    bindingProfile: outcome.bindingProfile as StandardOutcome['bindingProfile'],
-    pricingMode: outcome.pricingMode as StandardOutcome['pricingMode'],
-    fixedGrossAmount,
-    token: address(outcome.token, 'canonical token'),
-    payTo: address(outcome.payTo, 'splitter'),
-    providerPayee: address(outcome.providerPayee, 'provider payee'),
-    daskiCommissionReceiver: address(outcome.daskiCommissionReceiver, 'commission receiver'),
-    commissionBps,
-    providerAudience: https(outcome.providerAudience, 'provider audience'),
-    absoluteResourceUri: https(outcome.absoluteResourceUri, 'resource URI'),
-    listingManifestHash: hash(outcome.listingManifestHash, 'listing manifest hash'),
-    providerOfferHash: hash(outcome.providerOfferHash, 'provider offer hash'),
-    categoryFamily: categoryFamily as CategoryFamily,
-    serviceType: text(outcome.serviceType, 'service type'),
-    jurisdictions,
-    tags: stringArray(outcome.tags, 'tags'),
-    persistentAsset: outcome.persistentAsset,
-    fulfillmentObligationHash: hash(
-      outcome.fulfillmentObligationHash,
-      'fulfillment obligation hash',
-    ),
-    jurisdictionObligationHashes: parsedJurisdictionHashes,
-    splitterDeploymentBlockNumber: String(outcome.splitterDeploymentBlockNumber),
-    terms: parseTerms(outcome.terms),
-    deadlinePolicy,
-    capacityPolicy: { maxOpenOrders },
     providerReputation: parseReputation(outcome.providerReputation, 'provider reputation'),
     serviceReputation: parseReputation(outcome.serviceReputation, 'service reputation'),
     reputation: parseReputation(outcome.reputation, 'outcome reputation'),
@@ -313,13 +208,16 @@ function parseOutcome(value: unknown): StandardOutcome {
 
 export function parseOutcomeIndex(value: unknown): { version: number; outcomes: StandardOutcome[] } {
   const index = record(value, 'outcome index');
-  exact(index, ['version', 'outcomes'], 'outcome index');
-  if (index.version !== 2 || !Array.isArray(index.outcomes)) throw new Error('outcome index is invalid');
+  shape(index, ['version', 'outcomes'], 'outcome index', ['outcomeSchemaVersion']);
+  if (index.version !== 2 || !Array.isArray(index.outcomes)) {
+    throw new Error('outcome index is invalid');
+  }
   return { version: 2, outcomes: index.outcomes.map(parseOutcome) };
 }
 
 export function parseProviderAgentUri(value: unknown, expectedAgentId: string): string | null {
   const provider = record(value, 'provider registration');
+  shape(provider, ['agentId', 'identity'], 'provider registration');
   if (text(provider.agentId, 'provider agent ID') !== expectedAgentId) {
     throw new Error('provider registration agent ID does not match');
   }
@@ -329,12 +227,22 @@ export function parseProviderAgentUri(value: unknown, expectedAgentId: string): 
 
 export function parseRailMetadata(value: unknown): StandardRailMetadata {
   const metadata = record(value, 'rail metadata');
-  exact(metadata, [
+  shape(metadata, [
     'version', 'chainId', 'network', 'paymentRail', 'contracts', 'outcomes',
-  ], 'rail metadata');
-  if (metadata.version !== 2 || !Array.isArray(metadata.outcomes)) throw new Error('rail metadata is invalid');
+  ], 'rail metadata', ['outcomeSchemaVersion']);
+  const version = integer(metadata.version, 'rail metadata version');
+  if ((version !== 2 && version !== 3) || !Array.isArray(metadata.outcomes)) {
+    throw new Error('rail metadata is invalid');
+  }
+  const outcomeSchemaVersion = metadata.outcomeSchemaVersion === undefined
+    ? null
+    : integer(metadata.outcomeSchemaVersion, 'outcome schema version');
+  if ((version === 3 && outcomeSchemaVersion !== 1) ||
+      (version === 2 && outcomeSchemaVersion !== null && outcomeSchemaVersion !== 1)) {
+    throw new Error('outcome schema version is invalid');
+  }
   const rail = record(metadata.paymentRail, 'payment rail');
-  exact(rail, [
+  shape(rail, [
     'scheme', 'network', 'asset', 'transferMethod', 'activeRailProfileHash',
     'activeRailProfileUrl',
   ], 'payment rail');
@@ -345,7 +253,7 @@ export function parseRailMetadata(value: unknown): StandardRailMetadata {
   }
   const asset = address(rail.asset, 'payment asset');
   const contracts = record(metadata.contracts, 'contracts');
-  exact(contracts, [
+  shape(contracts, [
     'identityRegistry', 'agentIndex', 'providerRegistry', 'serviceRegistry',
     'validationRegistry', 'reputationStorage', 'eas', 'usdc',
   ], 'contracts');
@@ -362,12 +270,9 @@ export function parseRailMetadata(value: unknown): StandardRailMetadata {
   if (parsedContracts.usdc.toLowerCase() !== asset.toLowerCase()) {
     throw new Error('contract USDC differs from the canonical payment asset');
   }
-  const outcomes = metadata.outcomes.map(parseOutcome);
-  if (outcomes.some((outcome) => outcome.token.toLowerCase() !== asset.toLowerCase())) {
-    throw new Error('outcome token differs from the canonical payment asset');
-  }
   return {
-    version: 2,
+    version: version as 2 | 3,
+    outcomeSchemaVersion: outcomeSchemaVersion as 1 | null,
     chainId,
     network: text(metadata.network, 'network'),
     paymentRail: {
@@ -379,6 +284,6 @@ export function parseRailMetadata(value: unknown): StandardRailMetadata {
       activeRailProfileUrl: https(rail.activeRailProfileUrl, 'active rail profile URL'),
     },
     contracts: parsedContracts,
-    outcomes,
+    outcomes: metadata.outcomes.map(parseOutcome),
   };
 }
