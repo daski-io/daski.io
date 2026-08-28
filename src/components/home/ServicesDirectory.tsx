@@ -7,7 +7,6 @@ import { Card } from '../ui/Card';
 import { ServiceTaxonomyChips } from '../ServiceTaxonomyChips';
 import {
   priceRange,
-  primaryOutcome,
   serviceChips,
   serviceKey,
   servicePath,
@@ -118,8 +117,7 @@ export function ServicesDirectory({ services, loading, error }: ServicesDirector
           </div>
         )}
         {filtered.map((s) => (
-          // agentId alone is not unique — multi-service providers appear
-          // once per service, so key on the (agentId, serviceSlug) pair.
+          // The gateway-issued canonical service id is the catalog identity.
           <ServiceCard key={serviceKey(s)} service={s} />
         ))}
       </div>
@@ -127,50 +125,25 @@ export function ServicesDirectory({ services, loading, error }: ServicesDirector
   );
 }
 
-// Renders the provider's brand mark when the AgentCard advertises an
-// iconUrl (A2A v1.0); otherwise falls back to a category-family glyph.
-// On image load failure (broken URL, hot-link block) we also fall back —
-// the cell never goes blank.
-function ServiceIcon({
-  categoryFamily,
-  iconUrl,
-  providerName,
-}: {
-  categoryFamily: CategoryFamily;
-  iconUrl?: string | null;
-  providerName?: string | null;
-}) {
+// Renders a category-family glyph for the service. Provider brand marks
+// return once the v3 catalog exposes a validated iconUrl.
+function ServiceIcon({ categoryFamily }: { categoryFamily: CategoryFamily }) {
   const family = categoryFamilyConfig(categoryFamily);
-  const [imgFailed, setImgFailed] = useState(false);
-  const showImg = !!iconUrl && !imgFailed;
   return (
     <div
       style={{
         width: 44,
         height: 44,
         borderRadius: 10,
-        background: showImg ? '#e0e0e8' : 'rgba(52,211,177,0.06)',
-        border: `1px solid ${showImg ? 'var(--pro-border)' : family.color}`,
+        background: 'rgba(52,211,177,0.06)',
+        border: `1px solid ${family.color}`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         color: family.color,
-        overflow: 'hidden',
       }}
     >
-      {showImg ? (
-        <img
-          src={iconUrl ?? undefined}
-          alt={providerName ? `${providerName} logo` : 'Provider logo'}
-          width={44}
-          height={44}
-          loading="lazy"
-          onError={() => setImgFailed(true)}
-          style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-        />
-      ) : (
-        <Icon name={family.icon} size={20} />
-      )}
+      <Icon name={family.icon} size={20} />
     </div>
   );
 }
@@ -213,11 +186,7 @@ function ServiceCard({ service }: { service: PublicService }) {
               gap: 12,
             }}
           >
-            <ServiceIcon
-              categoryFamily={service.categoryFamily}
-              iconUrl={service.iconUrl}
-              providerName={service.providerName}
-            />
+            <ServiceIcon categoryFamily={service.categoryFamily} />
           </div>
           <h3
             style={{
@@ -276,11 +245,9 @@ function ServiceCard({ service }: { service: PublicService }) {
             </Mono>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <Mono style={{ fontSize: 14 }}>{formatAvgCompletion(
-              primaryOutcome(service).reputation.averageFulfillmentSeconds,
-            )}</Mono>
+            <Mono style={{ fontSize: 12 }}>{service.turnaroundEstimate}</Mono>
             <Mono dim style={{ display: 'block', fontSize: 11, marginTop: 2, letterSpacing: '0.04em' }}>
-              avg completion
+              turnaround
             </Mono>
           </div>
         </div>
@@ -306,7 +273,7 @@ function ServiceCard({ service }: { service: PublicService }) {
                   whiteSpace: 'nowrap',
                 }}
               >
-                {service.providerName ?? providerNameFromUri(service.agentURI) ?? 'Provider'}
+                {service.providerName}
               </span>
               <Icon name="check" size={12} color="var(--mint-400)" strokeWidth={2.6} />
             </div>
@@ -351,32 +318,4 @@ function ServiceCardSkeleton() {
       <Mono dim style={{ marginTop: 18, display: 'block' }}>loading services…</Mono>
     </div>
   );
-}
-
-function formatAvgCompletion(sec: number | null): string {
-  if (sec === null || sec < 0) return '–';
-  if (sec < 60) return `~${sec}s`;
-  if (sec < 3600) {
-    const minutes = Math.floor(sec / 60);
-    const seconds = sec % 60;
-    return seconds === 0 ? `~${minutes}m` : `~${minutes}m ${seconds}s`;
-  }
-  const hours = Math.floor(sec / 3600);
-  const minutes = Math.floor((sec % 3600) / 60);
-  return minutes === 0 ? `~${hours}h` : `~${hours}h ${minutes}m`;
-}
-
-function providerNameFromUri(uri: string | null): string | null {
-  if (!uri) return null;
-  try {
-    const u = new URL(uri);
-    const host = u.hostname;
-    // Strip leading 'sandbox-provider.' / 'www.' / etc.
-    const base = host.replace(/^sandbox-provider\./, '').replace(/^www\./, '');
-    // Strip TLD for a friendlier label
-    const label = base.split('.')[0];
-    return label.charAt(0).toUpperCase() + label.slice(1);
-  } catch {
-    return null;
-  }
 }

@@ -9,8 +9,8 @@ export function ServiceDetailPage({ service }: { service: ServiceDetail }) {
     <div style={{ background: 'var(--pro-bg)' }}>
       <ServiceHero service={service} />
       <ProviderAndRailDetails service={service} />
-      <ServiceSkillsTable service={service} />
       <ServicePurchasesAndUsage service={service} />
+      <ServiceSkillsTable service={service} />
     </div>
   );
 }

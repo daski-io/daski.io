@@ -5,6 +5,10 @@ standard x402 V2 Exact-EVM rail with canonical USDC on Base Sepolia.
 
 ## Buyer interface
 
+Discovery is service-first: the public service catalog lists each registered
+service with its canonical provider/service ids, skills, paid listings, and
+on-chain reputation aggregates. Purchases address a listed outcome.
+
 Connect the MCP server at `https://sandbox-gateway.daski.io/mcp` and use the
 single `daski_buy_outcome` tool. The same tool call is used first to receive a
 402 challenge and again with the wallet-produced standard payment payload.
@@ -44,7 +48,9 @@ writes without guessing or blindly retrying them.
 
 ## Public metadata
 
-- Outcomes: `https://sandbox-gateway.daski.io/public/v2/outcomes`
+- Service catalog: `https://sandbox-gateway.daski.io/public/v3/services`
+- Service detail: `https://sandbox-gateway.daski.io/public/v3/services/{serviceId}`
+- Purchasable outcomes (payment addressing): `https://sandbox-gateway.daski.io/public/v2/outcomes`
 - x402 discovery: `https://sandbox-gateway.daski.io/.well-known/x402`
 - Rail metadata: `https://sandbox-gateway.daski.io/.well-known/daski-chain.json`
 - MCP metadata: `https://sandbox-gateway.daski.io/.well-known/mcp.json`

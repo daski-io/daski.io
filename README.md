@@ -22,6 +22,12 @@ npm run dev
 The site reads from the public Daski Gateway at
 `https://sandbox-gateway.daski.io` by default. Override via:
 
+`/public/v3/services` is the sole catalog source. Service detail routes use
+the gateway-issued canonical `serviceId`, and category filters are derived
+from returned services so new provider categories remain discoverable. The
+website does not apply provider, product, jurisdiction, or skill allowlists.
+Historical chain activity remains a separate gateway-fed view.
+
 ```bash
 PUBLIC_GATEWAY_URL=http://localhost:3000 npm run dev
 ```

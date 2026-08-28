@@ -1,5 +1,12 @@
 import type { IconName } from '../components/ui/Icon';
 
+export interface CategoryFamilyConfig {
+  slug: string;
+  label: string;
+  icon: IconName;
+  color: string;
+}
+
 export const SERVICE_CATEGORY_FAMILIES = [
   {
     slug: 'business-formation',
@@ -87,39 +94,54 @@ export const SERVICE_CATEGORY_FAMILIES = [
     icon: 'layers',
     color: '#9da9bd',
   },
-] as const satisfies readonly {
-  slug: string;
-  label: string;
-  icon: IconName;
-  color: string;
-}[];
+] as const satisfies readonly CategoryFamilyConfig[];
 
-export type CategoryFamily = (typeof SERVICE_CATEGORY_FAMILIES)[number]['slug'];
-export type CategoryFamilyConfig = (typeof SERVICE_CATEGORY_FAMILIES)[number];
-export type CategoryFamilyFilter = 'all' | CategoryFamily;
+export type CategoryFamily = string;
+export type CategoryFamilyFilter = string;
 
-const CATEGORY_FAMILY_BY_SLUG = Object.fromEntries(
+const CATEGORY_FAMILY_BY_SLUG = new Map<string, CategoryFamilyConfig>(
   SERVICE_CATEGORY_FAMILIES.map((family) => [family.slug, family]),
-) as Record<CategoryFamily, CategoryFamilyConfig>;
+);
+
+function labelFromSlug(slug: string): string {
+  return slug
+    .split('-')
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
 
 export function categoryFamilyConfig(
-  categoryFamily: CategoryFamily,
+  categoryFamily: string,
 ): CategoryFamilyConfig {
-  return CATEGORY_FAMILY_BY_SLUG[categoryFamily];
+  return CATEGORY_FAMILY_BY_SLUG.get(categoryFamily) ?? {
+    slug: categoryFamily,
+    label: labelFromSlug(categoryFamily),
+    icon: 'layers',
+    color: '#9da9bd',
+  };
 }
 
 export function populatedCategoryFamilies(
-  services: readonly { categoryFamily: CategoryFamily }[],
+  services: readonly { categoryFamily: string }[],
 ): (CategoryFamilyConfig & { count: number })[] {
-  return SERVICE_CATEGORY_FAMILIES.map((family) => ({
-    ...family,
-    count: services.filter((service) => service.categoryFamily === family.slug)
-      .length,
-  })).filter((family) => family.count > 0);
+  const counts = new Map<string, number>();
+  for (const service of services) {
+    counts.set(service.categoryFamily, (counts.get(service.categoryFamily) ?? 0) + 1);
+  }
+  const recommended = SERVICE_CATEGORY_FAMILIES
+    .filter((family) => counts.has(family.slug))
+    .map((family) => ({ ...family, count: counts.get(family.slug)! }));
+  const known = new Set<string>(SERVICE_CATEGORY_FAMILIES.map((family) => family.slug));
+  const emerging = [...counts]
+    .filter(([slug]) => !known.has(slug))
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([slug, count]) => ({ ...categoryFamilyConfig(slug), count }));
+  return [...recommended, ...emerging];
 }
 
 export function filterServicesByCategory<
-  T extends { categoryFamily: CategoryFamily },
+  T extends { categoryFamily: string },
 >(services: readonly T[], filter: CategoryFamilyFilter): T[] {
   return filter === 'all'
     ? [...services]

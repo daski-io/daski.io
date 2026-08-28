@@ -99,8 +99,7 @@ export function ActivityPage({
             >
               <Mono>{buyerDisplay(purchase)}</Mono>
               <a className="dk-service-link" href={servicePath({
-                agentId: purchase.outcome.providerAgentId,
-                serviceSlug: purchase.outcome.service.slug,
+                serviceId: purchase.outcome.serviceId,
               })}>
                 {purchase.outcome.service.name}
               </a>

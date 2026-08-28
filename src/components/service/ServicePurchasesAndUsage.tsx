@@ -1,62 +1,73 @@
 import {
   atomicUsdc,
-  basescanTx,
-  buyerDisplay,
-  primaryOutcome,
+  reputationRate,
+  reputationRates,
+  type ReputationStats,
   type ServiceDetail,
 } from '../../lib/api';
-import { relativeTime } from '../../lib/marketplacePresentation';
-import { Icon } from '../ui/Icon';
 import { Mono } from '../ui/Mono';
 import { Section } from '../ui/Section';
 import { SectionHead } from '../ui/SectionHead';
 
 export function ServicePurchasesAndUsage({ service }: { service: ServiceDetail }) {
-  const purchases = primaryOutcome(service).reputation.recentPurchases;
+  const rows = [
+    service.serviceReputation
+      ? { label: 'This service', stats: service.serviceReputation }
+      : null,
+    service.providerReputation
+      ? { label: 'Provider, all services', stats: service.providerReputation }
+      : null,
+  ].filter((row): row is { label: string; stats: ReputationStats } => row !== null);
   return (
-    <>
-      <Section pad="40px 32px 0">
-        <SectionHead
-          kicker="recent purchases of this service"
-          title={null}
-        />
-        {purchases.length === 0 ? <EmptyPurchases /> : (
-          <div className="dk-table" style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>
-            <div className="dk-table-head dk-recent-row">
-              <span>Agent</span><span>Paid</span><span>Skill</span><span>When</span><span>Receipt</span>
-            </div>
-            {purchases.map((purchase, index) => (
-              <div
-                key={purchase.orderKey}
-                className="dk-recent-row"
-                style={{ padding: '12px 16px', gap: 16, borderBottom: index < purchases.length - 1 ? '1px solid var(--pro-border)' : 'none', alignItems: 'center', color: 'var(--pro-text)' }}
-              >
-                <Mono>{buyerDisplay(purchase)}</Mono>
-                <span style={{ color: 'var(--mint-400)' }}>{atomicUsdc(purchase.amount)} <span style={{ color: 'var(--pro-text-dim)' }}>USDC</span></span>
-                <span style={ellipsisStyle}>{purchase.outcomeId}</span>
-                <span style={{ color: 'var(--pro-text-dim)' }}>{relativeTime(purchase.timestamp)}</span>
-                {purchase.txHash ? (
-                  <a href={basescanTx(purchase.txHash)} target="_blank" rel="noreferrer" className="dk-basescan-link" style={receiptStyle}>
-                    tx <Icon name="external" size={11} />
-                  </a>
-                ) : <Mono dim>–</Mono>}
-              </div>
-            ))}
-          </div>
-        )}
-      </Section>
-    </>
+    <Section pad="40px 32px 0">
+      <SectionHead kicker="on-chain track record" title={null} />
+      {rows.length === 0 ? <EmptyReputation /> : (
+        <div style={{ display: 'grid', gap: 16 }}>
+          {rows.map((row) => (
+            <ReputationRow key={row.label} label={row.label} stats={row.stats} />
+          ))}
+          <Mono dim style={{ fontSize: 11 }}>
+            Aggregates read from on-chain reputation storage at safe block {rows[0]!.stats.safeBlock}.
+          </Mono>
+        </div>
+      )}
+    </Section>
   );
 }
 
-function EmptyPurchases() {
+function ReputationRow({ label, stats }: { label: string; stats: ReputationStats }) {
+  const rates = reputationRates(stats);
+  const tiles = [
+    { label: 'Purchases', value: String(rates.purchases) },
+    { label: 'Completed', value: stats.completed },
+    { label: 'Completion rate', value: reputationRate(rates.completionRate) },
+    { label: 'Buyer satisfaction', value: reputationRate(rates.buyerSatisfaction) },
+    ...(stats.refundedAmount !== null
+      ? [{ label: 'Refunded', value: `${atomicUsdc(stats.refundedAmount)} USDC` }]
+      : []),
+  ];
   return (
-    <div style={{ border: '1px solid var(--pro-border)', borderRadius: 12, background: 'var(--pro-surface)', padding: 28, textAlign: 'center', color: 'var(--pro-text-dim)', fontSize: 14, lineHeight: 1.6 }}>
-      <Mono dim style={{ display: 'block', fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>0 recent purchases</Mono>
-      Activity will appear here as agents use this service.
+    <div style={{ border: '1px solid var(--pro-border)', borderRadius: 12, background: 'var(--pro-surface)', padding: '20px 24px' }}>
+      <Mono dim style={{ display: 'block', fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 12 }}>
+        {label}
+      </Mono>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 16 }}>
+        {tiles.map((tile) => (
+          <div key={tile.label}>
+            <div style={{ color: 'var(--pro-text)', fontSize: 20, fontWeight: 600 }}>{tile.value}</div>
+            <div style={{ color: 'var(--pro-text-dim)', fontSize: 12 }}>{tile.label}</div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
 
-const ellipsisStyle = { color: 'var(--pro-text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } as const;
-const receiptStyle = { color: 'var(--mint-400)', textTransform: 'none', letterSpacing: 0, fontSize: 11 } as const;
+function EmptyReputation() {
+  return (
+    <div style={{ border: '1px solid var(--pro-border)', borderRadius: 12, background: 'var(--pro-surface)', padding: 28, textAlign: 'center', color: 'var(--pro-text-dim)', fontSize: 14, lineHeight: 1.6 }}>
+      <Mono dim style={{ display: 'block', fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>reputation unavailable</Mono>
+      On-chain reputation aggregates will appear here once reads succeed.
+    </div>
+  );
+}
