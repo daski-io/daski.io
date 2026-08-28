@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import {
   parseOutcomeIndex,
@@ -6,200 +7,103 @@ import {
   parseRailMetadata,
 } from '../src/lib/railMetadata.ts';
 
-const USDC = '0x036CbD53842c5426634e7929541eC2318f3dCF7e';
-const CONTRACTS = {
-  identityRegistry: '0x1111111111111111111111111111111111111111',
-  agentIndex: '0x2222222222222222222222222222222222222222',
-  providerRegistry: '0x3333333333333333333333333333333333333333',
-  serviceRegistry: '0x4444444444444444444444444444444444444444',
-  validationRegistry: '0x5555555555555555555555555555555555555555',
-  reputationStorage: '0x6666666666666666666666666666666666666666',
-  eas: '0x7777777777777777777777777777777777777777',
-  usdc: USDC,
-};
+const fixture = JSON.parse(readFileSync(
+  new URL('./vectors/daski-chain-v3.json', import.meta.url),
+  'utf8',
+));
 
-function validReputation(overrides = {}) {
-  return {
-    transactionCount: '2',
-    completedCount: '1',
-    failedCount: '1',
-    canceledCount: '0',
-    completionSampleSize: '2',
-    completionRate: 50,
-    confirmedCount: '1',
-    notConfirmedCount: '0',
-    confirmationSampleSize: '1',
-    buyerSatisfactionRate: 100,
-    valueWeightedBuyerSatisfactionRate: 100,
-    totalPaid: '9007199254740993000000',
-    totalRefunded: '5000000',
-    averageFulfillmentSeconds: 90,
-    fulfillmentSampleSize: '1',
-    recentPurchases: [{
-      orderKey: `0x${'89'.repeat(32)}`,
-      txHash: `0x${'90'.repeat(32)}`,
-      payer: '0x8888888888888888888888888888888888888888',
-      buyerAgentId: '42',
-      buyerName: 'Test Buyer',
-      amount: '5000000',
-      outcomeId: 'domain-registration',
-      timestamp: '2026-08-13T12:00:00.000Z',
-    }],
-    safeBlock: '12345690',
-    ...overrides,
-  };
-}
+const copy = () => structuredClone(fixture);
 
-function validOutcome(overrides = {}) {
-  const serviceId = `0x${'12'.repeat(32)}`;
-  return {
-    providerAgentId: '11',
-    serviceId,
-    outcomeId: 'domain-registration',
-    skillId: 'register-domain',
-    service: {
-      id: serviceId,
-      slug: 'domain-management',
-      version: '1',
-      name: 'Domain Management',
-      description: 'Register and manage domain names.',
-      categoryFamily: 'domains-web',
-      serviceType: 'domain-management',
-      jurisdictions: ['global'],
-      turnaroundEstimate: '5-10 minutes',
-      serviceLifecycle: 'asset-lifecycle',
-      agentCardUrl: 'https://provider.example/agent-cards/domain-management.json',
-      providerA2AUrl: 'https://provider.example/a2a/domain-management',
-    },
-    skill: {
-      id: 'register-domain',
-      name: 'Register Domain',
-      description: 'Register a new domain.',
-      tags: ['domains'],
-    },
-    bindingProfile: 'stock-fixed-v1',
-    pricingMode: 'fixed',
-    fixedGrossAmount: '5000000',
-    token: USDC,
-    payTo: '0x1111111111111111111111111111111111111111',
-    providerPayee: '0x2222222222222222222222222222222222222222',
-    daskiCommissionReceiver: '0x3333333333333333333333333333333333333333',
-    commissionBps: 500,
-    providerAudience: 'https://provider.example/audience',
-    absoluteResourceUri: 'https://gateway.example/outcomes/11/domain-registration',
-    listingManifestHash: `0x${'ab'.repeat(32)}`,
-    providerOfferHash: `0x${'cd'.repeat(32)}`,
-    splitterDeploymentBlockNumber: '12345678',
-    categoryFamily: 'domains-web',
-    serviceType: 'domain-registration',
-    jurisdictions: ['US-CO'],
-    tags: ['domain', 'registration'],
-    persistentAsset: true,
-    fulfillmentObligationHash: `0x${'34'.repeat(32)}`,
-    jurisdictionObligationHashes: { 'US-CO': `0x${'56'.repeat(32)}` },
-    terms: {
-      marketplaceTermsUrl: 'https://daski.example/terms-of-use',
-      marketplacePrivacyUrl: 'https://daski.example/privacy-policy',
-      providerLegalName: 'Example Provider LLC',
-      providerTermsUrl: 'https://provider.example/terms-of-use',
-      providerPrivacyUrl: 'https://provider.example/privacy-policy',
-    },
-    deadlinePolicy: {
-      draftSeconds: 600,
-      minimumPaymentWindowSeconds: 120,
-      verificationSeconds: 300,
-      settlementEvidenceSeconds: 600,
-      releaseEvidenceSeconds: 600,
-      dispatchSeconds: 900,
-      fulfillmentSeconds: 172800,
-    },
-    capacityPolicy: { maxOpenOrders: 5 },
-    providerReputation: validReputation(),
-    serviceReputation: validReputation(),
-    reputation: validReputation(),
-    ...overrides,
-  };
-}
+test('parses the gateway-owned v3 Activity projection', () => {
+  const parsed = parseRailMetadata(copy());
 
-function validMetadata(outcomes = [validOutcome()]) {
-  return {
-    version: 2,
-    chainId: 84532,
-    network: 'base-sepolia',
-    paymentRail: {
-      scheme: 'exact',
-      network: 'eip155:84532',
-      asset: USDC,
-      transferMethod: 'eip3009',
-      activeRailProfileHash: `0x${'ef'.repeat(32)}`,
-      activeRailProfileUrl: 'https://gateway.example/public/v2/artifacts/profile',
-    },
-    contracts: CONTRACTS,
-    outcomes,
-  };
-}
-
-test('admits a fully valid rail metadata document', () => {
-  const parsed = parseRailMetadata(validMetadata([
-    validOutcome(),
-    validOutcome({
-      outcomeId: 'llc-formation',
-      bindingProfile: 'recipe-bound-v1',
-      pricingMode: 'dynamic',
-      fixedGrossAmount: '0',
-    }),
-  ]));
-  assert.equal(parsed.version, 2);
+  assert.equal(parsed.version, 3);
+  assert.equal(parsed.outcomeSchemaVersion, 1);
   assert.equal(parsed.chainId, 84532);
-  assert.equal(parsed.paymentRail.asset, USDC);
-  assert.equal(parsed.contracts.reputationStorage, CONTRACTS.reputationStorage);
-  assert.equal(parsed.outcomes.length, 2);
-  assert.equal(parsed.outcomes[0].bindingProfile, 'stock-fixed-v1');
-  assert.equal(parsed.outcomes[0].commissionBps, 500);
-  assert.equal(parsed.outcomes[0].serviceId, `0x${'12'.repeat(32)}`);
-  assert.equal(parsed.outcomes[0].service.name, 'Domain Management');
-  assert.equal(parsed.outcomes[0].skill.name, 'Register Domain');
+  assert.equal(parsed.outcomes.length, 1);
+  assert.deepEqual(parsed.outcomes[0].service, {
+    id: fixture.outcomes[0].serviceId,
+    name: 'Domain Management',
+  });
+  assert.deepEqual(parsed.outcomes[0].skill, {
+    id: 'register-domain',
+    name: 'Register Domain',
+  });
   assert.equal(parsed.outcomes[0].reputation.transactionCount, '2');
-  assert.equal(parsed.outcomes[0].reputation.totalPaid, '9007199254740993000000');
-  assert.equal(parsed.outcomes[1].pricingMode, 'dynamic');
-  assert.equal(parsed.outcomes[1].fixedGrossAmount, '0');
+  assert.equal(parsed.outcomes[0].reputation.totalPaid, '5000000');
+  assert.equal(parsed.outcomes[0].reputation.recentPurchases.length, 1);
+  assert.equal('bindingProfile' in parsed.outcomes[0], false);
+  assert.equal(fixture.outcomes[0].fulfillmentObligationHash, undefined);
+  assert.equal(fixture.outcomes[0].jurisdictionObligationHashes, undefined);
 });
 
-test('preserves no-signal reputation and rejects malformed samples', () => {
-  const noSignal = validReputation({
-    transactionCount: '0', completedCount: '0', failedCount: '0',
-    completionSampleSize: '0', completionRate: null, confirmedCount: '0',
-    confirmationSampleSize: '0', buyerSatisfactionRate: null,
-    valueWeightedBuyerSatisfactionRate: null, averageFulfillmentSeconds: null,
-    fulfillmentSampleSize: '0', recentPurchases: [], safeBlock: null,
-  });
+test('keeps the deployed unversioned outcome projection compatible with metadata v2', () => {
+  const legacy = copy();
+  legacy.version = 2;
+  delete legacy.outcomeSchemaVersion;
+
+  const parsed = parseRailMetadata(legacy);
+  assert.equal(parsed.version, 2);
+  assert.equal(parsed.outcomeSchemaVersion, null);
+  assert.equal(parsed.outcomes[0].reputation.safeBlock, '12345690');
+});
+
+test('ignores and reports additive fields once per shape', () => {
+  const extended = copy();
+  extended.outcomes[0].futureProvenance = { version: 1 };
+  const warnings = [];
+  const originalWarn = console.warn;
+  console.warn = (...values) => warnings.push(values.join(' '));
+  try {
+    parseRailMetadata(extended);
+    parseRailMetadata(extended);
+  } finally {
+    console.warn = originalWarn;
+  }
+
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /standard outcome ignored unknown fields: futureProvenance/);
+});
+
+test('still fails closed on missing or malformed Activity fields', () => {
+  const missingName = copy();
+  delete missingName.outcomes[0].service.name;
+  assert.throws(
+    () => parseRailMetadata(missingName),
+    /provider service presentation is missing required fields: name/,
+  );
+
+  const malformedRate = copy();
+  malformedRate.outcomes[0].reputation.completionRate = 101;
+  assert.throws(() => parseRailMetadata(malformedRate), /completion rate is invalid/);
+
+  const mismatchedSkill = copy();
+  mismatchedSkill.outcomes[0].skill.id = 'different-skill';
+  assert.throws(
+    () => parseRailMetadata(mismatchedSkill),
+    /does not match the admitted outcome/,
+  );
+});
+
+test('requires the explicit outcome schema signal for metadata v3', () => {
+  const missingVersion = copy();
+  delete missingVersion.outcomeSchemaVersion;
+  assert.throws(() => parseRailMetadata(missingVersion), /outcome schema version is invalid/);
+
+  const mismatchedAsset = copy();
+  mismatchedAsset.contracts.usdc = '0x5555555555555555555555555555555555555555';
+  assert.throws(
+    () => parseRailMetadata(mismatchedAsset),
+    /contract USDC differs from the canonical payment asset/,
+  );
+});
+
+test('parses the legacy public outcome index through the same narrow projection', () => {
   const parsed = parseOutcomeIndex({
     version: 2,
-    outcomes: [validOutcome({ reputation: noSignal })],
+    outcomes: copy().outcomes,
   });
-  assert.equal(parsed.outcomes[0].reputation.completionRate, null);
-  assert.equal(parsed.outcomes[0].reputation.safeBlock, null);
-  assert.throws(() => parseOutcomeIndex({
-    version: 2,
-    outcomes: [validOutcome({
-      reputation: validReputation({ completionRate: 101 }),
-    })],
-  }), /completion rate is invalid/);
-});
-
-test('admits a valid outcome index and rejects cross-asset outcomes', () => {
-  const index = parseOutcomeIndex({ version: 2, outcomes: [validOutcome()] });
-  assert.equal(index.outcomes[0].outcomeId, 'domain-registration');
-  assert.throws(() => parseRailMetadata(validMetadata([
-    validOutcome({ token: '0x5555555555555555555555555555555555555555' }),
-  ])), /differs from the canonical payment asset/);
-});
-
-test('rejects provider presentation that does not match the admitted identifiers', () => {
-  assert.throws(() => parseOutcomeIndex({
-    version: 2,
-    outcomes: [validOutcome({ skillId: 'different-skill' })],
-  }), /does not match the admitted outcome/);
+  assert.equal(parsed.outcomes[0].service.name, 'Domain Management');
 });
 
 test('reads the registered provider card URI from provider identity', () => {
@@ -219,24 +123,4 @@ test('reads the registered provider card URI from provider identity', () => {
     () => parseProviderAgentUri(registration, '12'),
     /agent ID does not match/,
   );
-});
-
-test('fails closed on malformed live rail metadata', () => {
-  assert.throws(() => parseRailMetadata({
-    version: 2,
-    chainId: 84532,
-    network: 'base-sepolia',
-    paymentRail: true,
-    contracts: CONTRACTS,
-    outcomes: [],
-  }), /payment rail must be an object/);
-  assert.throws(() => parseRailMetadata({
-    version: 2,
-    chainId: 84532,
-    network: 'base-sepolia',
-    paymentRail: {},
-    contracts: CONTRACTS,
-    outcomes: [],
-    injected: true,
-  }), /unexpected shape/);
 });

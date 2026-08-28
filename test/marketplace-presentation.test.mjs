@@ -96,4 +96,6 @@ test('retains the established marketplace hierarchy while using rail data', asyn
     { name: 'ReputationStorage', field: 'reputationStorage' },
   ]);
   assert.doesNotMatch(activity, /splitter/i);
+  assert.match(activity, /Chain data unavailable\./);
+  assert.match(activity, /Showing the last verified projection/);
 });

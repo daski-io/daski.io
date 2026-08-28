@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Caption, Mono } from '../components/ui/Mono';
 import { Icon } from '../components/ui/Icon';
 import { Section } from '../components/ui/Section';
@@ -17,22 +17,37 @@ const REFRESH_MS = 30_000;
 
 export function ActivityPage({
   initialMetadata = null,
+  initialError = null,
 }: {
   initialMetadata?: StandardRailMetadata | null;
+  initialError?: string | null;
 }) {
   const [metadata, setMetadata] = useState(initialMetadata);
-  const [loading, setLoading] = useState(initialMetadata === null);
+  const [loading, setLoading] = useState(initialMetadata === null && initialError === null);
+  const [error, setError] = useState(initialError);
   const [tickSeconds, setTickSeconds] = useState(REFRESH_MS / 1_000);
+  const reportedRefreshError = useRef(false);
   const presentation = useMemo(() => marketplacePresentation(metadata), [metadata]);
+  const hasVerifiedData = metadata !== null;
 
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
       try {
         const next = await getRailMetadata();
-        if (!cancelled) setMetadata(next);
-      } catch {
-        // Keep the last verified projection until the next refresh.
+        if (!cancelled) {
+          setMetadata(next);
+          setError(null);
+          reportedRefreshError.current = false;
+        }
+      } catch (loadError) {
+        if (!cancelled) {
+          setError('Live chain data is temporarily unavailable.');
+          if (!reportedRefreshError.current) {
+            console.error('Failed to refresh verified chain metadata', loadError);
+            reportedRefreshError.current = true;
+          }
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -61,6 +76,7 @@ export function ActivityPage({
             Live numbers from the marketplace and the settlement layer underneath. Honest small
             numbers: they grow as agents start buying.
           </p>
+          {error && <DataStatus hasVerifiedData={hasVerifiedData} />}
         </div>
       </Section>
 
@@ -68,9 +84,9 @@ export function ActivityPage({
         <SectionHead kicker="marketplace" title="The numbers." />
         <div className="dk-card" style={{ padding: 0, overflow: 'hidden' }}>
           <div className="dk-stat-row dk-stat-cols-3">
-            <BigStat label="services available" value={presentation.serviceCount.toString()} hint="on the marketplace" />
-            <BigStat label="agent purchases" value={presentation.transactionCount} hint="finalized · all-time" />
-            <BigStat label="total spent by agents" value={`${presentation.totalPaid} USDC`} hint="across all services" last />
+            <BigStat label="services available" value={hasVerifiedData ? presentation.serviceCount.toString() : '–'} hint="on the marketplace" />
+            <BigStat label="agent purchases" value={hasVerifiedData ? presentation.transactionCount : '–'} hint="finalized · all-time" />
+            <BigStat label="total spent by agents" value={hasVerifiedData ? `${presentation.totalPaid} USDC` : '–'} hint="across all services" last />
           </div>
         </div>
       </Section>
@@ -87,8 +103,10 @@ export function ActivityPage({
             <span>Agent</span><span>Service</span><span>Paid</span>
             <span>Skill</span><span>When</span><span>Receipt</span>
           </div>
-          {loading && presentation.purchases.length === 0 ? (
+          {loading && !hasVerifiedData ? (
             <EmptyRow>loading…</EmptyRow>
+          ) : !hasVerifiedData ? (
+            <EmptyRow>Live chain data is unavailable. Retrying automatically…</EmptyRow>
           ) : presentation.purchases.length === 0 ? (
             <EmptyRow>No finalized paid activity yet.</EmptyRow>
           ) : presentation.purchases.slice(0, 50).map((purchase, index, rows) => (
@@ -128,11 +146,29 @@ export function ActivityPage({
           <div className="dk-stat-row dk-stat-cols-3">
             <BigStat label="network" value={networkLabel(metadata)} hint={metadata ? `testnet · ${metadata.chainId}` : 'testnet · 84532'} mono={false} />
             <BigStat label="block height" value={formatBlock(presentation.safeBlock)} hint="safe" />
-            <BigStat label="on-chain volume" value={`${presentation.totalPaid} USDC`} hint="settled · all-time" last />
+            <BigStat label="on-chain volume" value={hasVerifiedData ? `${presentation.totalPaid} USDC` : '–'} hint="settled · all-time" last />
           </div>
         </div>
         <ContractRows metadata={metadata} />
       </Section>
+    </div>
+  );
+}
+
+function DataStatus({ hasVerifiedData }: { hasVerifiedData: boolean }) {
+  return (
+    <div role="status" className="dk-card" style={statusStyle}>
+      <Icon name="bolt" size={16} color="var(--pro-warning, #f5b942)" />
+      <div>
+        <div style={{ color: 'var(--pro-text)', fontWeight: 600, fontSize: 13 }}>
+          {hasVerifiedData ? 'Live refresh delayed.' : 'Chain data unavailable.'}
+        </div>
+        <div style={{ color: 'var(--pro-text-dim)', fontSize: 12, marginTop: 3 }}>
+          {hasVerifiedData
+            ? 'Showing the last verified projection while automatic retries continue.'
+            : 'No verified projection has loaded. Automatic retries are continuing.'}
+        </div>
+      </div>
     </div>
   );
 }
@@ -211,6 +247,7 @@ function tableRowStyle(hasBorder: boolean) {
 
 const heroStyle = { fontSize: 56, fontWeight: 700, color: 'var(--pro-text)', letterSpacing: '-0.03em', lineHeight: 1.04, margin: 0 };
 const introStyle = { color: 'var(--pro-text-dim)', fontSize: 17, lineHeight: 1.6, margin: '22px 0 0', maxWidth: 700 };
+const statusStyle = { display: 'flex', alignItems: 'flex-start', gap: 10, marginTop: 24, padding: '14px 16px', maxWidth: 700 } as const;
 const ellipsisStyle = { color: 'var(--pro-text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } as const;
 const receiptStyle = { color: 'var(--mint-400)', textTransform: 'none', letterSpacing: 0, fontSize: 11 } as const;
 const contractStyle = { fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--mint-400)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } as const;

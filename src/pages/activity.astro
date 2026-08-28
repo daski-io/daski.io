@@ -4,15 +4,18 @@ import { ActivityPage } from '../views/ActivityPage';
 import { getRailMetadata, type StandardRailMetadata } from '../lib/api';
 
 let initialMetadata: StandardRailMetadata | null = null;
+let initialError: string | null = null;
 try {
   initialMetadata = await getRailMetadata();
-} catch {
+} catch (error) {
+  console.error('Failed to load verified chain metadata during SSR', error);
   initialMetadata = null;
+  initialError = 'Live chain data is temporarily unavailable.';
 }
 ---
 <BaseLayout
   title="Marketplace activity · Daski"
   description="Recent agent purchases, marketplace totals, reputation, and verified contracts on Daski Testnet."
 >
-  <ActivityPage client:load initialMetadata={initialMetadata} />
+  <ActivityPage client:load initialMetadata={initialMetadata} initialError={initialError} />
 </BaseLayout>

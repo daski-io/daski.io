@@ -14,35 +14,6 @@ export interface StandardOutcome {
   skillId: string;
   service: StandardServicePresentation;
   skill: StandardSkillPresentation;
-  bindingProfile: 'stock-fixed-v1' | 'recipe-bound-v1';
-  pricingMode: 'fixed' | 'dynamic';
-  fixedGrossAmount: string;
-  splitterDeploymentBlockNumber: string;
-  token: string;
-  payTo: string;
-  providerPayee: string;
-  daskiCommissionReceiver: string;
-  commissionBps: number;
-  providerAudience: string;
-  absoluteResourceUri: string;
-  listingManifestHash: string;
-  providerOfferHash: string;
-  categoryFamily: string;
-  serviceType: string;
-  jurisdictions: string[];
-  tags: string[];
-  persistentAsset: boolean;
-  fulfillmentObligationHash: string;
-  jurisdictionObligationHashes: Record<string, string>;
-  terms: PublicServiceLegal;
-  deadlinePolicy: {
-    verificationSeconds: number;
-    settlementEvidenceSeconds: number;
-    releaseEvidenceSeconds: number;
-    dispatchSeconds: number;
-    fulfillmentSeconds: number;
-  };
-  capacityPolicy: { maxOpenOrders: number };
   providerReputation: StandardReputation;
   serviceReputation: StandardReputation;
   reputation: StandardReputation;
@@ -50,24 +21,12 @@ export interface StandardOutcome {
 
 export interface StandardServicePresentation {
   id: string;
-  slug: string;
-  version: string;
   name: string;
-  description: string;
-  categoryFamily: string;
-  serviceType: string;
-  jurisdictions: string[];
-  turnaroundEstimate: string;
-  serviceLifecycle: string;
-  agentCardUrl: string;
-  providerA2AUrl: string;
 }
 
 export interface StandardSkillPresentation {
   id: string;
   name: string;
-  description: string;
-  tags: string[];
 }
 
 export interface StandardReputation {
@@ -193,7 +152,8 @@ export function reputationRates(stats: ReputationStats): {
 export type ServiceDetail = PublicService;
 
 export interface StandardRailMetadata {
-  version: number;
+  version: 2 | 3;
+  outcomeSchemaVersion: 1 | null;
   chainId: number;
   network: string;
   paymentRail: {
