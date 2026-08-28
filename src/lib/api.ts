@@ -198,6 +198,18 @@ function text(
   return value;
 }
 
+function multilineText(
+  value: unknown,
+  label: string,
+  maximum = 32_000,
+): string {
+  if (
+    typeof value !== 'string' || value.length === 0 || value.length > maximum ||
+    /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/.test(value)
+  ) throw new Error(`gateway ${label} is invalid`);
+  return value;
+}
+
 function decimal(value: unknown, label: string): string {
   const found = text(value, label, 80);
   if (!/^\d+$/.test(found)) throw new Error(`gateway ${label} is invalid`);
@@ -290,7 +302,7 @@ function parsePublicSkill(value: unknown): PublicSkill {
     id: text(listing.listingId, 'listing ID', 64),
     skillId: text(skill.skillId, 'skill ID', 96),
     name: text(presentation.name, 'skill name', 160),
-    description: text(presentation.description, 'skill description'),
+    description: multilineText(presentation.description, 'skill description'),
     tags: strings(presentation.tags, 'skill tags', 64),
     documentationUrl: httpsUrl(
       presentation.documentationUrl,
@@ -301,7 +313,7 @@ function parsePublicSkill(value: unknown): PublicSkill {
     variable: paymentRequired && fixedAmountAtomic === null,
     paymentRequired,
     acceptingNewOrders: booleanValue(
-      contract.acceptingNewOrders,
+      skill.acceptingNewOrders,
       'skill acceptingNewOrders',
     ),
     fulfillmentMode: fulfillmentMode as PublicSkill['fulfillmentMode'],
@@ -360,7 +372,7 @@ function parsePublicService(value: unknown): PublicService {
     categoryFamily: text(service.categoryFamily, 'category family', 128),
     serviceType: text(service.serviceType, 'service type', 128),
     jurisdictions: strings(service.jurisdictions, 'service jurisdictions', 64),
-    serviceDescription: text(item.description, 'service description'),
+    serviceDescription: multilineText(item.description, 'service description'),
     serviceLifecycle: text(service.lifecycle, 'service lifecycle', 128),
     turnaroundEstimate: text(
       service.turnaroundEstimate,
