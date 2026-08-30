@@ -57,12 +57,13 @@ test('derives marketplace totals and public purchase rows from the new rail', ()
 test('retains the established marketplace hierarchy while using rail data', async () => {
   const root = new URL('../', import.meta.url);
   const read = (path) => readFile(new URL(path, root), 'utf8');
-  const [activity, service, hero, details, skills] = await Promise.all([
+  const [activity, service, hero, details, skills, directory] = await Promise.all([
     read('src/views/ActivityPage.tsx'),
     read('src/views/ServiceDetailPage.tsx'),
     read('src/components/service/ServiceHero.tsx'),
     read('src/components/service/ProviderAndRailDetails.tsx'),
     read('src/components/service/ServiceSkillsTable.tsx'),
+    read('src/components/home/ServicesDirectory.tsx'),
   ]);
 
   assert.match(activity, /What&apos;s happening on/);
@@ -73,6 +74,10 @@ test('retains the established marketplace hierarchy while using rail data', asyn
   assert.match(service, /ServiceSkillsTable/);
   assert.match(service, /ProviderAndRailDetails/);
   assert.match(hero, /service\.turnaroundEstimate/);
+  assert.match(
+    directory,
+    /title=\{service\.turnaroundEstimate\}[\s\S]*maxWidth: '25ch'[\s\S]*textOverflow: 'ellipsis'[\s\S]*whiteSpace: 'nowrap'[\s\S]*\{service\.turnaroundEstimate\}/,
+  );
   assert.match(hero, /service\.jurisdictions/);
   assert.match(details, /service\.legal\.providerTermsUrl/);
   assert.match(details, /service\.providerAgentId/);
