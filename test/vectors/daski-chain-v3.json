@@ -138,25 +138,6 @@
         "totalRefunded": "0",
         "averageFulfillmentSeconds": 90,
         "fulfillmentSampleSize": "1",
-        "recentPurchases": [],
-        "safeBlock": "12345690"
-      },
-      "reputation": {
-        "transactionCount": "2",
-        "completedCount": "1",
-        "failedCount": "1",
-        "canceledCount": "0",
-        "completionSampleSize": "2",
-        "completionRate": 50,
-        "confirmedCount": "1",
-        "notConfirmedCount": "0",
-        "confirmationSampleSize": "1",
-        "buyerSatisfactionRate": 100,
-        "valueWeightedBuyerSatisfactionRate": 100,
-        "totalPaid": "5000000",
-        "totalRefunded": "0",
-        "averageFulfillmentSeconds": 90,
-        "fulfillmentSampleSize": "1",
         "recentPurchases": [
           {
             "orderKey": "0x8989898989898989898989898989898989898989898989898989898989898989",

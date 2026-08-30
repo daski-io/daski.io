@@ -244,8 +244,22 @@ function ServiceCard({ service }: { service: PublicService }) {
               price
             </Mono>
           </div>
-          <div style={{ textAlign: 'right' }}>
-            <Mono style={{ fontSize: 12 }}>{service.turnaroundEstimate}</Mono>
+          <div
+            title={service.turnaroundEstimate}
+            style={{ textAlign: 'right', minWidth: 0 }}
+          >
+            <Mono
+              style={{
+                display: 'block',
+                maxWidth: '25ch',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                fontSize: 12,
+              }}
+            >
+              {service.turnaroundEstimate}
+            </Mono>
             <Mono dim style={{ display: 'block', fontSize: 11, marginTop: 2, letterSpacing: '0.04em' }}>
               turnaround
             </Mono>

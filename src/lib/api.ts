@@ -16,7 +16,6 @@ export interface StandardOutcome {
   skill: StandardSkillPresentation;
   providerReputation: StandardReputation;
   serviceReputation: StandardReputation;
-  reputation: StandardReputation;
 }
 
 export interface StandardServicePresentation {
