@@ -51,7 +51,7 @@ export function reputationPresentation(outcome: StandardOutcome): {
   rows: ReputationPresentationRow[];
   recentPurchases: ReputationPresentationRow[];
 } {
-  const reputation = outcome.reputation;
+  const reputation = outcome.serviceReputation;
   const satisfaction = reputation.valueWeightedBuyerSatisfactionRate ??
     reputation.buyerSatisfactionRate;
   return {

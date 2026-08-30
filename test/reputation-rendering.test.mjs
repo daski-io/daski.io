@@ -27,11 +27,10 @@ function reputation(overrides = {}) {
   };
 }
 
-function outcome(outcomeReputation) {
+function outcome(serviceReputation) {
   return {
     providerReputation: reputation({ transactionCount: '12' }),
-    serviceReputation: reputation({ transactionCount: '8' }),
-    reputation: outcomeReputation,
+    serviceReputation,
   };
 }
 
@@ -84,7 +83,6 @@ test('keeps partial and revised confirmation samples explicit at every scope', (
   const presented = reputationPresentation({
     providerReputation: provider,
     serviceReputation: service,
-    reputation: reputation(),
   });
   assert.ok(presented.providerRows.some((row) => row.label === 'Provider completion (12)'));
   assert.ok(presented.providerRows.some((row) => row.value === '66.67%'));

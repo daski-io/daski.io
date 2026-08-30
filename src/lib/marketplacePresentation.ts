@@ -34,7 +34,7 @@ export function marketplacePresentation(
     outcome,
   ]));
   const safeBlocks = services
-    .map((outcome) => outcome.reputation.safeBlock)
+    .map((outcome) => outcome.serviceReputation.safeBlock)
     .filter((value): value is string => value !== null)
     .map(BigInt);
   const safeBlock = safeBlocks.reduce<bigint | null>(
@@ -42,7 +42,7 @@ export function marketplacePresentation(
     null,
   );
   const purchases = services
-    .flatMap((outcome) => outcome.reputation.recentPurchases.map((purchase) => ({
+    .flatMap((outcome) => outcome.serviceReputation.recentPurchases.map((purchase) => ({
       ...purchase,
       outcome: outcomesById.get(`${outcome.providerAgentId}:${purchase.outcomeId}`) ?? outcome,
     })))
@@ -52,9 +52,11 @@ export function marketplacePresentation(
     safeBlock: safeBlock?.toString() ?? null,
     purchases,
     serviceCount: services.length,
-    totalPaid: atomicUsdc(addDecimalStrings(services.map((outcome) => outcome.reputation.totalPaid))),
+    totalPaid: atomicUsdc(addDecimalStrings(
+      services.map((outcome) => outcome.serviceReputation.totalPaid),
+    )),
     transactionCount: addDecimalStrings(
-      services.map((outcome) => outcome.reputation.transactionCount),
+      services.map((outcome) => outcome.serviceReputation.transactionCount),
     ),
   };
 }

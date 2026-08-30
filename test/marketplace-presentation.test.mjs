@@ -18,7 +18,7 @@ function outcome(outcomeId, outcomeReputation) {
     outcomeId,
     serviceId: `0x${(outcomeId === 'domain' ? '11' : '22').repeat(32)}`,
     providerAgentId: '1',
-    reputation: outcomeReputation,
+    serviceReputation: outcomeReputation,
   };
 }
 

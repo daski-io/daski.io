@@ -104,7 +104,7 @@ function parseSkillPresentation(value: unknown): StandardOutcome['skill'] {
   };
 }
 
-function parseReputation(value: unknown, label: string): StandardOutcome['reputation'] {
+function parseReputation(value: unknown, label: string): StandardOutcome['serviceReputation'] {
   const reputation = record(value, label);
   shape(reputation, [
     'transactionCount', 'completedCount', 'failedCount', 'canceledCount',
@@ -174,7 +174,7 @@ function parseOutcome(value: unknown): StandardOutcome {
   const outcome = record(value, 'standard outcome');
   shape(outcome, [
     'providerAgentId', 'serviceId', 'outcomeId', 'skillId', 'service', 'skill',
-    'providerReputation', 'serviceReputation', 'reputation',
+    'providerReputation', 'serviceReputation',
   ], 'standard outcome', [
     'bindingProfile', 'pricingMode', 'fixedGrossAmount', 'token', 'payTo',
     'providerPayee', 'daskiCommissionReceiver', 'commissionBps', 'providerAudience',
@@ -202,7 +202,6 @@ function parseOutcome(value: unknown): StandardOutcome {
     skill,
     providerReputation: parseReputation(outcome.providerReputation, 'provider reputation'),
     serviceReputation: parseReputation(outcome.serviceReputation, 'service reputation'),
-    reputation: parseReputation(outcome.reputation, 'outcome reputation'),
   };
 }
 

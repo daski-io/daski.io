@@ -29,9 +29,10 @@ test('parses the gateway-owned v3 Activity projection', () => {
     id: 'register-domain',
     name: 'Register Domain',
   });
-  assert.equal(parsed.outcomes[0].reputation.transactionCount, '2');
-  assert.equal(parsed.outcomes[0].reputation.totalPaid, '5000000');
-  assert.equal(parsed.outcomes[0].reputation.recentPurchases.length, 1);
+  assert.equal(parsed.outcomes[0].serviceReputation.transactionCount, '2');
+  assert.equal(parsed.outcomes[0].serviceReputation.totalPaid, '5000000');
+  assert.equal(parsed.outcomes[0].serviceReputation.recentPurchases.length, 1);
+  assert.equal('reputation' in parsed.outcomes[0], false);
   assert.equal('bindingProfile' in parsed.outcomes[0], false);
   assert.equal(fixture.outcomes[0].fulfillmentObligationHash, undefined);
   assert.equal(fixture.outcomes[0].jurisdictionObligationHashes, undefined);
@@ -45,7 +46,7 @@ test('keeps the deployed unversioned outcome projection compatible with metadata
   const parsed = parseRailMetadata(legacy);
   assert.equal(parsed.version, 2);
   assert.equal(parsed.outcomeSchemaVersion, null);
-  assert.equal(parsed.outcomes[0].reputation.safeBlock, '12345690');
+  assert.equal(parsed.outcomes[0].serviceReputation.safeBlock, '12345690');
 });
 
 test('ignores and reports additive fields once per shape', () => {
@@ -74,7 +75,7 @@ test('still fails closed on missing or malformed Activity fields', () => {
   );
 
   const malformedRate = copy();
-  malformedRate.outcomes[0].reputation.completionRate = 101;
+  malformedRate.outcomes[0].serviceReputation.completionRate = 101;
   assert.throws(() => parseRailMetadata(malformedRate), /completion rate is invalid/);
 
   const mismatchedSkill = copy();
