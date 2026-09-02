@@ -3,7 +3,8 @@ export function atomicUsdc(value: string): string {
   const padded = value.padStart(7, '0');
   const whole = padded.slice(0, -6);
   const fraction = padded.slice(-6).replace(/0+$/, '');
-  return fraction ? `${whole}.${fraction}` : whole;
+  const groupedWhole = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return fraction ? `${groupedWhole}.${fraction}` : groupedWhole;
 }
 
 export function reputationRate(value: number | null): string {

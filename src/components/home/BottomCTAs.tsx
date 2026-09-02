@@ -1,34 +1,27 @@
-import { Section } from '../ui/Section';
-import { SectionHead } from '../ui/SectionHead';
+import { AgentPromptSection } from '../AgentPromptSection';
 import { Icon } from '../ui/Icon';
-import { PlatformPicker } from '../PlatformPicker';
 
 export function BottomCTAs() {
   return (
-    <Section pad="48px 32px 32px">
-      <SectionHead
-        kicker="MCP for your agent"
-        title="Empower your agent in 30 seconds."
-        subtitle="One MCP install command. Daski's outcome-purchase tool auto-discovers. Pick your stack."
-        action={
-          <a
-            href="/agents"
-            style={{
-              color: 'var(--mint-400)',
-              fontSize: 13,
-              fontWeight: 500,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              borderBottom: 'none',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            Full quickstart <Icon name="arrow" size={13} />
-          </a>
-        }
-      />
-      <PlatformPicker />
-    </Section>
+    <AgentPromptSection
+      pad="48px 32px 32px"
+      action={
+        <a
+          href="/agents"
+          style={{
+            color: 'var(--mint-400)',
+            fontSize: 13,
+            fontWeight: 500,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            borderBottom: 'none',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          Full quickstart <Icon name="arrow" size={13} />
+        </a>
+      }
+    />
   );
 }

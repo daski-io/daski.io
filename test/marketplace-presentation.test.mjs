@@ -23,7 +23,7 @@ function outcome(outcomeId, outcomeReputation) {
 }
 
 const domainReputation = reputation({
-  transactionCount: '9007199254740993', totalPaid: '5000000', safeBlock: '100',
+  transactionCount: '9007199254740993', totalPaid: '5000000000', safeBlock: '100',
   recentPurchases: [{
     amount: '5000000', outcomeId: 'domain', timestamp: '2026-08-16T12:00:00.000Z',
   }],
@@ -46,7 +46,7 @@ test('derives marketplace totals and public purchase rows from the new rail', ()
 
   assert.equal(presented.serviceCount, 2);
   assert.equal(presented.transactionCount, '9007199254740995');
-  assert.equal(presented.totalPaid, '6.25');
+  assert.equal(presented.totalPaid, '5,001.25');
   assert.equal(presented.safeBlock, '101');
   assert.deepEqual(presented.purchases.map((purchase) => purchase.outcome.outcomeId), [
     'mailbox', 'domain',

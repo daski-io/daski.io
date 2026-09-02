@@ -185,9 +185,11 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 
 /* Headline scale-down on smaller viewports. Apply to the page hero h1. */
 @media (max-width: 820px) {
+  .dk-page-h1 { font-size: 38px !important; line-height: 1.06 !important; }
   .dk-service-h1 { font-size: 32px !important; line-height: 1.08 !important; }
 }
 @media (max-width: 480px) {
+  .dk-page-h1 { font-size: 30px !important; }
   .dk-service-h1 { font-size: 26px !important; }
 }
 
@@ -283,6 +285,13 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 }
 .dk-service-link:hover {
   color: var(--mint-400);
+}
+
+.dk-rowlink {
+  transition: background 140ms var(--ease);
+}
+.dk-rowlink:hover {
+  background: var(--pro-surface2);
 }
 
 /* =====================================================================

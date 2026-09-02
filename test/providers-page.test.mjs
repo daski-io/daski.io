@@ -18,6 +18,9 @@ test('publishes the provider skill integration page and hydrates its controls', 
   assert.match(view, /--skill daski-provider -a codex/);
   assert.match(view, /Start from the template/);
   assert.match(view, /Join the Daski Discord/);
+  assert.match(view, /icon: 'claude'/);
+  assert.match(view, /icon: 'openai'/);
+  assert.match(view, /icon="chat"/);
 
   assert.doesNotMatch(view, /Three things\./);
   assert.doesNotMatch(view, /How it works\./);
