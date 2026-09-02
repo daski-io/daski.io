@@ -63,7 +63,7 @@ test('presents safe block, revisions, refunds, and large numeric values', () => 
   assert.ok(presented.rows.some((row) => row.value === '66.67%'));
   assert.ok(presented.rows.some((row) => row.value === '75%'));
   assert.ok(presented.rows.some((row) => row.value === '5 USDC'));
-  assert.ok(presented.rows.some((row) => row.value === '9007199254740993 USDC'));
+  assert.ok(presented.rows.some((row) => row.value === '9,007,199,254,740,993 USDC'));
   assert.ok(presented.rows.some((row) => row.value === '9999999999999999'));
   assert.deepEqual(presented.recentPurchases, [
     { label: 'Aug 13, 2026, 12:00 PM UTC', value: '5 USDC' },

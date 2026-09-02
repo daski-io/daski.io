@@ -4,6 +4,7 @@ import { Icon } from '../components/ui/Icon';
 import { Section } from '../components/ui/Section';
 import { SectionHead } from '../components/ui/SectionHead';
 import {
+  atomicUsdc,
   basescanAddress,
   basescanTx,
   buyerDisplay,
@@ -122,7 +123,7 @@ export function ActivityPage({
                 {purchase.outcome.service.name}
               </a>
               <span style={{ color: 'var(--mint-400)' }}>
-                {formatAtomicPurchase(purchase.amount)} <span style={{ color: 'var(--pro-text-dim)' }}>USDC</span>
+                {atomicUsdc(purchase.amount)} <span style={{ color: 'var(--pro-text-dim)' }}>USDC</span>
               </span>
               <span style={ellipsisStyle}>{purchase.outcome.skill.name}</span>
               <span style={{ color: 'var(--pro-text-dim)' }}>{relativeTime(purchase.timestamp)}</span>
@@ -223,13 +224,6 @@ function RefreshStatus({ seconds }: { seconds: number }) {
 
 function EmptyRow({ children }: { children: string }) {
   return <div style={{ padding: '24px 16px', color: 'var(--pro-text-dim)' }}>{children}</div>;
-}
-
-function formatAtomicPurchase(value: string): string {
-  const atomic = BigInt(value);
-  const whole = atomic / 1_000_000n;
-  const fraction = (atomic % 1_000_000n).toString().padStart(6, '0').replace(/0+$/, '');
-  return fraction ? `${whole}.${fraction}` : whole.toString();
 }
 
 function networkLabel(metadata: StandardRailMetadata | null): string {
