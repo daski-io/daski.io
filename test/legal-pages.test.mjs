@@ -86,7 +86,9 @@ test('links gateway-supplied provider details without a secondary card lookup', 
   assert.match(api, /agentCardUrl: httpsUrl\(item\.agentCardUrl/);
   assert.doesNotMatch(api, /parseProviderAgentUri|fetchProviderCard/);
   assert.match(providerDetails, /href=\{service\.agentCardUrl\}>Service card<\/ExternalLink>/);
-  assert.match(providerDetails, /href=\{service\.providerA2AUrl\}>Provider origin<\/ExternalLink>/);
+  assert.match(api, /export function providerPath/);
+  assert.match(providerDetails, /href=\{providerPath\(service\)\}>Provider details<\/InternalLink>/);
+  assert.doesNotMatch(providerDetails, /Provider origin/);
   assert.ok(
     providerDetails.indexOf('>Service card</ExternalLink>')
       < providerDetails.indexOf('>Provider Terms</ExternalLink>'),

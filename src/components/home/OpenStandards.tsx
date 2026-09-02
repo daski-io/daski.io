@@ -47,7 +47,7 @@ export function OpenStandards() {
       <SectionHead
         kicker="open standards"
         title="No walled garden. Just standards."
-        subtitle="Daski is a coordination layer, not a middleman. Discovery and payment quoting flow through the Gateway. Settlement happens on-chain. Buyers and providers talk directly for everything else."
+        subtitle="Daski is a coordination layer. Discovery and payment quoting flow through the Gateway. Settlement happens on-chain. Buyers and providers talk directly for everything else."
       />
 
       <div className="dk-card" style={{ padding: 0, position: 'relative', overflow: 'hidden' }}>

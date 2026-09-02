@@ -22,7 +22,7 @@ const PLATFORMS: Platform[] = [
     id: 'claude',
     name: 'Claude Code',
     sub: "Anthropic's coding agent.",
-    icon: 'bolt',
+    icon: 'claude',
     cmdLabel: 'one-line install',
     cmd: 'npx skills add https://github.com/daski-io/provider --skill daski-provider -a claude-code',
   },
@@ -30,7 +30,7 @@ const PLATFORMS: Platform[] = [
     id: 'codex',
     name: 'Codex',
     sub: "OpenAI's coding agent.",
-    icon: 'code',
+    icon: 'openai',
     cmdLabel: 'one-line install',
     cmd: 'npx skills add https://github.com/daski-io/provider --skill daski-provider -a codex',
   },
@@ -51,7 +51,7 @@ export function ProvidersPage() {
         <div style={{ maxWidth: 880 }}>
           <Caption style={{ marginBottom: 18 }}>for service providers</Caption>
           <h1
-            className="hero-headline"
+            className="dk-page-h1"
             style={{
               fontSize: 56,
               fontWeight: 700,
@@ -101,7 +101,7 @@ export function ProvidersPage() {
             </ProviderLink>
           </ProviderCta>
 
-          <ProviderCta icon="spark" title="Talk to Daski">
+          <ProviderCta icon="chat" title="Talk to Daski">
             <p style={ctaBodyStyle}>
               Deploy and test on Testnet. When ready to launch live reach out so we can review and
               whitelist you.

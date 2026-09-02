@@ -150,6 +150,16 @@ export function reputationRates(stats: ReputationStats): {
 
 export type ServiceDetail = PublicService;
 
+export interface ProviderDetail {
+  providerAgentId: string;
+  providerName: string;
+  providerAddress: string;
+  providerA2AUrl: string;
+  agentCardUrl: string;
+  legal: PublicServiceLegal;
+  services: PublicService[];
+}
+
 export interface StandardRailMetadata {
   version: 2 | 3;
   outcomeSchemaVersion: 1 | null;
@@ -461,6 +471,33 @@ export async function getServiceDetail(
   ));
 }
 
+export function providerDetailFromServices(
+  services: PublicService[],
+  providerAgentId: string,
+): ProviderDetail | null {
+  const normalized = decimal(providerAgentId, 'provider agent ID');
+  const owned = services.filter((service) => service.providerAgentId === normalized);
+  const first = owned[0];
+  if (!first) return null;
+  return {
+    providerAgentId: normalized,
+    providerName: first.providerName,
+    providerAddress: first.providerAddress,
+    providerA2AUrl: first.providerA2AUrl,
+    agentCardUrl: first.agentCardUrl,
+    legal: first.legal,
+    services: owned,
+  };
+}
+
+export async function getProviderDetail(
+  providerAgentId: string,
+  signal?: AbortSignal,
+): Promise<ProviderDetail | null> {
+  const { services } = await getServices(signal);
+  return providerDetailFromServices(services, providerAgentId);
+}
+
 export async function getRailMetadata(signal?: AbortSignal) {
   return parseRailMetadata(
     await fetchJson<unknown>('/.well-known/daski-chain.json', signal),
@@ -473,6 +510,12 @@ export function serviceKey(service: Pick<PublicService, 'serviceId'>): string {
 
 export function servicePath(service: Pick<PublicService, 'serviceId'>): string {
   return `/service/${encodeURIComponent(service.serviceId)}`;
+}
+
+export function providerPath(
+  provider: Pick<PublicService, 'providerAgentId'>,
+): string {
+  return `/provider/${encodeURIComponent(provider.providerAgentId)}`;
 }
 
 export function basescanAddress(address: string) {

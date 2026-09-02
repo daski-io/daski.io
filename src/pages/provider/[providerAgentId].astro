@@ -1,0 +1,57 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { ProviderProfilePage } from '../../views/ProviderProfilePage';
+import {
+  getProviderDetail,
+  getRailMetadata,
+  type ProviderDetail,
+  type StandardRailMetadata,
+} from '../../lib/api';
+
+const { providerAgentId } = Astro.params;
+
+let provider: ProviderDetail | null = null;
+let metadata: StandardRailMetadata | null = null;
+let error: string | null = null;
+let chainDataUnavailable = false;
+
+if (!providerAgentId) {
+  error = 'Missing providerAgentId';
+} else {
+  try {
+    provider = await getProviderDetail(providerAgentId);
+  } catch (e) {
+    error = e instanceof Error ? e.message : 'unknown error';
+  }
+}
+
+if (provider) {
+  try {
+    metadata = await getRailMetadata();
+  } catch {
+    chainDataUnavailable = true;
+  }
+} else {
+  Astro.response.status = 404;
+}
+---
+<BaseLayout
+  title={provider ? `${provider.providerName} · Daski` : 'Provider not found · Daski'}
+  description={provider
+    ? `${provider.providerName} offers ${provider.services.length} live service${provider.services.length === 1 ? '' : 's'} to AI agents on Daski.`
+    : 'Provider details for the Daski marketplace.'}
+>
+  {provider ? (
+    <ProviderProfilePage
+      provider={provider}
+      metadata={metadata}
+      chainDataUnavailable={chainDataUnavailable}
+    />
+  ) : (
+    <div style="padding: 88px 32px 48px; max-width: 1280px; margin: 0 auto;">
+      <h1 style="color: var(--pro-text); font-size: 32px;">Provider not found</h1>
+      <p style="color: var(--pro-text-dim);">{error ?? 'No provider with that agent ID.'}</p>
+      <a href="/" style="color: var(--mint-400);">← Back to services</a>
+    </div>
+  )}
+</BaseLayout>

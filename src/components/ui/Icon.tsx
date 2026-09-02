@@ -3,7 +3,8 @@ import type { CSSProperties } from 'react';
 export type IconName =
   | 'arrow' | 'check' | 'copy' | 'external' | 'wallet' | 'code' | 'github'
   | 'twitter' | 'domain' | 'server' | 'legal' | 'mail' | 'bolt' | 'spark'
-  | 'dollar' | 'user' | 'layers' | 'file' | 'plug' | 'menu' | 'close';
+  | 'dollar' | 'user' | 'layers' | 'file' | 'plug' | 'menu' | 'close'
+  | 'claude' | 'openai' | 'chat';
 
 interface IconProps {
   name: IconName;
@@ -35,6 +36,9 @@ const PATHS: Record<IconName, JSX.Element> = {
   plug: <><path d="M9 2v6M15 2v6M6 8h12v4a6 6 0 0 1-12 0z"/><path d="M12 18v4"/></>,
   menu: <path d="M3 12h18M3 6h18M3 18h18"/>,
   close: <path d="M6 6l12 12M6 18 18 6"/>,
+  claude: <path d="M16 12h5.5M15.5 14l4.8 2.7M14 15.5l2.7 4.8M12 16v5.5M10 15.5l-2.7 4.8M8.5 14l-4.8 2.7M8 12H2.5M8.5 10 3.7 7.3M10 8.5 7.3 3.7M12 8V2.5M14 8.5l2.7-4.8M15.5 10l4.8-2.7"/>,
+  openai: <><path d="M12 3l7.8 4.5v9L12 21l-7.8-4.5v-9z"/><path d="M12 3v5.5M19.8 16.5l-4.7-2.7M4.2 16.5l4.7-2.7"/></>,
+  chat: <path d="M21 12a8.5 8.5 0 0 1-12.4 7.5L3 21l1.5-5.6A8.5 8.5 0 1 1 21 12z"/>,
 };
 
 export function Icon({ name, size = 18, color = 'currentColor', strokeWidth = 1.6, style }: IconProps) {

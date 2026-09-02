@@ -8,8 +8,8 @@ const TOTAL_STEPS = 6;
 const BEATS = [
   { t: 'Agent recognized it needed a domain', sub: 'no human prompt' },
   { t: 'Discovered a verified provider via Daski', sub: 'bluet group · domains' },
-  { t: 'Authorized x402 V2 payment with its own wallet', sub: '4.99 USDC · Exact-EVM signed' },
-  { t: 'Domain registered and owned by the agent', sub: '47 seconds end-to-end' },
+  { t: 'Authorized x402 V2 payment with its own wallet', sub: '4.99 USDC · Signed' },
+  { t: 'Domain registered and owned by wallet', sub: '47 seconds end-to-end' },
 ];
 
 // Maps the 0..TOTAL_STEPS animation step to the BEAT index (0..3).
@@ -268,7 +268,7 @@ function AgentTrace({ step }: { step: number }) {
             <span className="dim">[mcp:daski]</span> <span className="ink">check_availability</span>
           </div>
           <div className="indent">
-            └─ <span className="ink">uat04291.info</span> <span className="dim">·</span>{' '}
+            └─ <span className="ink">idea.info</span> <span className="dim">·</span>{' '}
             <span className="mint">available</span> <span className="dim">·</span>{' '}
             <span className="amber">4.99 USDC</span>
           </div>
@@ -291,7 +291,7 @@ function AgentTrace({ step }: { step: number }) {
       {step >= 3 && (
         <Block>
           <div>
-            <span className="dim">[x402 client]</span> sign Exact-EVM payment
+            <span className="dim">[x402 client]</span> sign and send payment
           </div>
           <div className="indent">
             └─ <span className="mint">✓ signed</span>{' '}
@@ -330,7 +330,7 @@ function AgentTrace({ step }: { step: number }) {
             <span className="mint">agent</span> <span className="dim">·</span> result
           </div>
           <div className="indent">
-            └─ <span className="ink">uat04291.info</span> registered.
+            └─ <span className="ink">idea.info</span> registered.
           </div>
         </Block>
       )}

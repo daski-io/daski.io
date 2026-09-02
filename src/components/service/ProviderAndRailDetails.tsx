@@ -1,5 +1,6 @@
 import {
   basescanAddress,
+  providerPath,
   type ServiceDetail,
 } from '../../lib/api';
 import { Addr } from '../ui/Addr';
@@ -17,7 +18,7 @@ export function ProviderAndRailDetails({ service }: { service: ServiceDetail }) 
             <h3 style={providerTitleStyle}>{service.legal.providerLegalName}</h3>
             <div style={linkRowStyle}>
               <ExternalLink href={service.agentCardUrl}>Service card</ExternalLink>
-              <ExternalLink href={service.providerA2AUrl}>Provider origin</ExternalLink>
+              <InternalLink href={providerPath(service)}>Provider details</InternalLink>
               <Addr link={basescanAddress(service.providerAddress)} style={{ fontSize: 12 }}>
                 {service.providerAddress}
               </Addr>
@@ -58,6 +59,10 @@ function ProviderStat({ label, value }: { label: string; value: string }) {
 
 function ExternalLink({ href, children }: { href: string; children: string }) {
   return <a href={href} target="_blank" rel="noreferrer" className="dk-link-mint"><Icon name="external" size={13} />{children}</a>;
+}
+
+function InternalLink({ href, children }: { href: string; children: string }) {
+  return <a href={href} className="dk-link-mint"><Icon name="arrow" size={13} />{children}</a>;
 }
 
 const providerTitleStyle = { fontSize: 22, fontWeight: 600, margin: '0 0 14px', color: 'var(--pro-text)', letterSpacing: '-0.015em' };

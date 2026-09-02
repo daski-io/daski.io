@@ -1,13 +1,7 @@
 import type { ReactNode } from 'react';
+import { AgentPromptSection } from '../components/AgentPromptSection';
 import { Section } from '../components/ui/Section';
-import { SectionHead } from '../components/ui/SectionHead';
 import { Caption } from '../components/ui/Mono';
-import { type IconName } from '../components/ui/Icon';
-import { IconTile } from '../components/ui/IconTile';
-import { CodeBlock } from '../components/ui/CodeBlock';
-import { PlatformPicker } from '../components/PlatformPicker';
-
-const PROMPT = `Use the Daski MCP server at https://sandbox-gateway.daski.io/mcp\nto [your task here].`;
 
 export function AgentsPage() {
   return (
@@ -16,6 +10,7 @@ export function AgentsPage() {
         <div style={{ maxWidth: 880 }}>
           <Caption style={{ marginBottom: 18 }}>for ai agents · fast handoff</Caption>
           <h1
+            className="dk-page-h1"
             style={{
               fontSize: 56,
               fontWeight: 700,
@@ -36,8 +31,8 @@ export function AgentsPage() {
               maxWidth: 700,
             }}
           >
-            Daski plugs into any AI agent that supports MCP. Connect a wallet, install the server,
-            and your agent can discover and pay for services on Base.
+            Daski plugs into any AI agent that supports MCP. Connect a wallet, install the MCP
+            server, and your agent can discover and pay for services with USDC on Base.
           </p>
 
           <div
@@ -76,16 +71,8 @@ export function AgentsPage() {
               <li style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
                 <NumberChip>2</NumberChip>
                 <span>
-                  A wallet that holds USDC on Base.{' '}
-                  <a
-                    href="https://docs.cdp.coinbase.com/agentic-wallet/welcome"
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{ color: 'var(--mint-400)', borderBottom: 'none' }}
-                  >
-                    Coinbase Agentic Wallet
-                  </a>
-                  <span style={{ color: 'var(--pro-text-dim)' }}> recommended.</span>
+                  Use any EVM-compatible wallet.
+                  <span style={{ color: 'var(--pro-text-dim)' }}> Your agent can set it up for you.</span>
                 </span>
               </li>
             </ol>
@@ -93,55 +80,7 @@ export function AgentsPage() {
         </div>
       </Section>
 
-      <Section pad="48px 32px 0">
-        <SectionHead
-          kicker="install · 30 seconds"
-          title="Pick your stack."
-          subtitle="One install command. Daski's single outcome-purchase tool auto-discovers through MCP."
-        />
-        <PlatformPicker />
-      </Section>
-
-      <Section pad="64px 32px 0">
-        <SectionHead kicker="wallet · usdc on base" title="Your agent needs USDC to pay." />
-        <div className="dk-grid-2">
-          <WalletStep n="01" title="Set up a wallet" icon="wallet">
-            <a
-              href="https://docs.cdp.coinbase.com/agentic-wallet/welcome"
-              target="_blank"
-              rel="noreferrer"
-              style={{ color: 'var(--mint-400)', borderBottom: 'none' }}
-            >
-              Coinbase Agentic Wallet
-            </a>{' '}
-            is built for autonomous agents and integrates cleanly with Daski. Any EOA on Base works
-            too.
-          </WalletStep>
-          <WalletStep n="02" title="Fund it with testnet USDC" icon="dollar">
-            Sandbox runs on Base Sepolia. Get USDC from{' '}
-            <a
-              href="https://faucet.circle.com/"
-              target="_blank"
-              rel="noreferrer"
-              style={{ color: 'var(--mint-400)', borderBottom: 'none' }}
-            >
-              Circle's faucet
-            </a>{' '}
-            (~100 USDC per address per day). Your agent uses this to pay for services.
-          </WalletStep>
-        </div>
-      </Section>
-
-      <Section pad="64px 32px 0">
-        <SectionHead
-          kicker="copy-paste prompt"
-          title="Hand it to your agent."
-          subtitle="Paste this into Claude or ChatGPT. The agent self-onboards through the MCP server."
-        />
-        <CodeBlock copy={PROMPT} copyLabel="Copy prompt" size="lg">
-          {PROMPT}
-        </CodeBlock>
-      </Section>
+      <AgentPromptSection pad="48px 32px 0" />
     </div>
   );
 }
@@ -163,30 +102,5 @@ function NumberChip({ children }: { children: ReactNode }) {
     >
       {children}
     </span>
-  );
-}
-
-function WalletStep({
-  n,
-  title,
-  icon,
-  children,
-}: {
-  n: string;
-  title: string;
-  icon: IconName;
-  children: ReactNode;
-}) {
-  return (
-    <div className="dk-card" style={{ padding: 22, display: 'flex', gap: 16, alignItems: 'flex-start' }}>
-      <IconTile name={icon} size="lg" />
-      <div style={{ minWidth: 0 }}>
-        <Caption style={{ marginBottom: 6 }}>{`step ${n}`}</Caption>
-        <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--pro-text)', marginBottom: 8 }}>
-          {title}
-        </div>
-        <div style={{ color: 'var(--pro-text-dim)', fontSize: 14, lineHeight: 1.6 }}>{children}</div>
-      </div>
-    </div>
   );
 }
