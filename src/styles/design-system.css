@@ -3,7 +3,8 @@
    Single source of truth. Import once at the top of any HTML surface.
    ===================================================================== */
 
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap");
+/* Web fonts (Inter, JetBrains Mono) load from the document head so the
+   browser discovers them before the first stylesheet; see BaseLayout.astro. */
 
 :root {
   /* Brand */
