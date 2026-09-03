@@ -7,6 +7,23 @@ export const GATEWAY_URL =
   (import.meta.env?.PUBLIC_GATEWAY_URL as string | undefined) ??
   'https://sandbox-gateway.daski.io';
 
+// Optional server-only origin for server-rendering fetches, read at runtime so
+// it can point at Railway private networking (for example
+// http://gateway.railway.internal:8080) without a rebuild. The browser keeps
+// using GATEWAY_URL. When the internal origin fails, the request falls back to
+// the public origin and the internal one is skipped for a minute.
+const INTERNAL_RETRY_MS = 60_000;
+let internalDisabledUntil = 0;
+
+function internalGatewayUrl(): string | null {
+  if (!import.meta.env?.SSR) return null;
+  const env = (globalThis as unknown as {
+    process?: { env?: Record<string, string | undefined> };
+  }).process?.env;
+  const value = env?.GATEWAY_INTERNAL_URL?.trim().replace(/\/+$/, '');
+  return value && value !== GATEWAY_URL ? value : null;
+}
+
 export interface StandardOutcome {
   providerAgentId: string;
   serviceId: string;
@@ -430,12 +447,43 @@ function parsePublicService(value: unknown): PublicService {
 
 const FETCH_TIMEOUT_MS = 10_000;
 
-async function fetchJson<T>(path: string, signal?: AbortSignal): Promise<T> {
-  const response = await fetch(`${GATEWAY_URL}${path}`, {
+class GatewayHttpError extends Error {
+  status: number;
+
+  constructor(status: number, path: string) {
+    super(`gateway ${path} → ${status}`);
+    this.status = status;
+  }
+}
+
+async function fetchJsonFrom<T>(
+  origin: string,
+  path: string,
+  signal?: AbortSignal,
+): Promise<T> {
+  const response = await fetch(`${origin}${path}`, {
     signal: signal ?? AbortSignal.timeout(FETCH_TIMEOUT_MS),
   });
-  if (!response.ok) throw new Error(`gateway ${path} → ${response.status}`);
+  if (!response.ok) throw new GatewayHttpError(response.status, path);
   return response.json() as Promise<T>;
+}
+
+async function fetchJson<T>(path: string, signal?: AbortSignal): Promise<T> {
+  const internal = internalGatewayUrl();
+  if (internal && Date.now() >= internalDisabledUntil) {
+    try {
+      return await fetchJsonFrom<T>(internal, path, signal);
+    } catch (error) {
+      // A 4xx is the gateway's answer rather than a transport failure.
+      if (error instanceof GatewayHttpError && error.status < 500) throw error;
+      internalDisabledUntil = Date.now() + INTERNAL_RETRY_MS;
+      console.error(
+        `gateway internal origin ${internal} failed; using ${GATEWAY_URL}`,
+        error,
+      );
+    }
+  }
+  return fetchJsonFrom<T>(GATEWAY_URL, path, signal);
 }
 
 // Server-side stale-while-revalidate cache of parsed gateway payloads.
