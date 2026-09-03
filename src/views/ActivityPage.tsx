@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Caption, Mono } from '../components/ui/Mono';
 import { Icon } from '../components/ui/Icon';
 import { Section } from '../components/ui/Section';
@@ -10,34 +10,38 @@ import {
   buyerDisplay,
   getRailMetadata,
   servicePath,
-  type StandardRailMetadata,
 } from '../lib/api';
-import { marketplacePresentation, relativeTime } from '../lib/marketplacePresentation';
+import {
+  activityView,
+  relativeTime,
+  type ActivityView,
+} from '../lib/marketplacePresentation';
 
 const REFRESH_MS = 30_000;
 
 export function ActivityPage({
-  initialMetadata = null,
+  initialView = null,
+  initialFetchedAt = null,
   initialError = null,
 }: {
-  initialMetadata?: StandardRailMetadata | null;
+  initialView?: ActivityView | null;
+  initialFetchedAt?: number | null;
   initialError?: string | null;
 }) {
-  const [metadata, setMetadata] = useState(initialMetadata);
-  const [loading, setLoading] = useState(initialMetadata === null && initialError === null);
+  const [view, setView] = useState(initialView);
+  const [loading, setLoading] = useState(initialView === null && initialError === null);
   const [error, setError] = useState(initialError);
   const [tickSeconds, setTickSeconds] = useState(REFRESH_MS / 1_000);
   const reportedRefreshError = useRef(false);
-  const presentation = useMemo(() => marketplacePresentation(metadata), [metadata]);
-  const hasVerifiedData = metadata !== null;
+  const hasVerifiedData = view !== null;
 
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
       try {
-        const next = await getRailMetadata();
+        const next = activityView(await getRailMetadata());
         if (!cancelled) {
-          setMetadata(next);
+          setView(next);
           setError(null);
           reportedRefreshError.current = false;
         }
@@ -53,7 +57,10 @@ export function ActivityPage({
         if (!cancelled) setLoading(false);
       }
     };
-    if (!initialMetadata) void load();
+    // The server renders from a cached snapshot. Refresh right away when that
+    // snapshot is older than one polling interval so the numbers catch up.
+    const stale = initialFetchedAt === null || Date.now() - initialFetchedAt >= REFRESH_MS;
+    if (!initialView || stale) void load();
     const refreshTimer = window.setInterval(() => void load(), REFRESH_MS);
     const tickTimer = window.setInterval(() => {
       setTickSeconds((seconds) => seconds <= 1 ? REFRESH_MS / 1_000 : seconds - 1);
@@ -63,7 +70,7 @@ export function ActivityPage({
       window.clearInterval(refreshTimer);
       window.clearInterval(tickTimer);
     };
-  }, [initialMetadata]);
+  }, [initialView, initialFetchedAt]);
 
   return (
     <div>
@@ -85,9 +92,9 @@ export function ActivityPage({
         <SectionHead kicker="marketplace" title="The numbers." />
         <div className="dk-card" style={{ padding: 0, overflow: 'hidden' }}>
           <div className="dk-stat-row dk-stat-cols-3">
-            <BigStat label="services available" value={hasVerifiedData ? presentation.serviceCount.toString() : '–'} hint="on the marketplace" />
-            <BigStat label="agent purchases" value={hasVerifiedData ? presentation.transactionCount : '–'} hint="finalized · all-time" />
-            <BigStat label="total spent by agents" value={hasVerifiedData ? `${presentation.totalPaid} USDC` : '–'} hint="across all services" last />
+            <BigStat label="services available" value={view ? view.serviceCount.toString() : '–'} hint="on the marketplace" />
+            <BigStat label="agent purchases" value={view ? view.transactionCount : '–'} hint="finalized · all-time" />
+            <BigStat label="total spent by agents" value={view ? `${view.totalPaid} USDC` : '–'} hint="across all services" last />
           </div>
         </div>
       </Section>
@@ -104,28 +111,26 @@ export function ActivityPage({
             <span>Agent</span><span>Service</span><span>Paid</span>
             <span>Skill</span><span>When</span><span>Receipt</span>
           </div>
-          {loading && !hasVerifiedData ? (
+          {loading && !view ? (
             <EmptyRow>loading…</EmptyRow>
-          ) : !hasVerifiedData ? (
+          ) : !view ? (
             <EmptyRow>Live chain data is unavailable. Retrying automatically…</EmptyRow>
-          ) : presentation.purchases.length === 0 ? (
+          ) : view.purchases.length === 0 ? (
             <EmptyRow>No finalized paid activity yet.</EmptyRow>
-          ) : presentation.purchases.slice(0, 50).map((purchase, index, rows) => (
+          ) : view.purchases.map((purchase, index, rows) => (
             <div
               key={purchase.orderKey}
               className="dk-activity-row"
               style={tableRowStyle(index < rows.length - 1)}
             >
               <Mono>{buyerDisplay(purchase)}</Mono>
-              <a className="dk-service-link" href={servicePath({
-                serviceId: purchase.outcome.serviceId,
-              })}>
-                {purchase.outcome.service.name}
+              <a className="dk-service-link" href={servicePath(purchase)}>
+                {purchase.serviceName}
               </a>
               <span style={{ color: 'var(--mint-400)' }}>
                 {atomicUsdc(purchase.amount)} <span style={{ color: 'var(--pro-text-dim)' }}>USDC</span>
               </span>
-              <span style={ellipsisStyle}>{purchase.outcome.skill.name}</span>
+              <span style={ellipsisStyle}>{purchase.skillName}</span>
               <span style={{ color: 'var(--pro-text-dim)' }}>{relativeTime(purchase.timestamp)}</span>
               {purchase.txHash ? (
                 <a href={basescanTx(purchase.txHash)} target="_blank" rel="noreferrer" className="dk-basescan-link" style={receiptStyle}>
@@ -145,12 +150,12 @@ export function ActivityPage({
         />
         <div className="dk-card" style={{ padding: 0, overflow: 'hidden' }}>
           <div className="dk-stat-row dk-stat-cols-3">
-            <BigStat label="network" value={networkLabel(metadata)} hint={metadata ? `testnet · ${metadata.chainId}` : 'testnet · 84532'} mono={false} />
-            <BigStat label="block height" value={formatBlock(presentation.safeBlock)} hint="safe" />
-            <BigStat label="on-chain volume" value={hasVerifiedData ? `${presentation.totalPaid} USDC` : '–'} hint="settled · all-time" last />
+            <BigStat label="network" value={networkLabel(view)} hint={view ? `testnet · ${view.chainId}` : 'testnet · 84532'} mono={false} />
+            <BigStat label="block height" value={formatBlock(view?.safeBlock ?? null)} hint="safe" />
+            <BigStat label="on-chain volume" value={view ? `${view.totalPaid} USDC` : '–'} hint="settled · all-time" last />
           </div>
         </div>
-        <ContractRows metadata={metadata} />
+        <ContractRows contracts={view?.contracts ?? null} />
       </Section>
     </div>
   );
@@ -188,8 +193,7 @@ function BigStat({ label, value, hint, last, mono = true }: {
   );
 }
 
-function ContractRows({ metadata }: { metadata: StandardRailMetadata | null }) {
-  const contracts = metadata?.contracts;
+function ContractRows({ contracts }: { contracts: ActivityView['contracts'] | null }) {
   const rows = contracts ? [
     { name: 'AgentIndex', address: contracts.agentIndex },
     { name: 'ProviderRegistry', address: contracts.providerRegistry },
@@ -226,9 +230,9 @@ function EmptyRow({ children }: { children: string }) {
   return <div style={{ padding: '24px 16px', color: 'var(--pro-text-dim)' }}>{children}</div>;
 }
 
-function networkLabel(metadata: StandardRailMetadata | null): string {
-  if (!metadata) return 'Base Sepolia';
-  return metadata.network === 'base-sepolia' ? 'Base Sepolia' : metadata.network;
+function networkLabel(view: ActivityView | null): string {
+  if (!view) return 'Base Sepolia';
+  return view.network === 'base-sepolia' ? 'Base Sepolia' : view.network;
 }
 
 function formatBlock(value: string | null): string {

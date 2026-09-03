@@ -1,15 +1,18 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { ActivityPage } from '../views/ActivityPage';
-import { getRailMetadata, type StandardRailMetadata } from '../lib/api';
+import { getRailMetadataSnapshot } from '../lib/api';
+import { activityView, type ActivityView } from '../lib/marketplacePresentation';
 
-let initialMetadata: StandardRailMetadata | null = null;
+let initialView: ActivityView | null = null;
+let initialFetchedAt: number | null = null;
 let initialError: string | null = null;
 try {
-  initialMetadata = await getRailMetadata();
+  const snapshot = await getRailMetadataSnapshot();
+  initialView = activityView(snapshot.value);
+  initialFetchedAt = snapshot.fetchedAt;
 } catch (error) {
   console.error('Failed to load verified chain metadata during SSR', error);
-  initialMetadata = null;
   initialError = 'Live chain data is temporarily unavailable.';
 }
 ---
@@ -17,5 +20,10 @@ try {
   title="Marketplace activity · Daski"
   description="Recent agent purchases, marketplace totals, reputation, and verified contracts on Daski Testnet."
 >
-  <ActivityPage client:load initialMetadata={initialMetadata} initialError={initialError} />
+  <ActivityPage
+    client:load
+    initialView={initialView}
+    initialFetchedAt={initialFetchedAt}
+    initialError={initialError}
+  />
 </BaseLayout>

@@ -1,10 +1,18 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import {
+  activityView,
   marketplacePresentation,
   relativeTime,
 } from '../src/lib/marketplacePresentation.ts';
+import { parseRailMetadata } from '../src/lib/railMetadata.ts';
+
+const chainFixture = JSON.parse(readFileSync(
+  new URL('./vectors/daski-chain-v3.json', import.meta.url),
+  'utf8',
+));
 
 function reputation(overrides = {}) {
   return {
@@ -103,4 +111,25 @@ test('retains the established marketplace hierarchy while using rail data', asyn
   assert.doesNotMatch(activity, /splitter/i);
   assert.match(activity, /Chain data unavailable\./);
   assert.match(activity, /Showing the last verified projection/);
+});
+
+test('flattens the activity view into serializable rows for the island', () => {
+  const metadata = parseRailMetadata(structuredClone(chainFixture));
+  const view = activityView(metadata, 1);
+
+  assert.equal(view.chainId, 84532);
+  assert.equal(view.network, metadata.network);
+  assert.deepEqual(view.contracts, metadata.contracts);
+  assert.equal(view.serviceCount, 1);
+  assert.equal(view.purchases.length, 1);
+  const [row] = view.purchases;
+  const [purchase] = metadata.outcomes[0].serviceReputation.recentPurchases;
+  assert.equal(row.serviceId, metadata.outcomes[0].serviceId);
+  assert.equal(row.serviceName, 'Domain Management');
+  assert.equal(row.skillName, 'Register Domain');
+  assert.equal(row.amount, purchase.amount);
+  assert.equal(row.orderKey, purchase.orderKey);
+  assert.ok(!('outcome' in row), 'rows must not drag the full outcome along');
+  assert.ok(JSON.stringify(view).length < JSON.stringify(metadata).length);
+  assert.equal(activityView(metadata, 0).purchases.length, 0);
 });
