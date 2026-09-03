@@ -428,10 +428,60 @@ function parsePublicService(value: unknown): PublicService {
   };
 }
 
+const FETCH_TIMEOUT_MS = 10_000;
+
 async function fetchJson<T>(path: string, signal?: AbortSignal): Promise<T> {
-  const response = await fetch(`${GATEWAY_URL}${path}`, { signal });
+  const response = await fetch(`${GATEWAY_URL}${path}`, {
+    signal: signal ?? AbortSignal.timeout(FETCH_TIMEOUT_MS),
+  });
   if (!response.ok) throw new Error(`gateway ${path} → ${response.status}`);
   return response.json() as Promise<T>;
+}
+
+// Server-side stale-while-revalidate cache of parsed gateway payloads.
+//
+// Pages render from the last good payload immediately. A payload older than
+// CACHE_FRESH_MS is refreshed in the background, one refresh per key at a
+// time, so only the first request after process start waits on the gateway.
+// The browser bypasses the cache so client-side polling stays live.
+export interface Snapshot<T> {
+  value: T;
+  fetchedAt: number;
+}
+
+const CACHE_FRESH_MS = 30_000;
+const cache = new Map<string, Snapshot<unknown>>();
+const refreshing = new Map<string, Promise<Snapshot<unknown>>>();
+
+function refresh<T>(key: string, load: () => Promise<T>): Promise<Snapshot<T>> {
+  const pending = refreshing.get(key) as Promise<Snapshot<T>> | undefined;
+  if (pending) return pending;
+  const next = load()
+    .then((value) => {
+      const snapshot = { value, fetchedAt: Date.now() };
+      cache.set(key, snapshot);
+      return snapshot;
+    })
+    .finally(() => refreshing.delete(key));
+  refreshing.set(key, next);
+  return next;
+}
+
+async function cachedSnapshot<T>(
+  key: string,
+  load: () => Promise<T>,
+): Promise<Snapshot<T>> {
+  if (!import.meta.env?.SSR) {
+    return { value: await load(), fetchedAt: Date.now() };
+  }
+  const entry = cache.get(key) as Snapshot<T> | undefined;
+  if (!entry) return refresh(key, load);
+  if (Date.now() - entry.fetchedAt >= CACHE_FRESH_MS) {
+    refresh(key, load).catch((error) => {
+      console.error(`gateway refresh failed for ${key}`, error);
+    });
+  }
+  return entry;
 }
 
 export function parseServiceIndex(value: unknown): { services: PublicService[] } {
@@ -446,10 +496,12 @@ export function parseServiceIndex(value: unknown): { services: PublicService[] }
   return { services };
 }
 
+const SERVICES_PATH = '/public/v3/services?limit=100';
+const RAIL_METADATA_PATH = '/.well-known/daski-chain.json';
+
 export async function getServices(signal?: AbortSignal) {
-  const response = parseServiceIndex(
-    await fetchJson<unknown>('/public/v3/services?limit=100', signal),
-  );
+  const { value: response } = await cachedSnapshot(SERVICES_PATH, async () =>
+    parseServiceIndex(await fetchJson<unknown>(SERVICES_PATH, signal)));
   return {
     services: response.services,
     cachedAt: response.services
@@ -465,10 +517,10 @@ export async function getServiceDetail(
   signal?: AbortSignal,
 ): Promise<ServiceDetail> {
   const normalized = hex(serviceId, 'service ID', 32);
-  return parsePublicService(await fetchJson<unknown>(
-    `/public/v3/services/${encodeURIComponent(normalized)}`,
-    signal,
-  ));
+  const path = `/public/v3/services/${encodeURIComponent(normalized)}`;
+  const { value } = await cachedSnapshot(path, async () =>
+    parsePublicService(await fetchJson<unknown>(path, signal)));
+  return value;
 }
 
 export function providerDetailFromServices(
@@ -498,10 +550,15 @@ export async function getProviderDetail(
   return providerDetailFromServices(services, providerAgentId);
 }
 
+export async function getRailMetadataSnapshot(
+  signal?: AbortSignal,
+): Promise<Snapshot<StandardRailMetadata>> {
+  return cachedSnapshot(RAIL_METADATA_PATH, async () =>
+    parseRailMetadata(await fetchJson<unknown>(RAIL_METADATA_PATH, signal)));
+}
+
 export async function getRailMetadata(signal?: AbortSignal) {
-  return parseRailMetadata(
-    await fetchJson<unknown>('/.well-known/daski-chain.json', signal),
-  );
+  return (await getRailMetadataSnapshot(signal)).value;
 }
 
 export function serviceKey(service: Pick<PublicService, 'serviceId'>): string {
