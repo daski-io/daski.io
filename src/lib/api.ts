@@ -631,7 +631,36 @@ export function basescanTx(hash: string) {
   return `https://sepolia.basescan.org/tx/${hash}`;
 }
 
-export function priceDisplay(service: Pick<PublicService, 'pricing' | 'skills'>) {
+// The fields a catalog card renders. The home page passes these to its island
+// instead of full services so skill descriptions and legal metadata stay out
+// of the hydration payload.
+export type ServiceCardData = Pick<
+  PublicService,
+  | 'serviceId' | 'name' | 'categoryFamily' | 'serviceType'
+  | 'turnaroundEstimate' | 'providerName' | 'pricing'
+> & { skills: Pick<PublicSkill, 'skillId' | 'paymentRequired'>[] };
+
+export function serviceCardData(service: PublicService): ServiceCardData {
+  return {
+    serviceId: service.serviceId,
+    name: service.name,
+    categoryFamily: service.categoryFamily,
+    serviceType: service.serviceType,
+    turnaroundEstimate: service.turnaroundEstimate,
+    providerName: service.providerName,
+    pricing: service.pricing,
+    skills: service.skills.map(({ skillId, paymentRequired }) => ({
+      skillId,
+      paymentRequired,
+    })),
+  };
+}
+
+type PricedService = Pick<PublicService, 'pricing'> & {
+  skills: Pick<PublicSkill, 'paymentRequired'>[];
+};
+
+export function priceDisplay(service: PricedService) {
   const paid = service.skills.filter((skill) => skill.paymentRequired);
   if (paid.length === 0) return { value: 'free', unit: null };
   return service.pricing.basePrice !== null && !service.pricing.variable
@@ -639,12 +668,14 @@ export function priceDisplay(service: Pick<PublicService, 'pricing' | 'skills'>)
     : { value: 'variable', unit: 'USDC' };
 }
 
-export function priceRange(service: Pick<PublicService, 'pricing' | 'skills'>): string {
+export function priceRange(service: PricedService): string {
   const price = priceDisplay(service);
   return price.unit ? `${price.value} ${price.unit}` : price.value;
 }
 
-export function serviceChips(service: PublicService): string[] {
+export function serviceChips(
+  service: { skills: Pick<PublicSkill, 'skillId'>[] },
+): string[] {
   return service.skills.slice(0, 4).map((skill) => skill.skillId);
 }
 

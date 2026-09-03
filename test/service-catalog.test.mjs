@@ -5,6 +5,7 @@ import {
   parseServiceIndex,
   priceRange,
   reputationRates,
+  serviceCardData,
   servicePath,
 } from '../src/lib/api.ts';
 
@@ -99,4 +100,18 @@ test('rejects malformed reputation counters', () => {
     }),
     /transactions is invalid/,
   );
+});
+
+test('trims catalog rows to the fields a service card renders', () => {
+  const [full] = parseServiceIndex(copyServiceIndex()).services;
+  const card = serviceCardData(full);
+
+  assert.deepEqual(Object.keys(card).sort(), [
+    'categoryFamily', 'name', 'pricing', 'providerName', 'serviceId',
+    'serviceType', 'skills', 'turnaroundEstimate',
+  ]);
+  assert.deepEqual(Object.keys(card.skills[0]).sort(), ['paymentRequired', 'skillId']);
+  assert.equal(priceRange(card), priceRange(full));
+  assert.equal(servicePath(card), servicePath(full));
+  assert.ok(JSON.stringify(card).length < JSON.stringify(full).length / 2);
 });
