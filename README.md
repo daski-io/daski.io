@@ -32,6 +32,20 @@ Historical chain activity remains a separate gateway-fed view.
 PUBLIC_GATEWAY_URL=http://localhost:3000 npm run dev
 ```
 
+Server rendering can reach the gateway over a different origin than the
+browser does. `GATEWAY_INTERNAL_URL` is server-only and read at runtime; when
+set, SSR fetches use it and the browser keeps using `PUBLIC_GATEWAY_URL`. If
+the internal origin fails, SSR falls back to the public origin and retries the
+internal one a minute later.
+
+```bash
+GATEWAY_INTERNAL_URL=http://gateway.railway.internal:8080
+```
+
+Gateway payloads are cached in the server process for 30 seconds and
+refreshed in the background, so pages render from the last good payload
+instead of waiting on the gateway.
+
 ## Build
 
 ```bash
@@ -45,6 +59,12 @@ npm start        # equivalent to: node ./dist/server/entry.mjs
 Railway picks up `Dockerfile` + `railway.json`. The container runs
 `node ./dist/server/entry.mjs` — the standalone Node server emitted by the
 Astro Node adapter, which renders every route on demand.
+
+Set `GATEWAY_INTERNAL_URL=http://gateway.railway.internal:8080` on the
+website service so server rendering reaches the gateway over Railway private
+networking instead of the public Cloudflare hop. The gateway must listen on
+IPv6 for private networking to work; SSR falls back to the public origin if
+the internal one fails.
 
 Releases (develop→main merges, versioning) are coordinated from
 [daski-io/deploy-testnet](https://github.com/daski-io/deploy-testnet).

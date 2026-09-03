@@ -23,6 +23,11 @@ COPY --from=builder /app/dist ./dist
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0
 ENV PORT=8080
+# Public gateway hostnames resolve to IPv6 addresses too, but the container has
+# no public IPv6 egress. Prefer IPv4 so Node does not spend its 250 ms
+# happy-eyeballs attempt on an unreachable address before a fetch. Private
+# networking (*.railway.internal) is IPv6-only and unaffected.
+ENV NODE_OPTIONS=--dns-result-order=ipv4first
 EXPOSE 8080
 
 # The Astro Node adapter (standalone mode) emits a self-contained server

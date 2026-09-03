@@ -7,6 +7,23 @@ export const GATEWAY_URL =
   (import.meta.env?.PUBLIC_GATEWAY_URL as string | undefined) ??
   'https://sandbox-gateway.daski.io';
 
+// Optional server-only origin for server-rendering fetches, read at runtime so
+// it can point at Railway private networking (for example
+// http://gateway.railway.internal:8080) without a rebuild. The browser keeps
+// using GATEWAY_URL. When the internal origin fails, the request falls back to
+// the public origin and the internal one is skipped for a minute.
+const INTERNAL_RETRY_MS = 60_000;
+let internalDisabledUntil = 0;
+
+function internalGatewayUrl(): string | null {
+  if (!import.meta.env?.SSR) return null;
+  const env = (globalThis as unknown as {
+    process?: { env?: Record<string, string | undefined> };
+  }).process?.env;
+  const value = env?.GATEWAY_INTERNAL_URL?.trim().replace(/\/+$/, '');
+  return value && value !== GATEWAY_URL ? value : null;
+}
+
 export interface StandardOutcome {
   providerAgentId: string;
   serviceId: string;
@@ -428,10 +445,91 @@ function parsePublicService(value: unknown): PublicService {
   };
 }
 
-async function fetchJson<T>(path: string, signal?: AbortSignal): Promise<T> {
-  const response = await fetch(`${GATEWAY_URL}${path}`, { signal });
-  if (!response.ok) throw new Error(`gateway ${path} → ${response.status}`);
+const FETCH_TIMEOUT_MS = 10_000;
+
+class GatewayHttpError extends Error {
+  status: number;
+
+  constructor(status: number, path: string) {
+    super(`gateway ${path} → ${status}`);
+    this.status = status;
+  }
+}
+
+async function fetchJsonFrom<T>(
+  origin: string,
+  path: string,
+  signal?: AbortSignal,
+): Promise<T> {
+  const response = await fetch(`${origin}${path}`, {
+    signal: signal ?? AbortSignal.timeout(FETCH_TIMEOUT_MS),
+  });
+  if (!response.ok) throw new GatewayHttpError(response.status, path);
   return response.json() as Promise<T>;
+}
+
+async function fetchJson<T>(path: string, signal?: AbortSignal): Promise<T> {
+  const internal = internalGatewayUrl();
+  if (internal && Date.now() >= internalDisabledUntil) {
+    try {
+      return await fetchJsonFrom<T>(internal, path, signal);
+    } catch (error) {
+      // A 4xx is the gateway's answer rather than a transport failure.
+      if (error instanceof GatewayHttpError && error.status < 500) throw error;
+      internalDisabledUntil = Date.now() + INTERNAL_RETRY_MS;
+      console.error(
+        `gateway internal origin ${internal} failed; using ${GATEWAY_URL}`,
+        error,
+      );
+    }
+  }
+  return fetchJsonFrom<T>(GATEWAY_URL, path, signal);
+}
+
+// Server-side stale-while-revalidate cache of parsed gateway payloads.
+//
+// Pages render from the last good payload immediately. A payload older than
+// CACHE_FRESH_MS is refreshed in the background, one refresh per key at a
+// time, so only the first request after process start waits on the gateway.
+// The browser bypasses the cache so client-side polling stays live.
+export interface Snapshot<T> {
+  value: T;
+  fetchedAt: number;
+}
+
+const CACHE_FRESH_MS = 30_000;
+const cache = new Map<string, Snapshot<unknown>>();
+const refreshing = new Map<string, Promise<Snapshot<unknown>>>();
+
+function refresh<T>(key: string, load: () => Promise<T>): Promise<Snapshot<T>> {
+  const pending = refreshing.get(key) as Promise<Snapshot<T>> | undefined;
+  if (pending) return pending;
+  const next = load()
+    .then((value) => {
+      const snapshot = { value, fetchedAt: Date.now() };
+      cache.set(key, snapshot);
+      return snapshot;
+    })
+    .finally(() => refreshing.delete(key));
+  refreshing.set(key, next);
+  return next;
+}
+
+async function cachedSnapshot<T>(
+  key: string,
+  load: () => Promise<T>,
+): Promise<Snapshot<T>> {
+  if (!import.meta.env?.SSR) {
+    return { value: await load(), fetchedAt: Date.now() };
+  }
+  const entry = cache.get(key) as Snapshot<T> | undefined;
+  if (!entry) return refresh(key, load);
+  if (Date.now() - entry.fetchedAt >= CACHE_FRESH_MS) {
+    refresh(key, load).catch((error) => {
+      console.error(`gateway refresh failed for ${key}`, error);
+    });
+  }
+  return entry;
 }
 
 export function parseServiceIndex(value: unknown): { services: PublicService[] } {
@@ -446,10 +544,12 @@ export function parseServiceIndex(value: unknown): { services: PublicService[] }
   return { services };
 }
 
+const SERVICES_PATH = '/public/v3/services?limit=100';
+const RAIL_METADATA_PATH = '/.well-known/daski-chain.json';
+
 export async function getServices(signal?: AbortSignal) {
-  const response = parseServiceIndex(
-    await fetchJson<unknown>('/public/v3/services?limit=100', signal),
-  );
+  const { value: response } = await cachedSnapshot(SERVICES_PATH, async () =>
+    parseServiceIndex(await fetchJson<unknown>(SERVICES_PATH, signal)));
   return {
     services: response.services,
     cachedAt: response.services
@@ -465,10 +565,10 @@ export async function getServiceDetail(
   signal?: AbortSignal,
 ): Promise<ServiceDetail> {
   const normalized = hex(serviceId, 'service ID', 32);
-  return parsePublicService(await fetchJson<unknown>(
-    `/public/v3/services/${encodeURIComponent(normalized)}`,
-    signal,
-  ));
+  const path = `/public/v3/services/${encodeURIComponent(normalized)}`;
+  const { value } = await cachedSnapshot(path, async () =>
+    parsePublicService(await fetchJson<unknown>(path, signal)));
+  return value;
 }
 
 export function providerDetailFromServices(
@@ -498,10 +598,15 @@ export async function getProviderDetail(
   return providerDetailFromServices(services, providerAgentId);
 }
 
+export async function getRailMetadataSnapshot(
+  signal?: AbortSignal,
+): Promise<Snapshot<StandardRailMetadata>> {
+  return cachedSnapshot(RAIL_METADATA_PATH, async () =>
+    parseRailMetadata(await fetchJson<unknown>(RAIL_METADATA_PATH, signal)));
+}
+
 export async function getRailMetadata(signal?: AbortSignal) {
-  return parseRailMetadata(
-    await fetchJson<unknown>('/.well-known/daski-chain.json', signal),
-  );
+  return (await getRailMetadataSnapshot(signal)).value;
 }
 
 export function serviceKey(service: Pick<PublicService, 'serviceId'>): string {
@@ -526,7 +631,36 @@ export function basescanTx(hash: string) {
   return `https://sepolia.basescan.org/tx/${hash}`;
 }
 
-export function priceDisplay(service: Pick<PublicService, 'pricing' | 'skills'>) {
+// The fields a catalog card renders. The home page passes these to its island
+// instead of full services so skill descriptions and legal metadata stay out
+// of the hydration payload.
+export type ServiceCardData = Pick<
+  PublicService,
+  | 'serviceId' | 'name' | 'categoryFamily' | 'serviceType'
+  | 'turnaroundEstimate' | 'providerName' | 'pricing'
+> & { skills: Pick<PublicSkill, 'skillId' | 'paymentRequired'>[] };
+
+export function serviceCardData(service: PublicService): ServiceCardData {
+  return {
+    serviceId: service.serviceId,
+    name: service.name,
+    categoryFamily: service.categoryFamily,
+    serviceType: service.serviceType,
+    turnaroundEstimate: service.turnaroundEstimate,
+    providerName: service.providerName,
+    pricing: service.pricing,
+    skills: service.skills.map(({ skillId, paymentRequired }) => ({
+      skillId,
+      paymentRequired,
+    })),
+  };
+}
+
+type PricedService = Pick<PublicService, 'pricing'> & {
+  skills: Pick<PublicSkill, 'paymentRequired'>[];
+};
+
+export function priceDisplay(service: PricedService) {
   const paid = service.skills.filter((skill) => skill.paymentRequired);
   if (paid.length === 0) return { value: 'free', unit: null };
   return service.pricing.basePrice !== null && !service.pricing.variable
@@ -534,12 +668,14 @@ export function priceDisplay(service: Pick<PublicService, 'pricing' | 'skills'>)
     : { value: 'variable', unit: 'USDC' };
 }
 
-export function priceRange(service: Pick<PublicService, 'pricing' | 'skills'>): string {
+export function priceRange(service: PricedService): string {
   const price = priceDisplay(service);
   return price.unit ? `${price.value} ${price.unit}` : price.value;
 }
 
-export function serviceChips(service: PublicService): string[] {
+export function serviceChips(
+  service: { skills: Pick<PublicSkill, 'skillId'>[] },
+): string[] {
   return service.skills.slice(0, 4).map((skill) => skill.skillId);
 }
 

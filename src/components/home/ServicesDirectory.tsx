@@ -10,7 +10,7 @@ import {
   serviceChips,
   serviceKey,
   servicePath,
-  type PublicService,
+  type ServiceCardData,
 } from '../../lib/api';
 import {
   categoryFamilyConfig,
@@ -21,7 +21,7 @@ import {
 } from '../../config/service-taxonomy';
 
 interface ServicesDirectoryProps {
-  services: PublicService[];
+  services: ServiceCardData[];
   loading?: boolean;
   error?: string | null;
 }
@@ -148,7 +148,7 @@ function ServiceIcon({ categoryFamily }: { categoryFamily: CategoryFamily }) {
   );
 }
 
-function ServiceCard({ service }: { service: PublicService }) {
+function ServiceCard({ service }: { service: ServiceCardData }) {
   const chips = serviceChips(service);
 
   return (

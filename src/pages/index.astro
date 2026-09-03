@@ -1,18 +1,29 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { HomePage } from '../views/HomePage';
-import { getServices, type PublicService } from '../lib/api';
+import { Hero } from '../components/home/Hero';
+import { ServicesDirectory } from '../components/home/ServicesDirectory';
+import { DemoBlock } from '../components/home/DemoBlock';
+import { OpenStandards } from '../components/home/OpenStandards';
+import { BottomCTAs } from '../components/home/BottomCTAs';
+import { getServices, serviceCardData, type ServiceCardData } from '../lib/api';
 
-let services: PublicService[] = [];
+let services: ServiceCardData[] = [];
 let error: string | null = null;
 
 try {
   const res = await getServices();
-  services = res.services;
+  services = res.services.map(serviceCardData);
 } catch (e) {
   error = e instanceof Error ? e.message : 'unknown error';
 }
 ---
 <BaseLayout>
-  <HomePage client:load services={services} loading={false} error={error} />
+  {/* The hero is static HTML. Only the directory filter needs JavaScript on
+      load; the demo, the standards diagram, and the prompt copy button
+      hydrate once they scroll into view. */}
+  <Hero />
+  <ServicesDirectory client:load services={services} loading={false} error={error} />
+  <DemoBlock client:visible />
+  <OpenStandards client:visible />
+  <BottomCTAs client:visible />
 </BaseLayout>

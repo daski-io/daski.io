@@ -72,3 +72,47 @@ export function relativeTime(value: string, now = Date.now()): string {
   if (hours < 24) return `${hours}h ago`;
   return `${Math.floor(hours / 24)}d ago`;
 }
+
+// Serializable slice of the chain metadata that the activity page renders.
+// Passing this to the island instead of the full metadata keeps the
+// hydration payload to the rows on screen rather than every reputation block.
+export interface ActivityRow extends PublicMarketplacePurchase {
+  serviceId: string;
+  serviceName: string;
+  skillName: string;
+}
+
+export interface ActivityView {
+  network: string;
+  chainId: number;
+  contracts: StandardRailMetadata['contracts'];
+  safeBlock: string | null;
+  serviceCount: number;
+  totalPaid: string;
+  transactionCount: string;
+  purchases: ActivityRow[];
+}
+
+export const ACTIVITY_ROW_LIMIT = 50;
+
+export function activityView(
+  metadata: StandardRailMetadata,
+  limit = ACTIVITY_ROW_LIMIT,
+): ActivityView {
+  const presentation = marketplacePresentation(metadata);
+  return {
+    network: metadata.network,
+    chainId: metadata.chainId,
+    contracts: metadata.contracts,
+    safeBlock: presentation.safeBlock,
+    serviceCount: presentation.serviceCount,
+    totalPaid: presentation.totalPaid,
+    transactionCount: presentation.transactionCount,
+    purchases: presentation.purchases.slice(0, limit).map(({ outcome, ...purchase }) => ({
+      ...purchase,
+      serviceId: outcome.serviceId,
+      serviceName: outcome.service.name,
+      skillName: outcome.skill.name,
+    })),
+  };
+}
