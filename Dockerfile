@@ -3,7 +3,7 @@ FROM node:22-slim AS builder
 WORKDIR /app
 
 COPY package.json package-lock.json* ./
-RUN npm install --no-audit --no-fund
+RUN npm ci --no-audit --no-fund
 
 COPY tsconfig.json astro.config.mjs ./
 COPY public ./public
@@ -16,10 +16,12 @@ WORKDIR /app
 # Production-only install for the runtime image: keeps it lean and
 # avoids shipping the Astro/Vite/React build tooling.
 COPY package.json package-lock.json* ./
-RUN npm install --omit=dev --no-audit --no-fund
+RUN npm ci --omit=dev --no-audit --no-fund
 
 COPY --from=builder /app/dist ./dist
 
+ARG SOURCE_SHA
+ENV RELEASE_SOURCE_SHA=$SOURCE_SHA
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0
 ENV PORT=8080
