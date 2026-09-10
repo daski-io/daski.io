@@ -133,3 +133,32 @@ test('flattens the activity view into serializable rows for the island', () => {
   assert.ok(JSON.stringify(view).length < JSON.stringify(metadata).length);
   assert.equal(activityView(metadata, 0).purchases.length, 0);
 });
+
+
+test('Activity preserves parsed checkout names after a rename or retirement', () => {
+  const raw = structuredClone(chainFixture);
+  const source = raw.outcomes[0];
+  const purchase = source.serviceReputation.recentPurchases[0];
+  purchase.serviceName = 'Original Service';
+  purchase.skillName = 'Form Entity';
+  source.service.name = 'Renamed Service';
+  source.skill.name = 'Renamed Skill';
+  let metadata = parseRailMetadata(raw);
+  assert.equal(activityView(metadata).purchases[0].serviceName, 'Original Service');
+  assert.equal(activityView(metadata).purchases[0].skillName, 'Form Entity');
+  source.outcomeId = 'renew-registered-agent';
+  source.skill.name = 'Renew Registered Agent';
+  metadata = parseRailMetadata(raw);
+  assert.equal(activityView(metadata).purchases[0].skillName, 'Form Entity');
+});
+
+test('Activity never substitutes another skill for an unresolved historical purchase', () => {
+  const metadata = parseRailMetadata(structuredClone(chainFixture));
+  const source = metadata.outcomes[0];
+  const purchase = source.serviceReputation.recentPurchases[0];
+  source.skill.name = 'Renew Registered Agent';
+  purchase.outcomeId = 'form-entity';
+  assert.equal(activityView(metadata).purchases[0].skillName, 'form-entity');
+  purchase.outcomeId = 'unknown';
+  assert.equal(activityView(metadata).purchases[0].skillName, 'Unknown skill');
+});

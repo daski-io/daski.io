@@ -138,6 +138,12 @@ function parseReputation(value: unknown, label: string): StandardOutcome['servic
       buyerName: nullableText(purchase.buyerName, 'buyer name'),
       amount: decimal(purchase.amount, 'purchase amount'),
       outcomeId: text(purchase.outcomeId, 'purchase outcome ID'),
+      ...(purchase.serviceName === undefined ? {} : {
+        serviceName: text(purchase.serviceName, 'purchase service name'),
+      }),
+      ...(purchase.skillName === undefined ? {} : {
+        skillName: text(purchase.skillName, 'purchase skill name'),
+      }),
       timestamp,
     };
   });
