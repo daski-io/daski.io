@@ -30,7 +30,7 @@ export function marketplacePresentation(
     outcome,
   ])).values()];
   const outcomesById = new Map(outcomes.map((outcome) => [
-    `${outcome.providerAgentId}:${outcome.outcomeId}`,
+    `${outcome.providerAgentId}:${outcome.serviceId.toLowerCase()}:${outcome.outcomeId}`,
     outcome,
   ]));
   const safeBlocks = services
@@ -44,7 +44,7 @@ export function marketplacePresentation(
   const purchases = services
     .flatMap((outcome) => outcome.serviceReputation.recentPurchases.map((purchase) => ({
       ...purchase,
-      outcome: outcomesById.get(`${outcome.providerAgentId}:${purchase.outcomeId}`) ?? outcome,
+      outcome: outcomesById.get(`${outcome.providerAgentId}:${outcome.serviceId.toLowerCase()}:${purchase.outcomeId}`) ?? outcome,
     })))
     .sort((left, right) => Date.parse(right.timestamp) - Date.parse(left.timestamp));
 
@@ -111,8 +111,10 @@ export function activityView(
     purchases: presentation.purchases.slice(0, limit).map(({ outcome, ...purchase }) => ({
       ...purchase,
       serviceId: outcome.serviceId,
-      serviceName: outcome.service.name,
-      skillName: outcome.skill.name,
+      serviceName: purchase.serviceName ?? outcome.service.name,
+      skillName: purchase.skillName ?? (outcome.outcomeId === purchase.outcomeId
+        ? outcome.skill.name
+        : purchase.outcomeId === 'unknown' ? 'Unknown skill' : purchase.outcomeId),
     })),
   };
 }

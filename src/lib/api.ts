@@ -66,6 +66,8 @@ export interface StandardReputation {
 }
 
 export interface PublicMarketplacePurchase {
+  serviceName?: string;
+  skillName?: string;
   orderKey: string;
   txHash: string | null;
   payer: string;
