@@ -3,25 +3,35 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import { ActivityPage } from '../views/ActivityPage';
 import { getRailMetadataSnapshot } from '../lib/api';
 import { activityView, type ActivityView } from '../lib/marketplacePresentation';
+import { gatewayTarget, networkConfig, networkView } from '../lib/network';
+
+const network = networkConfig();
+const view = networkView(network);
+const target = gatewayTarget(network);
 
 let initialView: ActivityView | null = null;
 let initialFetchedAt: number | null = null;
 let initialError: string | null = null;
-try {
-  const snapshot = await getRailMetadataSnapshot();
-  initialView = activityView(snapshot.value);
-  initialFetchedAt = snapshot.fetchedAt;
-} catch (error) {
-  console.error('Failed to load verified chain metadata during SSR', error);
-  initialError = 'Live chain data is temporarily unavailable.';
+
+// A network without a gateway renders its empty states; nothing is fetched.
+if (target) {
+  try {
+    const snapshot = await getRailMetadataSnapshot(target);
+    initialView = activityView(snapshot.value);
+    initialFetchedAt = snapshot.fetchedAt;
+  } catch (error) {
+    console.error('Failed to load verified chain metadata during SSR', error);
+    initialError = 'Live chain data is temporarily unavailable.';
+  }
 }
 ---
 <BaseLayout
   title="Marketplace activity · Daski"
-  description="Recent agent purchases, marketplace totals, reputation, and verified contracts on Daski Testnet."
+  description={`Recent agent purchases, marketplace totals, reputation, and verified contracts on Daski ${view.label}.`}
 >
   <ActivityPage
     client:load
+    network={view}
     initialView={initialView}
     initialFetchedAt={initialFetchedAt}
     initialError={initialError}

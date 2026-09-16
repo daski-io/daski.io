@@ -3,14 +3,8 @@ import { Caption, Mono } from '../components/ui/Mono';
 import { Icon } from '../components/ui/Icon';
 import { Section } from '../components/ui/Section';
 import { SectionHead } from '../components/ui/SectionHead';
-import {
-  atomicUsdc,
-  basescanAddress,
-  basescanTx,
-  buyerDisplay,
-  getRailMetadata,
-  servicePath,
-} from '../lib/api';
+import { atomicUsdc, buyerDisplay, getRailMetadata, servicePath } from '../lib/api';
+import { explorerAddress, explorerTx, type NetworkView } from '../lib/chains';
 import {
   activityView,
   relativeTime,
@@ -20,26 +14,37 @@ import {
 const REFRESH_MS = 30_000;
 
 export function ActivityPage({
+  network,
   initialView = null,
   initialFetchedAt = null,
   initialError = null,
 }: {
+  network: NetworkView;
   initialView?: ActivityView | null;
   initialFetchedAt?: number | null;
   initialError?: string | null;
 }) {
+  const { gatewayUrl, chainId } = network;
+  // A network without a gateway has nothing to poll: the page shows its empty
+  // states rather than the unavailable state, which is reserved for a gateway
+  // that exists but does not answer.
+  const unpublished = gatewayUrl === null;
   const [view, setView] = useState(initialView);
-  const [loading, setLoading] = useState(initialView === null && initialError === null);
+  const [loading, setLoading] = useState(
+    !unpublished && initialView === null && initialError === null,
+  );
   const [error, setError] = useState(initialError);
   const [tickSeconds, setTickSeconds] = useState(REFRESH_MS / 1_000);
   const reportedRefreshError = useRef(false);
   const hasVerifiedData = view !== null;
 
   useEffect(() => {
+    if (gatewayUrl === null) return;
+    const target = { url: gatewayUrl, chainId };
     let cancelled = false;
     const load = async () => {
       try {
-        const next = activityView(await getRailMetadata());
+        const next = activityView(await getRailMetadata(target));
         if (!cancelled) {
           setView(next);
           setError(null);
@@ -70,13 +75,15 @@ export function ActivityPage({
       window.clearInterval(refreshTimer);
       window.clearInterval(tickTimer);
     };
-  }, [initialView, initialFetchedAt]);
+  }, [gatewayUrl, chainId, initialView, initialFetchedAt]);
+
+  const label = network.label.toLowerCase();
 
   return (
     <div>
       <Section pad="88px 32px 48px">
         <div style={{ maxWidth: 880 }}>
-          <Caption style={{ marginBottom: 18 }}>activity · testnet</Caption>
+          <Caption style={{ marginBottom: 18 }}>activity · {label}</Caption>
           <h1 style={heroStyle}>
             What&apos;s happening on <span style={{ color: 'var(--mint-400)' }}>the marketplace.</span>
           </h1>
@@ -92,9 +99,22 @@ export function ActivityPage({
         <SectionHead kicker="marketplace" title="The numbers." />
         <div className="dk-card" style={{ padding: 0, overflow: 'hidden' }}>
           <div className="dk-stat-row dk-stat-cols-3">
-            <BigStat label="services available" value={view ? view.serviceCount.toString() : '–'} hint="on the marketplace" />
-            <BigStat label="agent purchases" value={view ? view.transactionCount : '–'} hint="finalized · all-time" />
-            <BigStat label="total spent by agents" value={view ? `${view.totalPaid} USDC` : '–'} hint="across all services" last />
+            <BigStat
+              label="services available"
+              value={view ? view.serviceCount.toString() : unpublished ? '0' : '–'}
+              hint="on the marketplace"
+            />
+            <BigStat
+              label="agent purchases"
+              value={view ? view.transactionCount : unpublished ? '0' : '–'}
+              hint="finalized · all-time"
+            />
+            <BigStat
+              label="total spent by agents"
+              value={view ? `${view.totalPaid} USDC` : unpublished ? '0 USDC' : '–'}
+              hint="across all services"
+              last
+            />
           </div>
         </div>
       </Section>
@@ -104,14 +124,16 @@ export function ActivityPage({
           kicker="recent purchases"
           title="Latest agent transactions."
           subtitle="The most recent settlements through Daski. Each available receipt links to Basescan."
-          action={<RefreshStatus seconds={tickSeconds} />}
+          action={unpublished ? undefined : <RefreshStatus seconds={tickSeconds} />}
         />
         <div className="dk-table" style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>
           <div className="dk-table-head dk-activity-row">
             <span>Agent</span><span>Service</span><span>Paid</span>
             <span>Skill</span><span>When</span><span>Receipt</span>
           </div>
-          {loading && !view ? (
+          {unpublished ? (
+            <EmptyRow>No finalized paid activity yet.</EmptyRow>
+          ) : loading && !view ? (
             <EmptyRow>loading…</EmptyRow>
           ) : !view ? (
             <EmptyRow>Live chain data is unavailable. Retrying automatically…</EmptyRow>
@@ -133,7 +155,13 @@ export function ActivityPage({
               <span style={ellipsisStyle}>{purchase.skillName}</span>
               <span style={{ color: 'var(--pro-text-dim)' }}>{relativeTime(purchase.timestamp)}</span>
               {purchase.txHash ? (
-                <a href={basescanTx(purchase.txHash)} target="_blank" rel="noreferrer" className="dk-basescan-link" style={receiptStyle}>
+                <a
+                  href={explorerTx(network.explorerUrl, purchase.txHash)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="dk-basescan-link"
+                  style={receiptStyle}
+                >
                   tx <Icon name="external" size={11} />
                 </a>
               ) : <Mono dim>–</Mono>}
@@ -150,12 +178,22 @@ export function ActivityPage({
         />
         <div className="dk-card" style={{ padding: 0, overflow: 'hidden' }}>
           <div className="dk-stat-row dk-stat-cols-3">
-            <BigStat label="network" value={networkLabel(view)} hint={view ? `testnet · ${view.chainId}` : 'testnet · 84532'} mono={false} />
+            <BigStat
+              label="network"
+              value={network.chainName}
+              hint={`${label} · ${network.chainId}`}
+              mono={false}
+            />
             <BigStat label="block height" value={formatBlock(view?.safeBlock ?? null)} hint="safe" />
-            <BigStat label="on-chain volume" value={view ? `${view.totalPaid} USDC` : '–'} hint="settled · all-time" last />
+            <BigStat
+              label="on-chain volume"
+              value={view ? `${view.totalPaid} USDC` : unpublished ? '0 USDC' : '–'}
+              hint="settled · all-time"
+              last
+            />
           </div>
         </div>
-        <ContractRows contracts={view?.contracts ?? null} />
+        <ContractRows contracts={view?.contracts ?? null} network={network} unpublished={unpublished} />
       </Section>
     </div>
   );
@@ -193,7 +231,11 @@ function BigStat({ label, value, hint, last, mono = true }: {
   );
 }
 
-function ContractRows({ contracts }: { contracts: ActivityView['contracts'] | null }) {
+function ContractRows({ contracts, network, unpublished }: {
+  contracts: ActivityView['contracts'] | null;
+  network: NetworkView;
+  unpublished: boolean;
+}) {
   const rows = contracts ? [
     { name: 'AgentIndex', address: contracts.agentIndex },
     { name: 'ProviderRegistry', address: contracts.providerRegistry },
@@ -203,16 +245,25 @@ function ContractRows({ contracts }: { contracts: ActivityView['contracts'] | nu
   ] : [];
   return (
     <div style={{ marginTop: 20 }}>
-      <Caption style={{ marginBottom: 10 }}>contract addresses · base sepolia</Caption>
+      <Caption style={{ marginBottom: 10 }}>contract addresses · {network.chainName.toLowerCase()}</Caption>
       <div className="dk-card" style={{ padding: 0, overflow: 'hidden' }}>
-        {rows.length === 0 ? <EmptyRow>Verified contract metadata unavailable.</EmptyRow> : rows.map((row, index) => (
+        {rows.length === 0 ? (
+          <EmptyRow>
+            {unpublished ? 'No contract addresses published yet.' : 'Verified contract metadata unavailable.'}
+          </EmptyRow>
+        ) : rows.map((row, index) => (
           <div key={row.name} className="dk-contracts-row" style={tableRowStyle(index < rows.length - 1)}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <Icon name="file" size={14} color="var(--pro-text-dim)" />
               <span style={{ fontWeight: 500, fontSize: 14 }}>{row.name}</span>
             </div>
             <code style={contractStyle}>{row.address}</code>
-            <a href={basescanAddress(row.address)} target="_blank" rel="noreferrer" className="dk-basescan-link">
+            <a
+              href={explorerAddress(network.explorerUrl, row.address)}
+              target="_blank"
+              rel="noreferrer"
+              className="dk-basescan-link"
+            >
               basescan <Icon name="external" size={11} />
             </a>
           </div>
@@ -228,11 +279,6 @@ function RefreshStatus({ seconds }: { seconds: number }) {
 
 function EmptyRow({ children }: { children: string }) {
   return <div style={{ padding: '24px 16px', color: 'var(--pro-text-dim)' }}>{children}</div>;
-}
-
-function networkLabel(view: ActivityView | null): string {
-  if (!view) return 'Base Sepolia';
-  return view.network === 'base-sepolia' ? 'Base Sepolia' : view.network;
 }
 
 function formatBlock(value: string | null): string {

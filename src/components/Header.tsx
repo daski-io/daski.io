@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Logo } from './ui/Logo';
 import { Icon } from './ui/Icon';
+import { NetworkStrip, NetworkSwitch } from './NetworkControls';
+import type { NetworkView } from '../lib/chains';
 
 interface NavItem {
   to: string;
@@ -17,9 +19,10 @@ const ITEMS: NavItem[] = [
 
 interface HeaderProps {
   pathname: string;
+  network: NetworkView;
 }
 
-export function Header({ pathname }: HeaderProps) {
+export function Header({ pathname, network }: HeaderProps) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -60,7 +63,7 @@ export function Header({ pathname }: HeaderProps) {
           <a href="/" style={{ borderBottom: 'none' }}>
             <Logo size={20} />
           </a>
-          <nav className="dk-desktop-only" style={{ display: 'flex', gap: 2 }}>
+          <nav className="dk-desktop-only" style={{ display: 'flex', gap: 2, alignItems: 'center' }}>
             {ITEMS.map((it) => {
               const active = it.match ? it.match(pathname) : pathname === it.to;
               return (
@@ -100,29 +103,36 @@ export function Header({ pathname }: HeaderProps) {
                 </a>
               );
             })}
+            <a
+              href="https://github.com/daski-io"
+              target="_blank"
+              rel="noreferrer"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 7,
+                padding: '0 12px',
+                height: 32,
+                color: 'var(--pro-text-dim)',
+                borderBottom: 'none',
+                fontFamily: 'var(--font-sans)',
+                fontSize: 14,
+                fontWeight: 500,
+                letterSpacing: '-0.005em',
+                textDecoration: 'none',
+              }}
+            >
+              <span>GitHub</span>
+              <Icon name="external" size={12} />
+            </a>
           </nav>
         </div>
 
-        {/* Desktop utility cluster (GitHub).
-            On mobile this collapses behind the hamburger and the link
+        {/* Desktop utility cluster (network switch).
+            On mobile this collapses behind the hamburger and the switch
             reappears inside the slide-down panel. */}
         <div className="dk-desktop-only" style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
-          <a
-            href="https://github.com/daski-io"
-            target="_blank"
-            rel="noreferrer"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 8,
-              color: 'var(--pro-text-dim)',
-              borderBottom: 'none',
-              fontSize: 13,
-            }}
-          >
-            <Icon name="github" size={15} />
-            <span>GitHub</span>
-          </a>
+          <NetworkSwitch network={network} pathname={pathname} />
         </div>
 
         {/* Mobile hamburger toggle */}
@@ -213,6 +223,7 @@ export function Header({ pathname }: HeaderProps) {
               gap: 12,
             }}
           >
+            <NetworkSwitch network={network} pathname={pathname} size="md" />
             <a
               href="https://github.com/daski-io"
               target="_blank"
@@ -233,6 +244,8 @@ export function Header({ pathname }: HeaderProps) {
           </div>
         </div>
       )}
+
+      <NetworkStrip network={network} />
     </header>
   );
 }

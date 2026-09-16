@@ -7,8 +7,12 @@ import {
   type ProviderDetail,
   type StandardRailMetadata,
 } from '../../lib/api';
+import { gatewayTarget, networkConfig, networkView } from '../../lib/network';
 
 const { providerAgentId } = Astro.params;
+const network = networkConfig();
+const view = networkView(network);
+const target = gatewayTarget(network);
 
 let provider: ProviderDetail | null = null;
 let metadata: StandardRailMetadata | null = null;
@@ -17,17 +21,19 @@ let chainDataUnavailable = false;
 
 if (!providerAgentId) {
   error = 'Missing providerAgentId';
+} else if (!target) {
+  error = `No providers are listed on ${network.label} yet.`;
 } else {
   try {
-    provider = await getProviderDetail(providerAgentId);
+    provider = await getProviderDetail(target, providerAgentId);
   } catch (e) {
     error = e instanceof Error ? e.message : 'unknown error';
   }
 }
 
-if (provider) {
+if (provider && target) {
   try {
-    metadata = await getRailMetadata();
+    metadata = await getRailMetadata(target);
   } catch {
     chainDataUnavailable = true;
   }
@@ -45,6 +51,7 @@ if (provider) {
     <ProviderProfilePage
       provider={provider}
       metadata={metadata}
+      explorerUrl={view.explorerUrl}
       chainDataUnavailable={chainDataUnavailable}
     />
   ) : (

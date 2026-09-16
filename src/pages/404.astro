@@ -1,9 +1,13 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { NotFoundPage } from '../views/NotFoundPage';
+import { siteName } from '../lib/chains';
+import { networkConfig } from '../lib/network';
+
+const title = `404 · ${siteName(networkConfig())}`;
 ---
 <BaseLayout
-  title="404 · Daski Sandbox"
+  title={title}
   description="Page not found."
 >
   <NotFoundPage client:load />

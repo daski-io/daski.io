@@ -22,11 +22,13 @@ import {
 
 interface ServicesDirectoryProps {
   services: ServiceCardData[];
+  /** False while this network has no gateway: the directory shows its empty state and never fetches. */
+  configured: boolean;
   loading?: boolean;
   error?: string | null;
 }
 
-export function ServicesDirectory({ services, loading, error }: ServicesDirectoryProps) {
+export function ServicesDirectory({ services, configured, loading, error }: ServicesDirectoryProps) {
   const [filter, setFilter] = useState<CategoryFamilyFilter>('all');
   const families = useMemo(() => populatedCategoryFamilies(services), [services]);
   const filters = useMemo(
@@ -47,10 +49,14 @@ export function ServicesDirectory({ services, loading, error }: ServicesDirector
       <span id="directory" style={{ position: 'absolute', top: -80 }} />
       <SectionHead
         kicker="live services"
-        title="Base Sepolia testnet. The protocol is real. The money isn't, yet."
+        title="Real services, bought and fulfilled by agents."
         action={<Mono dim>{filtered.length} live</Mono>}
       />
 
+      {!configured ? (
+        <EmptyRow>No services listed yet.</EmptyRow>
+      ) : (
+        <>
       <div
         style={{
           display: 'flex',
@@ -116,12 +122,33 @@ export function ServicesDirectory({ services, loading, error }: ServicesDirector
             Couldn't load services from the gateway: {error}
           </div>
         )}
+        {!loading && !error && services.length === 0 && (
+          <EmptyRow>No services listed yet.</EmptyRow>
+        )}
         {filtered.map((s) => (
           // The gateway-issued canonical service id is the catalog identity.
           <ServiceCard key={serviceKey(s)} service={s} />
         ))}
       </div>
+        </>
+      )}
     </Section>
+  );
+}
+
+function EmptyRow({ children }: { children: string }) {
+  return (
+    <div
+      className="dk-card"
+      style={{
+        padding: '22px 24px',
+        gridColumn: '1 / -1',
+        color: 'var(--pro-text-dim)',
+        fontSize: 14,
+      }}
+    >
+      {children}
+    </div>
   );
 }
 

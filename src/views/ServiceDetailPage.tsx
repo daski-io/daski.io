@@ -4,11 +4,14 @@ import { ServicePurchasesAndUsage } from '../components/service/ServicePurchases
 import { ServiceSkillsTable } from '../components/service/ServiceSkillsTable';
 import type { ServiceDetail } from '../lib/api';
 
-export function ServiceDetailPage({ service }: { service: ServiceDetail }) {
+export function ServiceDetailPage({ service, explorerUrl }: {
+  service: ServiceDetail;
+  explorerUrl: string;
+}) {
   return (
     <div style={{ background: 'var(--pro-bg)' }}>
       <ServiceHero service={service} />
-      <ProviderAndRailDetails service={service} />
+      <ProviderAndRailDetails service={service} explorerUrl={explorerUrl} />
       <ServicePurchasesAndUsage service={service} />
       <ServiceSkillsTable service={service} />
     </div>

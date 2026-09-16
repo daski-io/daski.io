@@ -1,27 +1,28 @@
 import { parseRailMetadata } from './railMetadata.ts';
 import { atomicUsdc } from './displayFormat.ts';
+import { assertGatewayChain } from './chains.ts';
 
 export { atomicUsdc, formatDuration, reputationRate } from './displayFormat.ts';
 
-export const GATEWAY_URL =
-  (import.meta.env?.PUBLIC_GATEWAY_URL as string | undefined) ??
-  'https://sandbox-gateway.daski.io';
+// Where a request goes. The public origin is what the browser also uses; the
+// optional internal origin is server-only and points at Railway private
+// networking (for example http://gateway.railway.internal:8080). When the
+// internal origin fails, the request falls back to the public origin and the
+// internal one is skipped for a minute. `chainId` is the chain this instance
+// is configured for: rail metadata reporting another chain is refused.
+export interface GatewayTarget {
+  url: string;
+  internalUrl?: string | null;
+  chainId?: number;
+}
 
-// Optional server-only origin for server-rendering fetches, read at runtime so
-// it can point at Railway private networking (for example
-// http://gateway.railway.internal:8080) without a rebuild. The browser keeps
-// using GATEWAY_URL. When the internal origin fails, the request falls back to
-// the public origin and the internal one is skipped for a minute.
 const INTERNAL_RETRY_MS = 60_000;
-let internalDisabledUntil = 0;
+const internalDisabledUntil = new Map<string, number>();
 
-function internalGatewayUrl(): string | null {
+function internalOrigin(target: GatewayTarget): string | null {
   if (!import.meta.env?.SSR) return null;
-  const env = (globalThis as unknown as {
-    process?: { env?: Record<string, string | undefined> };
-  }).process?.env;
-  const value = env?.GATEWAY_INTERNAL_URL?.trim().replace(/\/+$/, '');
-  return value && value !== GATEWAY_URL ? value : null;
+  const value = target.internalUrl?.trim().replace(/\/+$/, '');
+  return value && value !== target.url ? value : null;
 }
 
 export interface StandardOutcome {
@@ -470,22 +471,26 @@ async function fetchJsonFrom<T>(
   return response.json() as Promise<T>;
 }
 
-async function fetchJson<T>(path: string, signal?: AbortSignal): Promise<T> {
-  const internal = internalGatewayUrl();
-  if (internal && Date.now() >= internalDisabledUntil) {
+async function fetchJson<T>(
+  target: GatewayTarget,
+  path: string,
+  signal?: AbortSignal,
+): Promise<T> {
+  const internal = internalOrigin(target);
+  if (internal && Date.now() >= (internalDisabledUntil.get(internal) ?? 0)) {
     try {
       return await fetchJsonFrom<T>(internal, path, signal);
     } catch (error) {
       // A 4xx is the gateway's answer rather than a transport failure.
       if (error instanceof GatewayHttpError && error.status < 500) throw error;
-      internalDisabledUntil = Date.now() + INTERNAL_RETRY_MS;
+      internalDisabledUntil.set(internal, Date.now() + INTERNAL_RETRY_MS);
       console.error(
-        `gateway internal origin ${internal} failed; using ${GATEWAY_URL}`,
+        `gateway internal origin ${internal} failed; using ${target.url}`,
         error,
       );
     }
   }
-  return fetchJsonFrom<T>(GATEWAY_URL, path, signal);
+  return fetchJsonFrom<T>(target.url, path, signal);
 }
 
 // Server-side stale-while-revalidate cache of parsed gateway payloads.
@@ -549,9 +554,14 @@ export function parseServiceIndex(value: unknown): { services: PublicService[] }
 const SERVICES_PATH = '/public/v3/services?limit=100';
 const RAIL_METADATA_PATH = '/.well-known/daski-chain.json';
 
-export async function getServices(signal?: AbortSignal) {
-  const { value: response } = await cachedSnapshot(SERVICES_PATH, async () =>
-    parseServiceIndex(await fetchJson<unknown>(SERVICES_PATH, signal)));
+// Snapshots are keyed by gateway origin so two networks never share an entry.
+function cacheKey(target: GatewayTarget, path: string): string {
+  return `${target.url} ${path}`;
+}
+
+export async function getServices(target: GatewayTarget, signal?: AbortSignal) {
+  const { value: response } = await cachedSnapshot(cacheKey(target, SERVICES_PATH), async () =>
+    parseServiceIndex(await fetchJson<unknown>(target, SERVICES_PATH, signal)));
   return {
     services: response.services,
     cachedAt: response.services
@@ -563,13 +573,14 @@ export async function getServices(signal?: AbortSignal) {
 }
 
 export async function getServiceDetail(
+  target: GatewayTarget,
   serviceId: string,
   signal?: AbortSignal,
 ): Promise<ServiceDetail> {
   const normalized = hex(serviceId, 'service ID', 32);
   const path = `/public/v3/services/${encodeURIComponent(normalized)}`;
-  const { value } = await cachedSnapshot(path, async () =>
-    parsePublicService(await fetchJson<unknown>(path, signal)));
+  const { value } = await cachedSnapshot(cacheKey(target, path), async () =>
+    parsePublicService(await fetchJson<unknown>(target, path, signal)));
   return value;
 }
 
@@ -593,22 +604,30 @@ export function providerDetailFromServices(
 }
 
 export async function getProviderDetail(
+  target: GatewayTarget,
   providerAgentId: string,
   signal?: AbortSignal,
 ): Promise<ProviderDetail | null> {
-  const { services } = await getServices(signal);
+  const { services } = await getServices(target, signal);
   return providerDetailFromServices(services, providerAgentId);
 }
 
 export async function getRailMetadataSnapshot(
+  target: GatewayTarget,
   signal?: AbortSignal,
 ): Promise<Snapshot<StandardRailMetadata>> {
-  return cachedSnapshot(RAIL_METADATA_PATH, async () =>
-    parseRailMetadata(await fetchJson<unknown>(RAIL_METADATA_PATH, signal)));
+  return cachedSnapshot(cacheKey(target, RAIL_METADATA_PATH), async () => {
+    const metadata = parseRailMetadata(
+      await fetchJson<unknown>(target, RAIL_METADATA_PATH, signal),
+    );
+    // A gateway serving another chain is refused before anything is cached.
+    if (target.chainId !== undefined) assertGatewayChain(metadata.chainId, target.chainId);
+    return metadata;
+  });
 }
 
-export async function getRailMetadata(signal?: AbortSignal) {
-  return (await getRailMetadataSnapshot(signal)).value;
+export async function getRailMetadata(target: GatewayTarget, signal?: AbortSignal) {
+  return (await getRailMetadataSnapshot(target, signal)).value;
 }
 
 export function serviceKey(service: Pick<PublicService, 'serviceId'>): string {
@@ -623,14 +642,6 @@ export function providerPath(
   provider: Pick<PublicService, 'providerAgentId'>,
 ): string {
   return `/provider/${encodeURIComponent(provider.providerAgentId)}`;
-}
-
-export function basescanAddress(address: string) {
-  return `https://sepolia.basescan.org/address/${address}`;
-}
-
-export function basescanTx(hash: string) {
-  return `https://sepolia.basescan.org/tx/${hash}`;
 }
 
 // The fields a catalog card renders. The home page passes these to its island

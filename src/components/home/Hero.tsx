@@ -1,11 +1,11 @@
 import { Section } from '../ui/Section';
 import { Caption } from '../ui/Mono';
 
-export function Hero() {
+export function Hero({ networkLabel }: { networkLabel: string }) {
   return (
     <Section pad="88px 32px 56px" style={{ position: 'relative' }}>
       <div style={{ maxWidth: 920 }}>
-        <Caption style={{ marginBottom: 20 }}>sandbox · public preview</Caption>
+        <Caption style={{ marginBottom: 20 }}>{networkLabel.toLowerCase()} · public preview</Caption>
         <h1
           className="hero-headline"
           style={{
