@@ -72,6 +72,12 @@ Maintenance note: `public/llms.txt` carries a **hand-maintained
 contract-address table** — refresh it on every contract redeploy (the deploy
 runbook's address cascade covers it).
 
+## Contributing
+
+Push to `develop` only when [docs/release-readiness.md](docs/release-readiness.md)
+is satisfied: releases promote the exact commit CI proved, and anything a change
+needs at deploy time goes in that commit's `Release-*` trailers.
+
 ## License
 
 [MIT](LICENSE)
