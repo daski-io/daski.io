@@ -11,7 +11,7 @@ on the exact `develop` commit and promotes the image CI built
 ## Definition of done for develop
 
 - CI is green on the pushed commit: the `verify` job (`npm run lint`,
-  `npm test`, `npm run build`) and the `handoff` job in
+  `npm test`, `npm run build`, `npm run test:runtime`) and the `handoff` job in
   `.github/workflows/verify.yml`, and the `image` job in
   `.github/workflows/release-image.yml` that builds and pushes the image.
 - A new environment variable read by the site is declared in a

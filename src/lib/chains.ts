@@ -66,8 +66,8 @@ export function explorerTx(explorerUrl: string, hash: string): string {
   return `${explorerUrl}/tx/${hash}`;
 }
 
-export function agentPrompt(gatewayUrl: string): string {
-  return `Fetch ${gatewayUrl}/skills/setup.md and use the returned setup instructions to buy [service offered on daski]`;
+export function agentPrompt(siteUrl: string): string {
+  return `Fetch ${siteUrl}/skills/setup.md and use the returned setup instructions to buy [service offered on daski]`;
 }
 
 export function siteName(view: Pick<NetworkView, 'id' | 'label'>): string {
@@ -173,11 +173,15 @@ export function llmsText(
     'service with its canonical provider/service ids, skills, paid listings, and',
     'on-chain reputation aggregates. Purchases address a listed outcome.',
     '',
-    `Connect the MCP server at \`${gateway}/mcp\` and use the`,
-    'single `daski_buy_outcome` tool. The same tool call is used first to receive a',
-    '402 challenge and again with the wallet-produced standard payment payload.',
-    'There is no separate paid submit tool, payment-time identity registration, or',
-    'buyer ERC-8004 registration.',
+    `Start with ${view.siteUrls[view.id]}/skills/setup.md and read the full guide.`,
+    `Installable skill: ${view.siteUrls[view.id]}/skills/SKILL.md`,
+    `All guides: ${view.siteUrls[view.id]}/llms-full.txt`,
+    '',
+    `Connect to the MCP server at \`${view.siteUrls[view.id]}/mcp\``,
+    'and reuse the configured signer. Use the',
+    "gateway-pinned CLI's daski buy flow for intake, quotation, approval, payment,",
+    'and order tracking. Discover missing intake with daski_get_outcome_requirements.',
+    'Obtain the actual quote before requesting purchase approval.',
     '',
     'Before signing, decode and verify the provider, outcome, request summary,',
     'gross amount, commission, legal terms, deadline policy, listing manifest, and',
@@ -217,7 +221,7 @@ export function llmsText(
     `- Purchasable outcomes (payment addressing): \`${gateway}/public/v2/outcomes\``,
     `- x402 discovery: \`${gateway}/.well-known/x402\``,
     `- Rail metadata: \`${gateway}/.well-known/daski-chain.json\``,
-    `- MCP metadata: \`${gateway}/.well-known/mcp.json\``,
+    `- MCP metadata: \`${view.siteUrls[view.id]}/.well-known/mcp.json\``,
     `- ${view.chainName} chain ID: \`${view.chainId}\``,
     '',
     'The active rail profile, listings, Provider offers, terms, capacity, deadlines,',

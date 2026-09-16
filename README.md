@@ -12,6 +12,37 @@ adapter. Requires Node >= 22.12; the Docker image runs node:22.
 Every page renders real HTML on the first byte so AI crawlers (ChatGPT, Claude,
 Perplexity) can read the service catalog without executing JavaScript.
 
+## Agent interface
+
+The website owns the MCP server at `/mcp`, the buyer guides under `/skills/`,
+`/llms-full.txt`, and the current and legacy skill discovery indexes under
+`/.well-known/`. Guides are bundled Markdown sources in `src/skills/`, rendered
+with this instance's public `GATEWAY_URL`, `SITE_URL`, and network. The copied
+agent prompt points at the website's `/skills/setup.md`.
+
+MCP tools execute gateway REST calls using `GATEWAY_INTERNAL_URL` when set,
+otherwise `GATEWAY_URL`. The server checks gateway chain metadata before tool
+execution, preserves payer signatures and gateway-bound resource URLs, and
+never retries transaction requests or falls back to another origin after a
+failed request. An uncertain paid submission must be reconciled. Only the
+client address selected by `MCP_TRUST_PROXY` is forwarded on private networking.
+Set it to 1 behind Railway ingress and keep the gateway's `TRUST_PROXY=1` for
+that private hop; direct local servers use 0. Public gateway
+routing retains the gateway's own ingress client address.
+
+The website owns no transaction state, payer keys, chain signer, or database.
+Its MCP tool names, schemas, and result envelopes retain the established buyer
+contract. `/.well-known/mcp.json` publishes the website
+transport with capabilities and supported CLI versions from the gateway.
+The setup guide reads the live CLI pin rather than duplicating it in prose.
+Mainnet without a configured gateway returns 503 from guides and MCP instead
+of publishing sandbox purchase instructions.
+
+The gateway's former documentation URLs redirect here, and its former MCP URL
+uses HTTP 307 to preserve client POST requests. `npm run test:runtime` checks
+compiled Astro routes, local MCP guide retrieval, the tool contract, and the
+legacy redirect through an offline REST fixture.
+
 ## Local dev
 
 ```bash
@@ -29,6 +60,7 @@ at `https://sandbox-gateway.daski.io`.
 | `DASKI_NETWORK` | `testnet` or `mainnet` | `testnet` |
 | `GATEWAY_URL` | public gateway origin for the server and the browser | the sandbox gateway on testnet, unset on mainnet |
 | `GATEWAY_INTERNAL_URL` | server-only origin over Railway private networking | unset |
+| `MCP_TRUST_PROXY` | trusted ingress hops for MCP client admission; use 1 behind Railway | `0` |
 | `NETWORK_NOTICE` | strip under the header: `testnet`, `mainnet-soon`, `none` | derived from the network and gateway |
 | `SITE_URL` | this instance's canonical origin | the network's public host |
 | `TESTNET_SITE_URL`, `MAINNET_SITE_URL` | header switch targets | `https://sandbox.daski.io`, `https://daski.io` |
@@ -69,6 +101,7 @@ instead of waiting on the gateway.
 
 ```bash
 npm run build    # astro build (server output via @astrojs/node standalone)
+npm run test:runtime # verify the built agent interface against an offline gateway
 npm run preview  # serve the production build locally
 npm start        # equivalent to: node ./dist/server/entry.mjs
 ```
