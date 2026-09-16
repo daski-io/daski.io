@@ -6,24 +6,38 @@ import { DemoBlock } from '../components/home/DemoBlock';
 import { OpenStandards } from '../components/home/OpenStandards';
 import { BottomCTAs } from '../components/home/BottomCTAs';
 import { getServices, serviceCardData, type ServiceCardData } from '../lib/api';
+import { gatewayTarget, networkConfig, networkView } from '../lib/network';
+
+const network = networkConfig();
+const view = networkView(network);
+const target = gatewayTarget(network);
 
 let services: ServiceCardData[] = [];
 let error: string | null = null;
 
-try {
-  const res = await getServices();
-  services = res.services.map(serviceCardData);
-} catch (e) {
-  error = e instanceof Error ? e.message : 'unknown error';
+// A network without a gateway renders the directory's empty state; nothing is fetched.
+if (target) {
+  try {
+    const res = await getServices(target);
+    services = res.services.map(serviceCardData);
+  } catch (e) {
+    error = e instanceof Error ? e.message : 'unknown error';
+  }
 }
 ---
 <BaseLayout>
   {/* The hero is static HTML. Only the directory filter needs JavaScript on
       load; the demo, the standards diagram, and the prompt copy button
       hydrate once they scroll into view. */}
-  <Hero />
-  <ServicesDirectory client:load services={services} loading={false} error={error} />
+  <Hero networkLabel={view.label} />
+  <ServicesDirectory
+    client:load
+    services={services}
+    configured={target !== null}
+    loading={false}
+    error={error}
+  />
   <DemoBlock client:visible />
   <OpenStandards client:visible />
-  <BottomCTAs client:visible />
+  <BottomCTAs client:visible gatewayUrl={view.gatewayUrl} />
 </BaseLayout>

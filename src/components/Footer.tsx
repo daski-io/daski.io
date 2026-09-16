@@ -1,4 +1,5 @@
 import { Logo } from './ui/Logo';
+import type { NetworkView } from '../lib/chains';
 
 interface FooterLink {
   label: string;
@@ -60,7 +61,7 @@ function FooterCol({ title, links }: FooterColProps) {
   );
 }
 
-export function Footer() {
+export function Footer({ network }: { network: NetworkView }) {
   return (
     <footer
       style={{
@@ -133,7 +134,10 @@ export function Footer() {
           flexWrap: 'wrap',
         }}
       >
-        <span style={{ textTransform: 'none' }}>daski</span>
+        <span>
+          <span style={{ textTransform: 'none' }}>daski</span>
+          {' · '}{network.label}{' · '}{network.chainName}{' · '}{network.chainId}
+        </span>
         <span className="dk-footer-legal-links">
           <a href="/terms-of-use">Terms of Use</a>
           <a href="/privacy-policy">Privacy Policy</a>

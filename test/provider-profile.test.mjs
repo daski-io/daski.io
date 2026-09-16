@@ -84,8 +84,9 @@ test('serves provider details from the catalog and links them from services', as
     read('src/components/service/ProviderAndRailDetails.tsx'),
   ]);
 
-  assert.match(route, /getProviderDetail\(providerAgentId\)/);
-  assert.match(route, /getRailMetadata\(\)/);
+  // Both reads address the instance's gateway target, never a module default.
+  assert.match(route, /getProviderDetail\(target, providerAgentId\)/);
+  assert.match(route, /getRailMetadata\(target\)/);
   assert.match(view, /All-time Purchases/);
   assert.match(view, /All-time Sales/);
   assert.match(view, /services offered by this provider/);

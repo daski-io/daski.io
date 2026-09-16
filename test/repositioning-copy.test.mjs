@@ -54,10 +54,9 @@ test('publishes the attachment-matched agent handoff copy on agents and home', a
     flatPrompt,
     /Copy-paste this prompt to empower your agent to buy services on daski marketplace\./,
   );
-  assert.match(
-    prompt,
-    /Fetch https:\/\/sandbox-gateway\.daski\.io\/skills\/setup\.md/,
-  );
+  // The prompt names the active network's gateway; test/network-presentation
+  // asserts the exact text for each network.
+  assert.match(prompt, /agentPrompt\(gatewayUrl\)/);
 
   assert.match(demo, /idea\.info/);
   assert.match(demo, /sign and send payment/);

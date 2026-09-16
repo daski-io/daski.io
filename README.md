@@ -19,8 +19,27 @@ npm install
 npm run dev
 ```
 
-The site reads from the public Daski Gateway at
-`https://sandbox-gateway.daski.io` by default. Override via:
+The same build serves either network. An instance is told its network at
+request time through the variables in [.env.example](.env.example); with none
+of them set it is the Testnet sandbox site, reading the public Daski Gateway
+at `https://sandbox-gateway.daski.io`.
+
+| Variable | Purpose | Default |
+|---|---|---|
+| `DASKI_NETWORK` | `testnet` or `mainnet` | `testnet` |
+| `GATEWAY_URL` | public gateway origin for the server and the browser | the sandbox gateway on testnet, unset on mainnet |
+| `GATEWAY_INTERNAL_URL` | server-only origin over Railway private networking | unset |
+| `NETWORK_NOTICE` | strip under the header: `testnet`, `mainnet-soon`, `none` | derived from the network and gateway |
+| `SITE_URL` | this instance's canonical origin | the network's public host |
+| `TESTNET_SITE_URL`, `MAINNET_SITE_URL` | header switch targets | `https://sandbox.daski.io`, `https://daski.io` |
+| `EXPLORER_URL` | block explorer origin | Basescan for the configured chain |
+| `SITE_ROBOTS` | `index` or `noindex` | `index` |
+
+Chain facts (chain ID, name, explorer) live in `src/lib/chains.ts`, keyed by
+network. A mainnet instance without `GATEWAY_URL` renders its empty states and
+the launching-soon strip instead of failing. A gateway that reports another
+chain is refused, and an unknown `DASKI_NETWORK` or a malformed URL fails
+readiness rather than quietly serving another network.
 
 `/public/v3/services` is the sole catalog source. Service detail routes use
 the gateway-issued canonical `serviceId`, and category filters are derived
@@ -29,14 +48,14 @@ website does not apply provider, product, jurisdiction, or skill allowlists.
 Historical chain activity remains a separate gateway-fed view.
 
 ```bash
-PUBLIC_GATEWAY_URL=http://localhost:3000 npm run dev
+GATEWAY_URL=http://localhost:3000 npm run dev
 ```
 
 Server rendering can reach the gateway over a different origin than the
-browser does. `GATEWAY_INTERNAL_URL` is server-only and read at runtime; when
-set, SSR fetches use it and the browser keeps using `PUBLIC_GATEWAY_URL`. If
-the internal origin fails, SSR falls back to the public origin and retries the
-internal one a minute later.
+browser does. `GATEWAY_INTERNAL_URL` is server-only; when set, SSR fetches use
+it and the browser keeps using `GATEWAY_URL`. If the internal origin fails,
+SSR falls back to the public origin and retries the internal one a minute
+later.
 
 ```bash
 GATEWAY_INTERNAL_URL=http://gateway.railway.internal:8080
@@ -66,11 +85,16 @@ networking instead of the public Cloudflare hop. The gateway must listen on
 IPv6 for private networking to work; SSR falls back to the public origin if
 the internal one fails.
 
+Two instances run the same image: the sandbox service with no variables set
+at sandbox.daski.io, and the production service with `DASKI_NETWORK=mainnet`
+at daski.io. Launching mainnet is setting `GATEWAY_URL` and
+`GATEWAY_INTERNAL_URL` on the production service; nothing else changes.
+
 Releases (develop→main merges, versioning) are coordinated from
 [daski-io/deploy-testnet](https://github.com/daski-io/deploy-testnet).
-Maintenance note: `public/llms.txt` carries a **hand-maintained
-contract-address table** — refresh it on every contract redeploy (the deploy
-runbook's address cascade covers it).
+`/llms.txt` and `/robots.txt` are rendered from the instance configuration,
+and contract addresses come from the gateway's chain metadata, so nothing in
+`public/` is hand-maintained per network.
 
 ## Contributing
 

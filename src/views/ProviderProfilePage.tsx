@@ -1,8 +1,6 @@
 import type { CSSProperties } from 'react';
 import {
   atomicUsdc,
-  basescanAddress,
-  basescanTx,
   buyerDisplay,
   priceRange,
   reputationRate,
@@ -10,6 +8,7 @@ import {
   type ProviderDetail,
   type StandardRailMetadata,
 } from '../lib/api';
+import { explorerAddress, explorerTx } from '../lib/chains';
 import {
   providerProfilePresentation,
   type ProviderPurchase,
@@ -25,12 +24,15 @@ import { SectionHead } from '../components/ui/SectionHead';
 interface ProviderProfilePageProps {
   provider: ProviderDetail;
   metadata: StandardRailMetadata | null;
+  /** Block explorer origin of the active network. */
+  explorerUrl: string;
   chainDataUnavailable?: boolean;
 }
 
 export function ProviderProfilePage({
   provider,
   metadata,
+  explorerUrl,
   chainDataUnavailable = false,
 }: ProviderProfilePageProps) {
   const presentation = providerProfilePresentation(provider, metadata);
@@ -75,7 +77,7 @@ export function ProviderProfilePage({
           <Dot />
           <ExternalLink href={provider.legal.providerPrivacyUrl}>Privacy Policy</ExternalLink>
           <Dot />
-          <Addr link={basescanAddress(provider.providerAddress)} style={{ fontSize: 12 }}>
+          <Addr link={explorerAddress(explorerUrl, provider.providerAddress)} style={{ fontSize: 12 }}>
             {provider.providerAddress}
           </Addr>
         </div>
@@ -125,7 +127,7 @@ export function ProviderProfilePage({
 
       <Section pad="40px 32px 0">
         <SectionHead kicker="recent purchases of this provider" title={null} />
-        <ProviderPurchasesTable rows={presentation.purchases} />
+        <ProviderPurchasesTable rows={presentation.purchases} explorerUrl={explorerUrl} />
       </Section>
     </div>
   );
@@ -226,7 +228,10 @@ function ProviderServicesTable({ rows }: { rows: ProviderServicePresentation[] }
   );
 }
 
-function ProviderPurchasesTable({ rows }: { rows: ProviderPurchase[] }) {
+function ProviderPurchasesTable({ rows, explorerUrl }: {
+  rows: ProviderPurchase[];
+  explorerUrl: string;
+}) {
   const columns = '1.3fr 0.9fr 1.3fr 1.2fr 0.9fr 70px';
 
   return (
@@ -271,7 +276,7 @@ function ProviderPurchasesTable({ rows }: { rows: ProviderPurchase[] }) {
               </Mono>
               {purchase.txHash ? (
                 <a
-                  href={basescanTx(purchase.txHash)}
+                  href={explorerTx(explorerUrl, purchase.txHash)}
                   target="_blank"
                   rel="noreferrer"
                   style={receiptStyle}

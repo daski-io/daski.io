@@ -1,6 +1,8 @@
 ---
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
+import { siteTitle } from '../lib/chains';
+import { networkConfig, networkView } from '../lib/network';
 import '../styles/app.css';
 
 export interface Props {
@@ -9,13 +11,17 @@ export interface Props {
   canonicalUrl?: string;
 }
 
-const {
-  title = 'Daski Sandbox · sandbox.daski.io',
-  description = 'Daski is a curated procurement marketplace where AI agents buy and manage real business services: domain registration, mailboxes, and company formation. Paid in USDC, settled on Base.',
-  canonicalUrl,
-} = Astro.props;
-
+// The instance's network is resolved once on the server; islands receive the
+// serializable view as props and never read the environment themselves.
+const network = networkConfig();
+const view = networkView(network);
 const pathname = Astro.url.pathname;
+
+const {
+  title = siteTitle(view),
+  description = 'Daski is a curated procurement marketplace where AI agents buy and manage real business services: domain registration, mailboxes, and company formation. Paid in USDC, settled on Base.',
+  canonicalUrl = new URL(pathname, network.siteUrl).href,
+} = Astro.props;
 ---
 <!doctype html>
 <html lang="en" data-theme="dark">
@@ -36,13 +42,14 @@ const pathname = Astro.url.pathname;
     />
     <title>{title}</title>
     <meta name="description" content={description} />
-    {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
+    <link rel="canonical" href={canonicalUrl} />
+    {network.robots === 'noindex' && <meta name="robots" content="noindex, nofollow" />}
   </head>
   <body data-theme="dark">
     <div style="min-height: 100vh; background: var(--pro-bg);">
-      <Header client:load pathname={pathname} />
+      <Header client:load pathname={pathname} network={view} />
       <slot />
-      <Footer />
+      <Footer network={view} />
     </div>
   </body>
 </html>

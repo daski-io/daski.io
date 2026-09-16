@@ -2,17 +2,23 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { ServiceDetailPage } from '../../views/ServiceDetailPage';
 import { getServiceDetail, type ServiceDetail } from '../../lib/api';
+import { gatewayTarget, networkConfig, networkView } from '../../lib/network';
 
 const { serviceId } = Astro.params;
+const network = networkConfig();
+const view = networkView(network);
+const target = gatewayTarget(network);
 
 let service: ServiceDetail | null = null;
 let error: string | null = null;
 
 if (!serviceId) {
   error = 'Missing serviceId';
+} else if (!target) {
+  error = `No services are listed on ${network.label} yet.`;
 } else {
   try {
-    service = await getServiceDetail(serviceId);
+    service = await getServiceDetail(target, serviceId);
   } catch (e) {
     error = e instanceof Error ? e.message : 'unknown error';
   }
@@ -27,7 +33,7 @@ if (!service) {
   description={service?.serviceDescription ?? 'A real service offered to AI agents on the Daski marketplace.'}
 >
   {service ? (
-    <ServiceDetailPage client:load service={service} />
+    <ServiceDetailPage client:load service={service} explorerUrl={view.explorerUrl} />
   ) : (
     <div style="padding: 88px 32px 48px; max-width: 1280px; margin: 0 auto;">
       <h1 style="color: var(--pro-text); font-size: 32px;">Service not found</h1>

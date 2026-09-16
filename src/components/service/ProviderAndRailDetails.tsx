@@ -1,14 +1,14 @@
-import {
-  basescanAddress,
-  providerPath,
-  type ServiceDetail,
-} from '../../lib/api';
+import { providerPath, type ServiceDetail } from '../../lib/api';
+import { explorerAddress } from '../../lib/chains';
 import { Addr } from '../ui/Addr';
 import { Icon } from '../ui/Icon';
 import { Section } from '../ui/Section';
 import { SectionHead } from '../ui/SectionHead';
 
-export function ProviderAndRailDetails({ service }: { service: ServiceDetail }) {
+export function ProviderAndRailDetails({ service, explorerUrl }: {
+  service: ServiceDetail;
+  explorerUrl: string;
+}) {
   return (
     <Section pad="0 32px 0">
       <SectionHead kicker="provided by" title={null} />
@@ -19,7 +19,7 @@ export function ProviderAndRailDetails({ service }: { service: ServiceDetail }) 
             <div style={linkRowStyle}>
               <ExternalLink href={service.agentCardUrl}>Service card</ExternalLink>
               <InternalLink href={providerPath(service)}>Provider details</InternalLink>
-              <Addr link={basescanAddress(service.providerAddress)} style={{ fontSize: 12 }}>
+              <Addr link={explorerAddress(explorerUrl, service.providerAddress)} style={{ fontSize: 12 }}>
                 {service.providerAddress}
               </Addr>
             </div>
