@@ -1,10 +1,12 @@
 name: verify
 
 on:
+  # The release merge commit on sandbox and every hotfix head need their own
+  # push run: production promotion reads it as the proof for that exact commit.
   push:
-    branches: [develop, main]
+    branches: [develop, sandbox, main, 'hotfix/**']
   pull_request:
-    branches: [develop, main]
+    branches: [develop, sandbox, main]
 
 jobs:
   verify:
