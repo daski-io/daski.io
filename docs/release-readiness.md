@@ -16,8 +16,13 @@ on the exact `develop` commit and promotes the image CI built
   `.github/workflows/release-image.yml` that builds and pushes the image.
 - A new environment variable read by the site is declared in a
   `Release-Variable` trailer on the commit that introduces it (see below).
-- Never merge to `main` or tag by hand. The coordinator does that through its
-  authorized `go`, and only for a commit CI proved.
+- Never merge to `sandbox` or `main` or tag by hand. The coordinator merges the
+  release pull request into `sandbox` and tags the merge commit through its
+  authorized `go`, and only for a commit CI proved. `main` is the production
+  branch: only the production coordinator moves it, by fast-forward to a
+  release commit that already ran on the sandbox.
+- Emergency fixes branch from `main` as `hotfix/<id>`. Their pushes run the
+  `verify` workflow, and so does the release merge commit on `sandbox`.
 
 ## Hand-off to the release agent
 
