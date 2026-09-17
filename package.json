@@ -12,7 +12,7 @@
     "astro": "astro",
     "lint": "astro check",
     "test": "node --experimental-strip-types --test test/*.test.mjs",
-    "test:runtime": "node scripts/test-agent-runtime.mjs"
+    "test:runtime": "node scripts/test-agent-runtime.mjs && node scripts/test-server-start.mjs"
   },
   "dependencies": {
     "@astrojs/node": "11.1.3",

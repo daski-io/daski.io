@@ -41,7 +41,9 @@ of publishing sandbox purchase instructions.
 The gateway's former documentation URLs redirect here, and its former MCP URL
 uses HTTP 307 to preserve client POST requests. `npm run test:runtime` checks
 compiled Astro routes, local MCP guide retrieval, the tool contract, and the
-legacy redirect through an offline REST fixture.
+legacy redirect through an offline REST fixture. It then starts the built
+server the way the container does and requires HTTP 200 on `/` and
+`/health/ready.json`.
 
 ## Local dev
 
@@ -101,7 +103,7 @@ instead of waiting on the gateway.
 
 ```bash
 npm run build    # astro build (server output via @astrojs/node standalone)
-npm run test:runtime # verify the built agent interface against an offline gateway
+npm run test:runtime # verify the built agent interface and the server start against an offline gateway
 npm run preview  # serve the production build locally
 npm start        # equivalent to: node ./dist/server/entry.mjs
 ```
