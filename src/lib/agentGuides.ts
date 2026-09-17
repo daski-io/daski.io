@@ -1,8 +1,10 @@
 import { createHash } from 'node:crypto';
 import type { NetworkConfig } from './network.ts';
 
-export const GUIDE_FILES = ['setup.md', 'buy.md', 'orders.md', 'wallets.md', 'recipe.md', 'SKILL.md'] as const;
-export type GuideFile = typeof GUIDE_FILES[number];
+import { GUIDE_FILES, type GuideFile } from './guideFiles.ts';
+
+export { GUIDE_FILES };
+export type { GuideFile };
 export type GuideTemplates = Record<GuideFile, string>;
 
 /** Render once per instance; the hash and size always describe the served bytes. */

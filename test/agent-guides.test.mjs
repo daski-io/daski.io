@@ -96,3 +96,13 @@ test('the prompt and machine-readable entry point use the configured website ori
   assert.match(llms, /daski buy flow/);
   assert.doesNotMatch(llms, /single `daski_buy_outcome`|railway\.internal/);
 });
+
+test('llms.txt lists every indexed guide, so the three documents describe one set', () => {
+  // The gateway listed them all before agent interface ownership moved here;
+  // dropping four of the six left llms.txt disagreeing with the agent-skills
+  // index and llms-full.txt, which the release preflight caught.
+  const llms = llmsText(config);
+  for (const file of GUIDE_FILES) {
+    assert.ok(llms.includes(`${config.siteUrl}/skills/${file}`), `llms.txt omitted ${file}`);
+  }
+});
