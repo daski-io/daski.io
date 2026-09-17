@@ -1,10 +1,10 @@
 import { AgentPromptSection } from '../AgentPromptSection';
 import { Icon } from '../ui/Icon';
 
-export function BottomCTAs({ gatewayUrl }: { gatewayUrl: string | null }) {
+export function BottomCTAs({ gatewayUrl, siteUrl }: { gatewayUrl: string | null; siteUrl: string }) {
   return (
     <AgentPromptSection
-      gatewayUrl={gatewayUrl}
+      gatewayUrl={gatewayUrl} siteUrl={siteUrl}
       pad="48px 32px 32px"
       action={
         <a

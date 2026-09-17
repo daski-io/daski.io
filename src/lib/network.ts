@@ -19,6 +19,8 @@ export type Robots = 'index' | 'noindex';
 export interface NetworkConfig extends NetworkView {
   /** Server-only gateway origin over private networking; null when unset or when no gateway is configured. */
   gatewayInternalUrl: string | null;
+  /** Trusted ingress hops for MCP client admission; zero trusts only the socket. */
+  mcpTrustProxy: number;
   /** This instance's canonical origin. */
   siteUrl: string;
   robots: Robots;
@@ -66,6 +68,10 @@ function origin(value: string | undefined, name: string): string | undefined {
 export function resolveNetworkConfig(env: ProcessEnv): NetworkConfig {
   const id = oneOf(read(env, 'DASKI_NETWORK'), NETWORK_IDS, 'DASKI_NETWORK', 'testnet');
   const chain = CHAINS[id];
+  const mcpTrustProxy = Number(read(env, 'MCP_TRUST_PROXY') ?? 0);
+  if (!Number.isSafeInteger(mcpTrustProxy) || mcpTrustProxy < 0 || mcpTrustProxy > 5) {
+    throw new Error('MCP_TRUST_PROXY must be an integer between 0 and 5');
+  }
   const gatewayUrl = origin(read(env, 'GATEWAY_URL'), 'GATEWAY_URL')
     ?? (id === 'testnet' ? DEFAULT_TESTNET_GATEWAY_URL : null);
   const gatewayInternalUrl = gatewayUrl
@@ -88,6 +94,7 @@ export function resolveNetworkConfig(env: ProcessEnv): NetworkConfig {
     explorerUrl: origin(read(env, 'EXPLORER_URL'), 'EXPLORER_URL') ?? chain.explorerUrl,
     gatewayUrl,
     gatewayInternalUrl,
+    mcpTrustProxy,
     notice: oneOf(read(env, 'NETWORK_NOTICE'), NOTICES, 'NETWORK_NOTICE', derivedNotice),
     siteUrls,
     siteUrl,

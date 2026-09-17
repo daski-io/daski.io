@@ -3,7 +3,7 @@ import { AgentPromptSection } from '../components/AgentPromptSection';
 import { Section } from '../components/ui/Section';
 import { Caption } from '../components/ui/Mono';
 
-export function AgentsPage({ gatewayUrl }: { gatewayUrl: string | null }) {
+export function AgentsPage({ gatewayUrl, siteUrl }: { gatewayUrl: string | null; siteUrl: string }) {
   return (
     <div>
       <Section pad="88px 32px 48px">
@@ -80,7 +80,7 @@ export function AgentsPage({ gatewayUrl }: { gatewayUrl: string | null }) {
         </div>
       </Section>
 
-      <AgentPromptSection pad="48px 32px 0" gatewayUrl={gatewayUrl} />
+      <AgentPromptSection pad="48px 32px 0" gatewayUrl={gatewayUrl} siteUrl={siteUrl} />
     </div>
   );
 }

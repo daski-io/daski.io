@@ -7,13 +7,14 @@ import { agentPrompt } from '../lib/chains';
 interface AgentPromptSectionProps {
   /** Public gateway origin of the active network; null hides the section while the network has no gateway. */
   gatewayUrl: string | null;
+  siteUrl: string;
   pad?: string;
   action?: ReactNode;
 }
 
-export function AgentPromptSection({ gatewayUrl, pad, action }: AgentPromptSectionProps) {
+export function AgentPromptSection({ gatewayUrl, siteUrl, pad, action }: AgentPromptSectionProps) {
   if (gatewayUrl === null) return null;
-  const prompt = agentPrompt(gatewayUrl);
+  const prompt = agentPrompt(siteUrl);
   return (
     <Section pad={pad}>
       <SectionHead

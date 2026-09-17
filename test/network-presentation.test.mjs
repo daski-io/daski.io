@@ -53,8 +53,8 @@ test('testnet: prompt, explorer links, strip, titles and llms.txt name the sandb
   const view = VIEWS.testnet;
 
   assert.equal(
-    agentPrompt(view.gatewayUrl),
-    'Fetch https://sandbox-gateway.daski.io/skills/setup.md and use the returned setup instructions to buy [service offered on daski]',
+    agentPrompt(view.siteUrls[view.id]),
+    'Fetch https://sandbox.daski.io/skills/setup.md and use the returned setup instructions to buy [service offered on daski]',
   );
   assert.equal(explorerTx(view.explorerUrl, '0xabc'), 'https://sepolia.basescan.org/tx/0xabc');
   assert.equal(explorerAddress(view.explorerUrl, '0xdef'), 'https://sepolia.basescan.org/address/0xdef');
@@ -69,7 +69,7 @@ test('testnet: prompt, explorer links, strip, titles and llms.txt name the sandb
 
   const llms = llmsText(view);
   assert.match(llms, /The Testnet runtime uses one\nstandard x402 V2 Exact-EVM rail with canonical USDC on Base Sepolia\./);
-  assert.match(llms, /`https:\/\/sandbox-gateway\.daski\.io\/mcp`/);
+  assert.match(llms, /`https:\/\/sandbox\.daski\.io\/mcp`/);
   assert.match(llms, /- Base Sepolia chain ID: `84532`/);
   assert.doesNotMatch(llms, /https:\/\/gateway\.daski\.io/);
 });
@@ -78,8 +78,8 @@ test('mainnet live: prompt, explorer links, strip, titles and llms.txt name main
   const view = VIEWS.mainnetLive;
 
   assert.equal(
-    agentPrompt(view.gatewayUrl),
-    'Fetch https://gateway.daski.io/skills/setup.md and use the returned setup instructions to buy [service offered on daski]',
+    agentPrompt(view.siteUrls[view.id]),
+    'Fetch https://daski.io/skills/setup.md and use the returned setup instructions to buy [service offered on daski]',
   );
   assert.equal(explorerTx(view.explorerUrl, '0xabc'), 'https://basescan.org/tx/0xabc');
   assert.equal(explorerAddress(view.explorerUrl, '0xdef'), 'https://basescan.org/address/0xdef');
