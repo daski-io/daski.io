@@ -3,6 +3,7 @@
 // This module is imported by browser islands, so it never reads the process
 // environment. The running instance's network is resolved on the server in
 // network.ts and handed to islands as a serializable NetworkView.
+import { GUIDE_FILES } from './guideFiles.ts';
 
 export type NetworkId = 'testnet' | 'mainnet';
 export type NetworkNotice = 'testnet' | 'mainnet-soon' | 'none';
@@ -176,6 +177,10 @@ export function llmsText(
     `Start with ${view.siteUrls[view.id]}/skills/setup.md and read the full guide.`,
     `Installable skill: ${view.siteUrls[view.id]}/skills/SKILL.md`,
     `All guides: ${view.siteUrls[view.id]}/llms-full.txt`,
+    '',
+    // Every indexed guide is listed, so llms.txt, the agent-skills index and
+    // llms-full.txt describe the same set. They are one list in guideFiles.ts.
+    ...GUIDE_FILES.map(file => `- ${view.siteUrls[view.id]}/skills/${file}`),
     '',
     `Connect to the MCP server at \`${view.siteUrls[view.id]}/mcp\``,
     'and reuse the configured signer. Use the',
