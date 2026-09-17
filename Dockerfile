@@ -1,5 +1,10 @@
 # syntax=docker/dockerfile:1
-FROM node:22-slim AS builder
+# One base for both stages, pinned by digest: the sandbox and production build
+# the same commit days apart, so the base must not drift between them. To
+# refresh it, run `docker buildx imagetools inspect node:22-slim`, copy the
+# top-level Digest (the manifest list) here, then rebuild and test the image.
+ARG NODE_IMAGE=node:22-slim@sha256:83f487e0a63425e5b4d146fb5e5be574bcbe1b7b843d3ebafdd95eaf7767a7e5
+FROM ${NODE_IMAGE} AS builder
 WORKDIR /app
 
 COPY package.json package-lock.json* ./
@@ -10,7 +15,7 @@ COPY public ./public
 COPY src ./src
 RUN npm run build
 
-FROM node:22-slim AS runtime
+FROM ${NODE_IMAGE} AS runtime
 WORKDIR /app
 
 # Production-only install for the runtime image: keeps it lean and
