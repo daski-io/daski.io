@@ -109,10 +109,11 @@ export function Footer({ network }: { network: NetworkView }) {
           ]}
         />
         <FooterCol
-          title="Connect"
+          title="Contact"
           links={[
             { label: 'X / Twitter', href: 'https://x.com/daskiio', external: true },
             { label: 'Discord', href: 'https://discord.gg/uyeMp7Q2HW', external: true },
+            { label: 'LinkedIn', href: 'https://www.linkedin.com/company/daski', external: true },
           ]}
         />
       </div>
