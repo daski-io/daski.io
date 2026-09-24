@@ -98,6 +98,7 @@ export function Footer({ network }: { network: NetworkView }) {
           links={[
             { label: 'GitHub', href: 'https://github.com/daski-io', external: true },
             { label: 'Whitepaper', href: '/agentic-procurement-protocol-whitepaper.pdf', external: true },
+            { label: 'Brand Assets', to: '/brand-assets' },
           ]}
         />
         <FooterCol
