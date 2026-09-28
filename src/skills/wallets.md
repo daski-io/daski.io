@@ -6,7 +6,7 @@ Run `daski doctor --json` to identify the configured signer and its native state
 
 | Signer | Account | Status | Buys | Tracks | Confirms delivery | Gas for confirmation |
 |---|---|---|---|---|---|---|
-| Circle agent wallet | contract | candidate until its conformance run is recorded | yes | yes | direct, through the circle CLI | Circle sponsors, capped |
+| Circle agent wallet | contract | verified | yes | yes | direct, through the circle CLI | Circle sponsors, capped |
 | Local key | EOA | verified | yes | yes | sponsored by Daski | none |
 | CDP server wallet | EOA | candidate | yes | yes | sponsored by Daski | none |
 | Base Account via Base MCP | contract | candidate | via MCP | via MCP | direct, via Base MCP | account pays |
