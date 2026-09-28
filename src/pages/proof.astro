@@ -6,6 +6,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 const proof = {
   youtubeId: 'He00M2mktvM',
   entityName: 'Daski',
+  entityType: 'Corporation',
   chainName: 'Base',
   txHash: '0xa6b8402239892ba7f2c87779b3053595e0ce2c78a04e98d8682a38d5bcb94217',
   block: 51877982,
@@ -28,7 +29,7 @@ const cards = [
   {
     kicker: 'Wyoming state filing',
     title: proof.entityName,
-    meta: [['File no.', proof.fileNumber], ['Filed', proof.filedAt]],
+    meta: [['Entity type', proof.entityType], ['File no.', proof.fileNumber], ['Filed', proof.filedAt]],
     href: proof.filingUrl,
     cta: 'View state filing',
   },
