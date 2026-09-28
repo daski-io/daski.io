@@ -194,3 +194,26 @@ test('MCP client admission counts proxy hops from the socket and ignores spoofed
   assert.equal(mcpClientAddress('10.0.0.1', 'not-an-ip', 1), '10.0.0.1');
   assert.throws(() => resolveNetworkConfig({ MCP_TRUST_PROXY: '-1' }), /MCP_TRUST_PROXY/);
 });
+
+
+test('entity download URL survives the MCP envelope without being fetched or rewritten', async t => {
+  const result = { documentId: 'fixture-document', title: 'Bylaws', type: 'bylaws', refreshAction: 'download-entity-document',
+    download: { url: 'https://provider.example/services/entity-formation/entity-documents/fixture-token', method: 'GET',
+      mimeType: 'application/pdf', expiresAt: '2026-09-28T18:15:00.000Z', singleUse: true } };
+  const { tool, calls } = fixture(t, ({ path, body }) => {
+    assert.equal(path, '/wallet/assets/action');
+    assert.equal(body.actionId, 'download-entity-document');
+    return json({ status: 'completed', actionExecutionId: 'fixture-execution', result });
+  });
+  const response = await tool('daski_use_asset', { payer, providerAgentId: '42', actionId: 'download-entity-document',
+    providerAssetId: '00000000-0000-4000-8000-000000000001', input: { documentId: 'fixture-document' } });
+  assert.notEqual(response.isError, true);
+  const wrapped = response.structuredContent.untrustedResult;
+  assert.equal(wrapped.contentEncoding, 'base64');
+  assert.equal(wrapped.mediaType, 'application/json');
+  const bytes = Buffer.from(wrapped.content, 'base64');
+  assert.equal(wrapped.byteLength, bytes.length);
+  assert.deepEqual(JSON.parse(bytes), result);
+  assert.equal(calls.filter(call => call.path === '/wallet/assets/action').length, 1);
+  assert.ok(calls.every(call => !call.url.includes('/entity-documents/')));
+});
