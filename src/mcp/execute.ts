@@ -17,6 +17,24 @@ function isolateProviderResult(value: Record<string, unknown>) {
     byteLength: encoded.byteLength, content: encoded.toString('base64') } };
 }
 
+const SUPPORT_RECEIPT_KEYS = ['acceptedAt', 'messageId', 'requestId', 'reviewId'];
+
+/**
+ * A support receipt is the gateway-validated record of the buyer's own
+ * request, not provider task data, so it stays readable beside the isolated
+ * result. HTTP callers read the same value at result.supportReceipt.
+ */
+function supportResult(value: Record<string, unknown>) {
+  const result = value.result;
+  const receipt = result && typeof result === 'object' && !Array.isArray(result)
+    ? (result as Record<string, unknown>).supportReceipt : undefined;
+  const readable = !!receipt && typeof receipt === 'object' && !Array.isArray(receipt) &&
+    Object.keys(receipt).sort().join(',') === SUPPORT_RECEIPT_KEYS.join(',') &&
+    SUPPORT_RECEIPT_KEYS.every(key => typeof (receipt as Record<string, unknown>)[key] === 'string');
+  const isolated = isolateProviderResult(value);
+  return readable ? { ...isolated, supportReceipt: receipt } : isolated;
+}
+
 export async function executeTool(name: string, args: Record<string, unknown>, meta: Record<string, unknown> | undefined,
   gateway: GatewayClient, readGuide: ReadGuide): Promise<McpToolResult> {
   try {
@@ -61,7 +79,8 @@ export async function executeTool(name: string, args: Record<string, unknown>, m
       }
       const { body } = await gateway.call(path, args.readCapability ? { request } : { request, authorization: args.authorization },
         args.readCapability ? { headers: { authorization: `DaskiReadCap ${args.readCapability}` } } : {});
-      return mcpJson(['confirmation', 'revoke-confirmation', 'grant-read'].includes(action) ? body : isolateProviderResult(body));
+      if (['confirmation', 'revoke-confirmation', 'grant-read'].includes(action)) return mcpJson(body);
+      return mcpJson(action === 'support' ? supportResult(body) : isolateProviderResult(body));
     }
     const walletPaths: Record<string, string> = {
       daski_list_my_orders: '/wallet/orders', daski_get_my_reputation: '/wallet/reputation',

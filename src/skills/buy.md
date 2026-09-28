@@ -10,6 +10,10 @@ daski buy --provider <id> --outcome <id> --request <file.json> --json
 
 The command obtains a binding quote and payer preflight. Quotation sends the request to the provider for pricing and creates or reuses a draft order. Intake discovery is read-only and creates neither a quote nor an order.
 
+Mailbox purchases require DNS readiness for the intended payer before payment. Supply `payerAddress` to the payment challenge. A readiness rejection includes `readiness` with the required records; display every record with its type, full name, value, and priority. HTTP integrations can also POST `{address,payer}` to the provider's `/services/mailboxes/availability`. For an external domain this includes the payer-specific ownership TXT; MX and SPF alone do not prove ownership. Correct missing records and recheck readiness before requesting a fresh quote.
+
+For a domain managed by Daski, prepare DNS first through the existing payer-authorized `daski_list_assets` and `daski_use_asset` domain DNS actions. Match the domain asset and use the returned relative record host. A registrar write confirms configuration only; wait for readiness to verify public DNS. Never purchase a mailbox to trigger DNS setup. A changed payer requires a new readiness check and quote.
+
 Show the quoted service, provider, request, price, network, payer, and terms. After the user's approval, repeat with `--approve <approval.id>`. The CLI validates the payment, signs with the configured wallet, submits it, and records the gateway's payment identifier and order handle. A refreshed quote can reuse approval while all material terms stay the same.
 
 ## Advanced challenge and submission
@@ -47,6 +51,7 @@ Use the response's `retryable`, `requiresNewSignature`, `paymentMayHaveSettled`,
 | PAYMENT_IDENTIFIER_CONFLICT | Reconcile the original payment identifier and recover its order. |
 | Timeout / PAYMENT_PENDING_RECONCILIATION / paymentMayHaveSettled: true | Run daski order reconcile with the recorded identifier. |
 | WALLET_AUTHORIZATION_INVALID | Repeat the order command to obtain fresh read access or action authorization. |
+| ARTIFACT_NOT_AVAILABLE | The order is neither completed nor recovered. Read its status; fetch the artifact once it completes. |
 | INTERNAL_ERROR | Report correlationId. Reconcile if the signature was submitted and settlement is uncertain. |
 
 ## Reconciliation
