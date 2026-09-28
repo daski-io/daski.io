@@ -2,16 +2,16 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 
 // Unlinked marketing page: evidence that Daski registered its own entity
-// through Daski rails. Update the filing fields once the state records it.
+// through Daski rails, with the Wyoming state filing linked below.
 const proof = {
   youtubeId: 'He00M2mktvM',
   entityName: 'Daski',
   chainName: 'Base',
   txHash: '0xa6b8402239892ba7f2c87779b3053595e0ce2c78a04e98d8682a38d5bcb94217',
   block: 51877982,
-  fileNumber: 'Pending',
-  filedAt: 'Pending',
-  filingUrl: null as string | null,
+  fileNumber: '2026-002093002',
+  filedAt: '09/28/2026',
+  filingUrl: 'https://wyobiz.wyo.gov/business/FilingDetails.aspx?eFNum=178202139015179132112144051009231182026207148245',
 };
 
 const explorerTxUrl = `https://basescan.org/tx/${proof.txHash}`;
@@ -26,11 +26,11 @@ const cards = [
     cta: 'View on Basescan',
   },
   {
-    kicker: 'state filing',
+    kicker: 'Wyoming state filing',
     title: proof.entityName,
     meta: [['File no.', proof.fileNumber], ['Filed', proof.filedAt]],
     href: proof.filingUrl,
-    cta: proof.filingUrl ? 'View filing document' : 'Filing document pending',
+    cta: 'View state filing',
   },
 ];
 ---
