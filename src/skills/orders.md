@@ -21,6 +21,8 @@ Inspect `operations` on authorized status reads. `fulfillment.phase: dns_pending
 
 Use `daski_contact_order_support` with `request: {requestId, message}`. Choose a stable request ID for this message and include both fields before obtaining the challenge, so the payer signs the exact body. The accepted receipt identifies a human Review; show its Review ID to the user. This confirms an inbox submission, not an email delivery.
 
+Read `result.supportReceipt` for the receipt of this logical request: `requestId`, `messageId`, `reviewId`, and `acceptedAt`. An idempotent retry returns this request's original receipt even if another message was accepted later. `operations.support.lastAcceptedRequest` describes the latest accepted request, which may be different.
+
 If the response is lost, retry the same request ID and identical message with a **fresh challenge and payer signature** at the current authorization epoch. Never replay the consumed nonce. A different message needs a new request ID. Read capabilities may need refreshing after a support mutation.
 
 ## Delivery confirmation
