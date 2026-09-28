@@ -15,6 +15,14 @@ Status and artifact commands obtain a `grant-read` capability and reuse it until
 
 For an interrupted payment, use `daski order reconcile <intentId> --json`. It queries the gateway for that payment identifier and recovers the handle when settlement is established.
 
+Inspect `operations` on authorized status reads. `fulfillment.phase: dns_pending` means the paid order waits for DNS and rechecks every five minutes; `nextCheckAt` and `missingRecords` describe the next check and required corrections. `waiting_capacity` means ready and queued. Do not pay again. `recovery.state` distinguishes queued, pending, running, attention, completed, and stopped recovery. Show completed recovery as **Completed after recovery**, while retaining the original failed financial/reputation history. Recovery does not create a new purchase or rewrite its receipt.
+
+## Contact support
+
+Use `daski_contact_order_support` with `request: {requestId, message}`. Choose a stable request ID for this message and include both fields before obtaining the challenge, so the payer signs the exact body. The accepted receipt identifies a human Review; show its Review ID to the user. This confirms an inbox submission, not an email delivery.
+
+If the response is lost, retry the same request ID and identical message with a **fresh challenge and payer signature** at the current authorization epoch. Never replay the consumed nonce. A different message needs a new request ID. Read capabilities may need refreshing after a support mutation.
+
 ## Delivery confirmation
 
 daski order confirm <handle> --choice Confirmed|NotConfirmed

@@ -113,6 +113,33 @@ test('wallet reconciliation keeps the payment identifier in the gateway request'
   assert.deepEqual(calls.at(-1).body, { payer, paymentIdentifier: 'intent-123456789012', authorization: null, cursor: null, limit: 25 });
 });
 
+test('support binds a stable request ID and returns a human Review receipt without inventing email delivery', async t => {
+  const receipt = { requestId: 'help-1', messageId: 'message-1', reviewId: 'review-1', acceptedAt: 100 };
+  const { tool, calls } = fixture(t, ({ path }) => path.endsWith('/challenge') ? json({ nonce: 'fresh' }) : json({ accepted: true, receipt }));
+  const request = { requestId: 'help-1', message: 'Please recover this paid mailbox' };
+  await tool('daski_contact_order_support', { orderHandle: 'handle', request });
+  assert.deepEqual(calls.at(-1).body, { request });
+  const accepted = await tool('daski_contact_order_support', { orderHandle: 'handle', request, authorization: actionAuthorization });
+  assert.deepEqual(accepted.structuredContent.receipt, receipt);
+  assert.deepEqual(calls.at(-1).body.request, request);
+  const count = calls.length;
+  for (const invalid of [{ message: 'Missing ID' }, { ...request, extra: true }, { ...request, requestId: 'bad id' }]) {
+    const rejected = await tool('daski_contact_order_support', { orderHandle: 'handle', request: invalid });
+    assert.equal(rejected.isError, true);
+  }
+  assert.equal(calls.length, count);
+});
+
+test('operational recovery and DNS details survive the MCP envelope with original financial failure', async t => {
+  const operations = { schemaVersion: 1, fulfillment: { phase: 'dns_pending', nextCheckAt: 400 },
+    recovery: { state: 'completed', originalTerminal: { state: 'failed' } }, support: { reviewId: 'review-1' } };
+  const { tool } = fixture(t, () => json({ state: 'failed', orderState: 'PROVIDER_FAILED', operations, result: { mailbox: 'data' } }));
+  const result = await tool('daski_get_order_status', { orderHandle: 'handle', readCapability: 'c'.repeat(80) });
+  assert.equal(result.structuredContent.orderState, 'PROVIDER_FAILED');
+  assert.deepEqual(result.structuredContent.operations, operations);
+  assert.equal(result.structuredContent.result, undefined);
+});
+
 test('every lifecycle, wallet, search and identity tool uses its intended REST path', async t => {
   const { tool, calls } = fixture(t);
   const cases = [
@@ -121,7 +148,7 @@ test('every lifecycle, wallet, search and identity tool uses its intended REST p
     ['daski_get_outcome', { providerAgentId: '42', outcomeId: 'domain' }, '/public/v2/outcomes/42/domain'],
     ['daski_cancel_order', { orderHandle: 'handle' }, '/orders/handle/actions/cancel/challenge'],
     ['daski_get_order_artifact', { orderHandle: 'handle' }, '/orders/handle/actions/artifact/challenge'],
-    ['daski_contact_order_support', { orderHandle: 'handle' }, '/orders/handle/actions/support/challenge'],
+    ['daski_contact_order_support', { orderHandle: 'handle', request: { requestId: 'support-1', message: 'Please investigate' } }, '/orders/handle/actions/support/challenge'],
     ['daski_confirm_delivery', { orderHandle: 'handle' }, '/orders/handle/actions/confirmation/challenge'],
     ['daski_revoke_delivery_confirmation', { orderHandle: 'handle' }, '/orders/handle/actions/revoke-confirmation/challenge'],
     ['daski_get_my_reputation', { payer }, '/wallet/reputation'],

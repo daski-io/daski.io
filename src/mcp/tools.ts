@@ -211,7 +211,10 @@ for (const [name, action, description] of lifecycleTools) {
             "then retry with the payer's EIP-712 authorization.",
           inputSchema: action === "status" || action === "artifact"
             ? actionInputSchema
-            : mutationActionInputSchema,
+            : action === "support" ? {
+              ...mutationActionInputSchema,
+              request: z.object({ requestId: z.string().regex(/^[A-Za-z0-9_-]{1,128}$/), message: z.string().min(1).max(4000) }).strict(),
+            } : mutationActionInputSchema,
           annotations: {
             title: description,
             readOnlyHint: action === "status" || action === "artifact",
@@ -220,7 +223,7 @@ for (const [name, action, description] of lifecycleTools) {
             openWorldHint: true,
           },
         },
-        (args, context) => invoke(name, args, context.mcpReq._meta),
+        (args: Record<string, unknown>, context: { mcpReq: { _meta?: Record<string, unknown> } }) => invoke(name, args, context.mcpReq._meta),
       );
     }
 server.registerTool(
