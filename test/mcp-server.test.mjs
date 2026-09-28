@@ -132,12 +132,26 @@ test('support binds a stable request ID and returns a human Review receipt witho
 
 test('operational recovery and DNS details survive the MCP envelope with original financial failure', async t => {
   const operations = { schemaVersion: 1, fulfillment: { phase: 'dns_pending', nextCheckAt: 400 },
-    recovery: { state: 'completed', originalTerminal: { state: 'failed' } }, support: { reviewId: 'review-1' } };
+    recovery: { state: 'completed', originalTerminal: { state: 'failed' } }, support: { reviewId: 'review-1',
+      lastReply: { messageId: 'message-2', repliedAt: 500, message: 'We are recovering your mailbox.' } } };
   const { tool } = fixture(t, () => json({ state: 'failed', orderState: 'PROVIDER_FAILED', operations, result: { mailbox: 'data' } }));
   const result = await tool('daski_get_order_status', { orderHandle: 'handle', readCapability: 'c'.repeat(80) });
   assert.equal(result.structuredContent.orderState, 'PROVIDER_FAILED');
   assert.deepEqual(result.structuredContent.operations, operations);
   assert.equal(result.structuredContent.result, undefined);
+});
+
+test('an artifact read of an unfinished order returns the gateway refusal and its next action', async t => {
+  const refusal = { code: 'ARTIFACT_NOT_AVAILABLE', message: 'The order has no artifact: it is neither completed nor recovered',
+    phase: 'dispatch', retryable: true, requiresNewSignature: false, paymentMayHaveSettled: false,
+    docs: 'https://gateway.example/skills/buy.md#errors', correlationId: '00000000-0000-4000-8000-00000000c0de' };
+  const { tool } = fixture(t, () => json({ error: refusal }, 409, {
+    'daski-next-action': 'Read the order status. Artifacts are available once it is completed or completed after recovery.' }));
+  const result = await tool('daski_get_order_artifact', { orderHandle: 'handle', readCapability: 'c'.repeat(80) });
+  assert.equal(result.isError, true);
+  assert.equal(result.structuredContent.code, 'ARTIFACT_NOT_AVAILABLE');
+  assert.equal(result.structuredContent.retryable, true);
+  assert.match(result.structuredContent.next_action, /Read the order status/);
 });
 
 test('every lifecycle, wallet, search and identity tool uses its intended REST path', async t => {

@@ -51,6 +51,7 @@ Use the response's `retryable`, `requiresNewSignature`, `paymentMayHaveSettled`,
 | PAYMENT_IDENTIFIER_CONFLICT | Reconcile the original payment identifier and recover its order. |
 | Timeout / PAYMENT_PENDING_RECONCILIATION / paymentMayHaveSettled: true | Run daski order reconcile with the recorded identifier. |
 | WALLET_AUTHORIZATION_INVALID | Repeat the order command to obtain fresh read access or action authorization. |
+| ARTIFACT_NOT_AVAILABLE | The order is neither completed nor recovered. Read its status; fetch the artifact once it completes. |
 | INTERNAL_ERROR | Report correlationId. Reconcile if the signature was submitted and settlement is uncertain. |
 
 ## Reconciliation
