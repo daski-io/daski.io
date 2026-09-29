@@ -18,7 +18,7 @@ Use doctor's `stateDirectory`, `configFile`, signer, and self-test results. Thes
 
 ## Choose the signer
 
-The default is the Circle agent wallet, on every kind of host. The user owns it through their email, no key sits on the agent's machine, and it signs everything Daski asks for. Use it whenever `payerAccounts.types` in `{{GATEWAY_URL}}/.well-known/mcp.json` includes `contract`.
+The default is the Circle agent wallet, on every kind of host. The user owns it through their email, no key sits on the agent's machine, and it signs Daski purchases and order authorizations. Delivery reviews use a separate wallet transaction flow described in [orders.md]({{SITE_URL}}/skills/orders.md). Use it whenever `payerAccounts.types` in `{{GATEWAY_URL}}/.well-known/mcp.json` includes `contract`.
 
 Use another signer only when the user asks for one:
 
@@ -33,7 +33,7 @@ If `payerAccounts.types` lacks `contract`, that gateway accepts plain wallets on
 2. Configure Daski: set `DASKI_KEY_BACKEND=circle-agent`, run `daski doctor --json --signer circle-agent`, and set the profile's `signer` to `circle-agent` in `configFile`. Doctor names anything else this gateway's network needs: a separate Circle session, deploying the wallet with a zero-value transfer to itself, funding.
 3. Never edit or patch the Daski or Circle CLI. A failing command is reported to the user with its message, not worked around.
 
-The Circle CLI version Daski's adapter is tested with is published as `signerClis.circle-agent` in `{{GATEWAY_URL}}/.well-known/mcp.json`. Its repository is `https://github.com/circlefin/cli`; Circle's skill installs and updates the CLI.
+The supported Circle CLI versions are published as `signerClis.circle-agent` in `{{GATEWAY_URL}}/.well-known/mcp.json`; Circle's skill installs and updates the CLI. Purchase signing and direct review execution are separate capabilities. Read `confirmation.directReview` in the same document: `circleEstimate` permits estimation, while `circleExecute` must be true before the buyer CLI can submit a Circle review on this network.
 
 ## Local key (durable machine only)
 
