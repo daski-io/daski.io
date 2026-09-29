@@ -106,6 +106,43 @@ test('order actions preserve signed authority and isolate provider content', asy
   assert.equal(calls.length, before);
 });
 
+test('review protocol requests remain signed verbatim and terminal dispositions remain MCP errors', async t => {
+  const operationId = '11111111-1111-4111-8111-111111111111';
+  let failed = false;
+  const { tool, calls } = fixture(t, () => failed
+    ? json({ error: { code: 'CONFIRMATION_SUBMISSION_FAILED', message: 'The review did not complete',
+      retryable: false, requiresNewSignature: false,
+      expected: { operationId, disposition: 'failed', safeRetired: true } } }, 409,
+      { 'daski-next-action': 'Read the operation disposition before preparing another review.' })
+    : json({ operationId, state: 'pending' }));
+  const requests = [
+    { phase: 'prepare', submission: 'sponsored', reviewProtocol: 2, confirmation: 'Confirmed',
+      supersedesOperationId: operationId, acknowledgeSameNonce: true },
+    { phase: 'submit', submission: 'sponsored', reviewProtocol: 2, preparationId: operationId, signature },
+    { phase: 'reaffirm', submission: 'sponsored', reviewProtocol: 2, operationId },
+  ];
+  for (const name of ['daski_confirm_delivery', 'daski_revoke_delivery_confirmation']) {
+    for (const request of requests) {
+      const result = await tool(name, { orderHandle: 'handle', request, authorization: actionAuthorization });
+      assert.notEqual(result.isError, true);
+      assert.deepEqual(calls.at(-1).body, { request, authorization: actionAuthorization });
+      assert.equal(result.structuredContent.operationId, operationId);
+    }
+  }
+  failed = true;
+  const result = await tool('daski_confirm_delivery', {
+    orderHandle: 'handle', request: requests[1], authorization: actionAuthorization,
+  });
+  assert.equal(result.isError, true);
+  assert.equal(result.structuredContent.code, 'CONFIRMATION_SUBMISSION_FAILED');
+  assert.deepEqual(result.structuredContent.expected, { operationId, disposition: 'failed', safeRetired: true });
+  assert.equal(result.structuredContent.requiresNewSignature, false);
+  assert.equal(result.structuredContent.retryable, false);
+  assert.deepEqual(JSON.parse(result.content[0].text), result.structuredContent);
+  assert.match(result.structuredContent.next_action, /disposition/);
+  assert.equal(calls.filter(call => call.path.endsWith('/confirmation')).length, 4);
+});
+
 test('wallet reconciliation keeps the payment identifier in the gateway request', async t => {
   const { tool, calls } = fixture(t, () => json({ authorizationRequired: true, code: 'WALLET_AUTHORIZATION_REQUIRED', challenge: {} }));
   const result = await tool('daski_list_my_orders', { payer, paymentIdentifier: 'intent-123456789012' });

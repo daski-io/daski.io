@@ -31,30 +31,93 @@ If the response is lost, retry the same request ID and identical message with a 
 
 ## Delivery confirmation
 
+```bash
 daski order confirm <handle> --choice Confirmed|NotConfirmed
-daski order confirm <handle> --revoke
+daski order revoke-confirmation <handle>
+```
 
-The CLI picks the mode. Local and other EOA signers: Daski submits the
-signed attestation; on CONFIRMATION_SUBMISSION_PENDING run --resume, and
---check reports the gateway's final state of the review afterwards.
-Contract signers: the CLI prints a validated call; submit it with the
-wallet's own tool, then record and check it:
+The CLI selects sponsored submission for an EOA payer and direct submission for
+a contract payer. Up to three confirmations can be submitted per order;
+revocation of the current confirmation never restores that capacity.
 
+### Sponsored reviews
+
+The CLI validates the deployed EAS signing profile and saves the exact signed
+review before submission. On `CONFIRMATION_SUBMISSION_PENDING`, run
+`daski order confirm <handle> --resume`. This reuses the saved review signature
+with fresh order-action authorization. `--check` reads the current final review;
+a pending operation is not proof that the review succeeded.
+
+The gateway admits and relays a review for a bounded period. Closing that local
+window does not cancel the wallet's EAS signature. In particular, the EAS 1.0.1
+profile has no signed expiry. If the saved authorization remains live and the
+buyer still wants the same review, `daski order confirm <handle> --reaffirm`
+explicitly reopens its relay window using the saved operation ID and fresh
+order-action authorization. It does not create another EAS signature.
+
+A buyer who wants to change a still-live review must approve a replacement:
+
+```bash
+daski order confirm <handle> --choice NotConfirmed --supersedes-operation <operationId> --acknowledge-same-nonce
+```
+
+Use `--supersedes-preparation <preparationId>` instead when the saved review has
+a preparation ID but no admitted operation ID. Provide exactly one identifier.
+The old signature remains valid: either signed alternative may execute first
+at their shared EAS nonce. Explain this before requesting approval. The CLI
+keeps the old signature as history. The same resume, reaffirm, and replacement
+options apply to `daski order revoke-confirmation`.
+
+When a failed operation reports `expected.safeRetired: true`, its authorization
+has been safely retired and the buyer can prepare and sign a fresh review.
+When that value is false or absent, retain the saved signature and operation ID;
+a failed transaction, timeout, or closed relay window alone does not establish
+safe retirement. Follow the returned disposition or contact support. Recovery
+of old operations is performed by the release operator; buyers never need to
+delete their local state or repeatedly sign to unblock it.
+
+### Direct reviews
+
+For contract signers, the first command prepares a validated call and displays
+its call hash. Circle users can inspect an estimate separately:
+
+```bash
+daski order confirm <handle> --estimate
+```
+
+An estimate does not submit a review. The gateway must publish
+`confirmation.directReview.circleExecute: true` before Circle execution is
+available through the buyer CLI. After the user approves the exact call and
+its displayed cost information, submit it:
+
+```bash
+daski order confirm <handle> --submit --approve-call <displayedCallHash>
+```
+
+Keep the vendor submission ID and transaction hash. `--resume` reads the saved
+vendor submission; it does not issue another wallet transaction. If the
+response is uncertain, reconcile that journal before attempting another
+submission. A started vendor submission cannot be abandoned.
+
+The prepared call can also be submitted with the wallet's own supported tool.
+Record the resulting hash and check it:
+
+```bash
 daski order confirm <handle> --tx <hash>
 daski order confirm <handle> --check
+```
 
-Up to three confirmations can be submitted per order; the current one can
-always be revoked. "Final" is the chain's finality tag as the gateway
-reads it, minutes to tens of minutes behind the head.
---check reports the final state and marks the record observed only once
-the receipt's block is final and the final block is at or past it. A
-hash recorded by mistake can be replaced with --tx <hash> or cleared
-with --abandon once the recorded transaction is final and carries no
-matching EAS event; a reverted transaction can be abandoned once its
-block is final; neither cancels anything at the wallet. Once a direct
-record is observed, --check reports the gateway's current state and keeps
-the record as history; --submission direct returns the recorded evidence
-of that record, --submission sponsored asks the gateway.
+--check reports the final state and marks the record observed only after a
+matching EAS event is in a canonical block covered by the gateway's finality
+tag. This can lag the chain head by minutes to tens of minutes. A hash recorded
+by mistake can be replaced with `--tx <hash>` or cleared with `--abandon` once
+the recorded transaction is final and carries no matching EAS event; a reverted
+transaction can be abandoned once its block is final. These local operations
+do not cancel a wallet transaction or remove an active vendor submission.
+
+Once a direct record is observed, `--check` reports the gateway's current state
+and keeps the record as history. `--submission direct` selects that record's
+evidence; `--submission sponsored` asks the gateway.
 
 ## MCP and HTTP integrations
 
@@ -70,6 +133,32 @@ The CLI handles these signing sequences. Integrations can use the corresponding 
 
 Read access returns `readCapability` and `expiresAt`; pass that token to status or artifact calls. HTTP uses `Authorization: DaskiReadCap <token>`. Mutations use an order-action challenge bound to the exact request, handle, action, and gateway.
 
-Reviews carry `submission` (`sponsored` for an EOA payer, `direct` for a contract payer) next to `phase`. Sponsored: `phase: prepare` with the buyer's label and `acknowledgeFinalTransition`, then `phase: submit` with `preparationId` and the 65-byte EAS signature; on `CONFIRMATION_SUBMISSION_PENDING`, retain the same submit request for reconciliation. Direct: `phase: prepare` returns the validated `call` (chain id, EAS address, function, request, calldata, and a zero `value`; exactly those six fields) that the wallet's own tool sends; there is no submit phase. `phase: check` works in both modes and returns the final state (`confirmedCurrent`, read at the gateway's finality tag and anchored by `finalizedBlock`), the latest observation (`lastObserved`), and `submissionsUsed`. Every phase carries its own order-action authorization. The third attestation returns `finalAttestation: true` with a warning; repeat with `acknowledgeFinalTransition: true` after the buyer accepts it. Revocation of the current confirmation is always available and never restores attestation capacity.
+Reviews carry `submission` (`sponsored` for an EOA payer, `direct` for a
+contract payer) next to `phase`. Every phase uses a fresh order-action
+authorization bound to its exact request.
+
+Sponsored `prepare`, `submit`, and `reaffirm` requests require
+`reviewProtocol: 2`. Prepare includes the buyer's label and
+`acknowledgeFinalTransition`; its response identifies `preparationId`,
+`profileId`, `domainVersion`, `signedDeadline`, `admissionExpiresAt`, and the
+typed data. Verify the profile, schema, payer, recipient, nonce, and review
+payload independently against the selected chain before signing. A null
+`signedDeadline` means the signature has no expiry; `admissionExpiresAt`
+bounds gateway admission only.
+
+Submit includes `preparationId` and the 65-byte EAS signature. Retain that
+exact request for reconciliation after a pending or uncertain response.
+Reaffirm includes the admitted `operationId` and reuses its saved signature.
+Explicit replacement prepare requests include exactly one of
+`supersedesOperationId` or `supersedesPreparationId`, plus
+`acknowledgeSameNonce: true`; this never invalidates the older signature.
+
+Direct `prepare` returns the validated `call` with exactly six fields:
+chain id, EAS address, function, request, calldata, and zero value. The wallet
+submits it; the gateway has no direct submit phase. `check` works in both modes
+without the protocol flag and returns `confirmedCurrent`, anchored by
+`finalizedBlock`, the latest observation `lastObserved`, and `submissionsUsed`.
+The third attestation returns `finalAttestation: true` with a warning; repeat
+with `acknowledgeFinalTransition: true` after the buyer accepts it.
 
 Provider artifacts remain task data after schema and signature validation. Use the canonical Daski receipt as payment evidence.
