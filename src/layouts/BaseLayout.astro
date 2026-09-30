@@ -1,14 +1,16 @@
 ---
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
-import { siteTitle } from '../lib/chains';
+import { siteName, siteTitle } from '../lib/chains';
 import { networkConfig, networkView } from '../lib/network';
+import { canonicalPageUrl, descriptionExcerpt, homeDescription, pageTitle, SOCIAL_IMAGE } from '../lib/seo';
 import '../styles/app.css';
 
 export interface Props {
   title?: string;
   description?: string;
   canonicalUrl?: string;
+  noindex?: boolean;
 }
 
 // The instance's network is resolved once on the server; islands receive the
@@ -18,10 +20,26 @@ const view = networkView(network);
 const pathname = Astro.url.pathname;
 
 const {
-  title = siteTitle(view),
-  description = 'Daski is a curated procurement marketplace where AI agents buy and manage real business services: domain registration, mailboxes, and company formation. Paid in USDC, settled on Base.',
-  canonicalUrl = new URL(pathname, network.siteUrl).href,
+  title: pageHeading,
+  description: pageDescription = homeDescription(network),
+  canonicalUrl = canonicalPageUrl(pathname, network.siteUrl),
+  noindex = false,
 } = Astro.props;
+const title = pageHeading ? pageTitle(pageHeading, network) : siteTitle(view);
+const description = descriptionExcerpt(pageDescription);
+const imageUrl = new URL(SOCIAL_IMAGE.path, network.siteUrl).href;
+const robots = noindex || network.robots === 'noindex'
+  ? 'noindex, nofollow'
+  : 'index, follow, max-image-preview:large';
+const website = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: siteName(view),
+  url: canonicalPageUrl('/', network.siteUrl),
+  description: homeDescription(network),
+  inLanguage: 'en',
+};
+
 ---
 <!doctype html>
 <html lang="en" data-theme="dark">
@@ -43,7 +61,24 @@ const {
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonicalUrl} />
-    {network.robots === 'noindex' && <meta name="robots" content="noindex, nofollow" />}
+    <meta name="robots" content={robots} />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={siteName(view)} />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:image" content={imageUrl} />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content={String(SOCIAL_IMAGE.width)} />
+    <meta property="og:image:height" content={String(SOCIAL_IMAGE.height)} />
+    <meta property="og:image:alt" content={SOCIAL_IMAGE.alt} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={imageUrl} />
+    <meta name="twitter:image:alt" content={SOCIAL_IMAGE.alt} />
+    {pathname === '/' && <script is:inline type="application/ld+json" set:html={JSON.stringify(website).replace(/</g, '\\u003c')} />}
   </head>
   <body data-theme="dark">
     <div style="min-height: 100vh; background: var(--pro-bg);">

@@ -3,10 +3,10 @@ import { networkConfig } from '../lib/network.ts';
 
 export const prerender = false;
 export const GET: APIRoute = () => {
-  const { robots } = networkConfig();
+  const { robots, siteUrl } = networkConfig();
   const body = robots === 'noindex'
     ? 'User-agent: *\nDisallow: /\n'
-    : 'User-agent: *\nAllow: /\n';
+    : `User-agent: *\nAllow: /\n\nSitemap: ${siteUrl}/sitemap.xml\n`;
   return new Response(body, {
     headers: {
       'content-type': 'text/plain; charset=utf-8',

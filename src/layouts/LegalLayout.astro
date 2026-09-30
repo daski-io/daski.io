@@ -5,6 +5,7 @@ import '../styles/legal.css';
 
 interface Props {
   title: string;
+  metadataTitle: string;
   description: string;
   canonicalUrl: string;
   kicker: string;
@@ -19,6 +20,7 @@ interface Props {
 
 const {
   title,
+  metadataTitle,
   description,
   canonicalUrl,
   kicker,
@@ -42,7 +44,7 @@ const sections = headings
     };
   });
 ---
-<BaseLayout title={`${title} · Daski`} description={description} canonicalUrl={canonicalUrl}>
+<BaseLayout title={metadataTitle} description={description} canonicalUrl={canonicalUrl}>
   <main class="dk-legal-page">
     <section class="dk-legal-hero">
       <div class="dk-legal-hero-inner">

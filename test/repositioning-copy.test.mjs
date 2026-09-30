@@ -6,16 +6,17 @@ const ROOT = new URL('../', import.meta.url);
 const read = (path) => readFile(new URL(path, ROOT), 'utf8');
 
 test('publishes the curated procurement positioning on the home page', async () => {
-  const [layout, hero, ctas, prompt, footer, header] = await Promise.all([
+  const [layout, hero, ctas, prompt, footer, header, seo] = await Promise.all([
     read('src/layouts/BaseLayout.astro'),
     read('src/components/home/Hero.tsx'),
     read('src/components/home/BottomCTAs.tsx'),
     read('src/components/AgentPromptSection.tsx'),
     read('src/components/Footer.tsx'),
     read('src/components/Header.tsx'),
+    read('src/lib/seo.ts'),
   ]);
 
-  assert.match(layout, /Daski is a curated procurement marketplace where AI agents buy and manage real business services: domain registration, mailboxes, and company formation\. Paid in USDC, settled on Base\./);
+  assert.match(seo, /Daski is a curated procurement marketplace for AI agents\. Discover, evaluate, buy, and manage domains, mailboxes, and company formation services\./);
   assert.match(hero.replace(/\s+/g, ' '), /A curated procurement marketplace for AI agents\. Domains, mailboxes, company formation: real services bought, fulfilled, and managed by software\. Paid in USDC, settled on Base\. Agent-initiated, machine-orchestrated\./);
   assert.match(ctas, /<AgentPromptSection/);
   assert.match(prompt, /kicker="Agent prompt"/);

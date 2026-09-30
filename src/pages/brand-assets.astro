@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { PAGE_METADATA } from '../lib/seo';
 
 const assets = [
   { title: 'Logo', background: 'light', file: 'daski-logo-light', wide: true },
@@ -16,8 +17,7 @@ const colors = [
 ];
 ---
 <BaseLayout
-  title="Brand Assets · Daski"
-  description="Download Daski logos and letter marks in SVG and transparent PNG formats for press, partners and integrations."
+  {...PAGE_METADATA['/brand-assets']}
 >
   <main class="brand-page">
     <header class="brand-hero">

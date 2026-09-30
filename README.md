@@ -114,6 +114,33 @@ npm run preview  # serve the production build locally
 npm start        # equivalent to: node ./dist/server/entry.mjs
 ```
 
+## Search and link previews
+
+Every HTML route renders its title, description, canonical URL, robots directive,
+Open Graph tags, and X card tags on the server. Static page copy is in
+`src/lib/seo.ts`; service and provider metadata comes from the same catalog data
+as the page. Titles use the Daski brand without a domain suffix, and sandbox
+pages identify themselves as Daski Testnet. The home page also publishes
+`WebSite` structured data for the site name.
+
+The shared social preview is `public/assets/social/daski-card.png` (1200 × 630),
+using the published Daski wordmark, brand colors, and Inter typography. Its
+editable SVG source sits alongside it; render with Inter installed when updating
+it. Social tags use the PNG for crawler compatibility and include dimensions
+and alternative text.
+
+`/sitemap.xml` includes public pages, the whitepaper, and the current catalog’s
+service and provider URLs. It is advertised in `/robots.txt` when `SITE_ROBOTS`
+is `index`. Legal documents retain their production canonical URLs and are
+omitted from other origins’ sitemaps. `noindex` instances publish an empty
+sitemap. Catalog outages return 503 instead of a depleted sitemap; unavailable
+service/provider pages return 503 with `Retry-After`, while unknown pages
+return 404. Error pages carry `noindex` metadata.
+
+The metadata runtime checks exercise every page type, the image response,
+canonical URLs, sitemap, and failure states against an offline catalog in
+mainnet, testnet, preview, prelaunch, and outage configurations.
+
 ## Deploy
 
 Railway picks up `Dockerfile` + `railway.json`. The container runs

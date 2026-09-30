@@ -75,8 +75,8 @@ export function siteName(view: Pick<NetworkView, 'id' | 'label'>): string {
   return view.id === 'mainnet' ? 'Daski' : `Daski ${view.label}`;
 }
 
-export function siteTitle(view: Pick<NetworkView, 'id' | 'label' | 'siteUrls'>): string {
-  return `${siteName(view)} · ${new URL(view.siteUrls[view.id]).host}`;
+export function siteTitle(view: Pick<NetworkView, 'id' | 'label'>): string {
+  return `Real services for AI agents · ${siteName(view)}`;
 }
 
 export interface NetworkStrip {

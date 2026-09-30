@@ -65,7 +65,7 @@ test('testnet: prompt, explorer links, strip, titles and llms.txt name the sandb
     live: true,
   });
   assert.equal(siteName(view), 'Daski Testnet');
-  assert.equal(siteTitle(view), 'Daski Testnet · sandbox.daski.io');
+  assert.equal(siteTitle(view), 'Real services for AI agents · Daski Testnet');
 
   const llms = llmsText(view);
   assert.match(llms, /The Testnet runtime uses one\nstandard x402 V2 Exact-EVM rail with canonical USDC on Base Sepolia\./);
@@ -85,7 +85,7 @@ test('mainnet live: prompt, explorer links, strip, titles and llms.txt name main
   assert.equal(explorerAddress(view.explorerUrl, '0xdef'), 'https://basescan.org/address/0xdef');
   assert.equal(networkStrip(view), null);
   assert.equal(siteName(view), 'Daski');
-  assert.equal(siteTitle(view), 'Daski · daski.io');
+  assert.equal(siteTitle(view), 'Real services for AI agents · Daski');
 
   const llms = llmsText(view);
   assert.match(llms, /The Mainnet runtime uses one\nstandard x402 V2 Exact-EVM rail with canonical USDC on Base\./);
@@ -104,7 +104,7 @@ test('mainnet without a gateway: launching-soon strip and an honest llms.txt', (
     message: 'Mainnet launching soon. Nothing is live for purchase on Base mainnet yet.',
     live: false,
   });
-  assert.equal(siteTitle(view), 'Daski · daski.io');
+  assert.equal(siteTitle(view), 'Real services for AI agents · Daski');
 
   const llms = llmsText(view);
   assert.match(llms, /The Mainnet runtime on\nBase \(chain ID 8453\) is not published yet/);

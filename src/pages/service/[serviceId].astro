@@ -1,7 +1,8 @@
 ---
+import { canonicalPageUrl } from '../../lib/seo';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { ServiceDetailPage } from '../../views/ServiceDetailPage';
-import { getServiceDetail, type ServiceDetail } from '../../lib/api';
+import { getServiceDetail, GatewayHttpError, servicePath, type ServiceDetail } from '../../lib/api';
 import { gatewayTarget, networkConfig, networkView } from '../../lib/network';
 
 const { serviceId } = Astro.params;
@@ -11,32 +12,37 @@ const target = gatewayTarget(network);
 
 let service: ServiceDetail | null = null;
 let error: string | null = null;
+let unavailable = false;
 
-if (!serviceId) {
-  error = 'Missing serviceId';
+if (!serviceId || !/^0x[0-9a-fA-F]{64}$/.test(serviceId)) {
+  error = 'No service with that id.';
 } else if (!target) {
   error = `No services are listed on ${network.label} yet.`;
 } else {
   try {
     service = await getServiceDetail(target, serviceId);
   } catch (e) {
-    error = e instanceof Error ? e.message : 'unknown error';
+    unavailable = !(e instanceof GatewayHttpError && e.status === 404);
+    error = unavailable ? 'Service details are temporarily unavailable. Please try again later.' : 'No service with that id.';
   }
 }
 
 if (!service) {
-  Astro.response.status = 404;
+  Astro.response.status = unavailable ? 503 : 404;
+  if (unavailable) Astro.response.headers.set('Retry-After', '60');
 }
 ---
 <BaseLayout
-  title={service ? `${service.name} · Daski` : 'Service not found · Daski'}
-  description={service?.serviceDescription ?? 'A real service offered to AI agents on the Daski marketplace.'}
+  title={service?.name ?? (unavailable ? 'Service temporarily unavailable' : 'Service not found')}
+  description={service?.serviceDescription ?? error ?? 'Service not found.'}
+  canonicalUrl={service ? canonicalPageUrl(servicePath(service), network.siteUrl) : undefined}
+  noindex={!service}
 >
   {service ? (
     <ServiceDetailPage client:load service={service} explorerUrl={view.explorerUrl} />
   ) : (
     <div style="padding: 88px 32px 48px; max-width: 1280px; margin: 0 auto;">
-      <h1 style="color: var(--pro-text); font-size: 32px;">Service not found</h1>
+      <h1 style="color: var(--pro-text); font-size: 32px;">{unavailable ? 'Service temporarily unavailable' : 'Service not found'}</h1>
       <p style="color: var(--pro-text-dim);">{error ?? 'No service with that id.'}</p>
       <a href="/" style="color: var(--mint-400);">← Back to services</a>
     </div>
