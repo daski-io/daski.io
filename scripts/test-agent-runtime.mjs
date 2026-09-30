@@ -13,7 +13,7 @@ const gateway = createServer(async (req, res) => {
   const body = chunks.length ? JSON.parse(Buffer.concat(chunks).toString()) : null;
   calls.push({ path: req.url, body });
   res.setHeader('content-type', 'application/json');
-  if (req.url === '/.well-known/mcp.json') { res.end(JSON.stringify({ confirmationSigning: { chainId: 84532 }, transport: { type: 'streamable-http', url: 'https://gateway.example/mcp' }, buyerCli: { version: '0.4.3' } })); return; }
+  if (req.url === '/.well-known/mcp.json') { res.end(JSON.stringify({ name: 'daski-gateway', version: 'gateway-fixture', description: 'Gateway runtime', confirmationSigning: { chainId: 84532 }, transport: { type: 'streamable-http', url: 'https://gateway.example/mcp' }, buyerCli: { version: '0.4.3' } })); return; }
   if (req.url === '/public/v2/outcomes/search') { res.end(JSON.stringify({ outcomes: [], searchHint: { terms: ['domain'] } })); return; }
   if (req.url === '/outcomes/42/domain/purchase') {
     if (!body.paymentPayload) { res.writeHead(402); res.end(JSON.stringify({ x402Version: 2, accepts: [] })); }
@@ -72,6 +72,15 @@ try {
     assert.deepEqual(icon.sizes, [`${png.readUInt32BE(16)}x${png.readUInt32BE(20)}`]);
   }
   assert.equal(calls.length, 0, 'MCP branding discovery must not depend on gateway availability');
+
+  const manifest = await (await fetch(`${siteUrl}/.well-known/mcp.json`)).json();
+  for (const key of Object.keys(info)) assert.deepEqual(manifest[key], info[key], key);
+  assert.deepEqual(manifest.gateway, { name: 'daski-gateway', version: 'gateway-fixture' });
+  assert.deepEqual(manifest.buyerCli, { version: '0.4.3' });
+  assert.deepEqual(manifest.confirmationSigning, { chainId: 84532 });
+  assert.equal(manifest.discovery.openapi, `${gatewayUrl}/openapi.json`);
+  assert.equal(manifest.discovery.x402, `${gatewayUrl}/.well-known/x402`);
+  assert.equal((await fetch(`${siteUrl}/openapi.json`)).status, 404, 'Paid routes belong to the gateway origin');
 
   const indexResponse = await fetch(`${siteUrl}/.well-known/agent-skills/index.json`);
   assert.equal(indexResponse.status, 200);

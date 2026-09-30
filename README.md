@@ -26,6 +26,16 @@ and light/dark PNG icons from the published brand assets. Both legacy
 with URLs derived from this instance's `SITE_URL`. Clients decide whether to
 show the supplied branding when a user adds the MCP URL.
 
+The URL-readable `/.well-known/mcp.json` uses the same branding and retains
+all gateway capabilities and CLI pins. Its `gateway` field identifies the
+upstream runtime separately. Its `discovery` links identify the gateway's
+`/openapi.json` and `/.well-known/x402`; the OpenAPI URL is also in `/llms.txt`.
+Submit this website's `/mcp` URL to MCP directories and the **gateway origin**
+to x402 directories. Scanners may bind all OpenAPI paths to the submitted
+origin even when `servers` names another host, so the website does not mirror
+paid gateway routes in its own OpenAPI document. The manifest fails with 503
+when the gateway cannot provide matching network metadata.
+
 MCP tools execute gateway REST calls using `GATEWAY_INTERNAL_URL` when set,
 otherwise `GATEWAY_URL`. The server checks gateway chain metadata before tool
 execution, preserves payer signatures and gateway-bound resource URLs, and

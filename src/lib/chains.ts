@@ -225,6 +225,7 @@ export function llmsText(
     `- Service detail: \`${gateway}/public/v3/services/{serviceId}\``,
     `- Purchasable outcomes (payment addressing): \`${gateway}/public/v2/outcomes\``,
     `- x402 discovery: \`${gateway}/.well-known/x402\``,
+    `- OpenAPI discovery: \`${gateway}/openapi.json\``,
     `- Rail metadata: \`${gateway}/.well-known/daski-chain.json\``,
     `- MCP metadata: \`${view.siteUrls[view.id]}/.well-known/mcp.json\``,
     `- ${view.chainName} chain ID: \`${view.chainId}\``,
