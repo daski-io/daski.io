@@ -20,6 +20,12 @@ The website owns the MCP server at `/mcp`, the buyer guides under `/skills/`,
 with this instance's public `GATEWAY_URL`, `SITE_URL`, and network. The copied
 agent prompt points at the website's `/skills/setup.md`.
 
+MCP server metadata includes Daski's display name, description, website URL,
+and light/dark PNG icons from the published brand assets. Both legacy
+`initialize` and current `server/discover` responses expose this metadata,
+with URLs derived from this instance's `SITE_URL`. Clients decide whether to
+show the supplied branding when a user adds the MCP URL.
+
 MCP tools execute gateway REST calls using `GATEWAY_INTERNAL_URL` when set,
 otherwise `GATEWAY_URL`. The server checks gateway chain metadata before tool
 execution, preserves payer signatures and gateway-bound resource URLs, and

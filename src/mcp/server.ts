@@ -14,7 +14,17 @@ export function createWebsiteMcp(config: NetworkConfig, readGuide: ReadGuide, re
   const counts = new Map<string, number>();
   const handler = createMcpHandler(context => {
     const gateway = new GatewayClient(config, context.requestInfo?.signal, request, clients.getStore());
-    const server = new McpServer({ name: 'daski', version: manifest.version }, {
+    const server = new McpServer({
+      name: 'daski',
+      title: 'Daski',
+      version: manifest.version,
+      description: 'Discover services, purchase outcomes, and manage orders on Daski.',
+      websiteUrl: config.siteUrl,
+      icons: [
+        { src: `${config.siteUrl}/assets/brand/daski-mark-light.png`, mimeType: 'image/png', sizes: ['1024x1024'], theme: 'light' },
+        { src: `${config.siteUrl}/assets/brand/daski-mark-dark.png`, mimeType: 'image/png', sizes: ['1024x1024'], theme: 'dark' },
+      ],
+    }, {
       capabilities: { tools: { listChanged: false } },
       instructions: [
         `Load the full setup guide with daski_get_setup_guide or a raw fetch of ${config.siteUrl}/skills/setup.md.`,
