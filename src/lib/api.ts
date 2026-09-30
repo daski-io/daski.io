@@ -450,7 +450,7 @@ function parsePublicService(value: unknown): PublicService {
 
 const FETCH_TIMEOUT_MS = 10_000;
 
-class GatewayHttpError extends Error {
+export class GatewayHttpError extends Error {
   status: number;
 
   constructor(status: number, path: string) {

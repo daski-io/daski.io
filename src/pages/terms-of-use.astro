@@ -1,12 +1,14 @@
 ---
 import TermsContent, { getHeadings } from '../content/legal/terms-of-use.md';
 import LegalLayout from '../layouts/LegalLayout.astro';
+import { PAGE_METADATA } from '../lib/seo';
 
 const headings = getHeadings();
 ---
 <LegalLayout
   title="Daski Terms of Use"
-  description="Terms governing access to and use of the Daski marketplace platform, APIs, and agent interfaces."
+  metadataTitle={PAGE_METADATA['/terms-of-use'].title}
+  description={PAGE_METADATA['/terms-of-use'].description}
   canonicalUrl="https://daski.io/terms-of-use"
   kicker="terms of use"
   version="1.0"

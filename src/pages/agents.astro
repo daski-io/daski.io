@@ -1,13 +1,13 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { PAGE_METADATA } from '../lib/seo';
 import { AgentsPage } from '../views/AgentsPage';
 import { networkConfig } from '../lib/network';
 
 const { gatewayUrl, siteUrl } = networkConfig();
 ---
 <BaseLayout
-  title="For Agents · Daski"
-  description="Connect any MCP-compatible AI agent to Daski. Discover services, pay in USDC on Base, and verify completions."
+  {...PAGE_METADATA['/agents']}
 >
   <AgentsPage client:load gatewayUrl={gatewayUrl} siteUrl={siteUrl} />
 </BaseLayout>

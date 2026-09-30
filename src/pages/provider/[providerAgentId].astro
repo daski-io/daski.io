@@ -1,8 +1,10 @@
 ---
+import { canonicalPageUrl } from '../../lib/seo';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { ProviderProfilePage } from '../../views/ProviderProfilePage';
 import {
   getProviderDetail,
+  providerPath,
   getRailMetadata,
   type ProviderDetail,
   type StandardRailMetadata,
@@ -18,16 +20,18 @@ let provider: ProviderDetail | null = null;
 let metadata: StandardRailMetadata | null = null;
 let error: string | null = null;
 let chainDataUnavailable = false;
+let unavailable = false;
 
-if (!providerAgentId) {
-  error = 'Missing providerAgentId';
+if (!providerAgentId || !/^\d{1,80}$/.test(providerAgentId)) {
+  error = 'No provider with that agent ID.';
 } else if (!target) {
   error = `No providers are listed on ${network.label} yet.`;
 } else {
   try {
     provider = await getProviderDetail(target, providerAgentId);
-  } catch (e) {
-    error = e instanceof Error ? e.message : 'unknown error';
+  } catch {
+    unavailable = true;
+    error = 'Provider details are temporarily unavailable. Please try again later.';
   }
 }
 
@@ -38,14 +42,17 @@ if (provider && target) {
     chainDataUnavailable = true;
   }
 } else {
-  Astro.response.status = 404;
+  Astro.response.status = unavailable ? 503 : 404;
+  if (unavailable) Astro.response.headers.set('Retry-After', '60');
 }
 ---
 <BaseLayout
-  title={provider ? `${provider.providerName} · Daski` : 'Provider not found · Daski'}
+  title={provider ? `${provider.providerName} services and reputation` : (unavailable ? 'Provider temporarily unavailable' : 'Provider not found')}
   description={provider
-    ? `${provider.providerName} offers ${provider.services.length} live service${provider.services.length === 1 ? '' : 's'} to AI agents on Daski.`
-    : 'Provider details for the Daski marketplace.'}
+    ? `Explore ${provider.providerName} on Daski: ${provider.services.length} service${provider.services.length === 1 ? '' : 's'} for AI agents, provider details, reputation, and recent purchases.`
+    : error ?? 'Provider not found.'}
+  canonicalUrl={provider ? canonicalPageUrl(providerPath(provider), network.siteUrl) : undefined}
+  noindex={!provider}
 >
   {provider ? (
     <ProviderProfilePage
@@ -56,7 +63,7 @@ if (provider && target) {
     />
   ) : (
     <div style="padding: 88px 32px 48px; max-width: 1280px; margin: 0 auto;">
-      <h1 style="color: var(--pro-text); font-size: 32px;">Provider not found</h1>
+      <h1 style="color: var(--pro-text); font-size: 32px;">{unavailable ? 'Provider temporarily unavailable' : 'Provider not found'}</h1>
       <p style="color: var(--pro-text-dim);">{error ?? 'No provider with that agent ID.'}</p>
       <a href="/" style="color: var(--mint-400);">← Back to services</a>
     </div>

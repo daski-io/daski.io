@@ -1,12 +1,14 @@
 ---
 import PrivacyContent, { getHeadings } from '../content/legal/privacy-policy.md';
 import LegalLayout from '../layouts/LegalLayout.astro';
+import { PAGE_METADATA } from '../lib/seo';
 
 const headings = getHeadings();
 ---
 <LegalLayout
   title="Daski Privacy Policy"
-  description="How Daski processes personal data across its marketplace, APIs, agent interfaces, and related technology."
+  metadataTitle={PAGE_METADATA['/privacy-policy'].title}
+  description={PAGE_METADATA['/privacy-policy'].description}
   canonicalUrl="https://daski.io/privacy-policy"
   kicker="privacy policy"
   version="1.0"

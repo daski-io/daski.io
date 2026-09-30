@@ -20,6 +20,22 @@ The website owns the MCP server at `/mcp`, the buyer guides under `/skills/`,
 with this instance's public `GATEWAY_URL`, `SITE_URL`, and network. The copied
 agent prompt points at the website's `/skills/setup.md`.
 
+MCP server metadata includes Daski's display name, description, website URL,
+and light/dark PNG icons from the published brand assets. Both legacy
+`initialize` and current `server/discover` responses expose this metadata,
+with URLs derived from this instance's `SITE_URL`. Clients decide whether to
+show the supplied branding when a user adds the MCP URL.
+
+The URL-readable `/.well-known/mcp.json` uses the same branding and retains
+all gateway capabilities and CLI pins. Its `gateway` field identifies the
+upstream runtime separately. Its `discovery` links identify the gateway's
+`/openapi.json` and `/.well-known/x402`; the OpenAPI URL is also in `/llms.txt`.
+Submit this website's `/mcp` URL to MCP directories and the **gateway origin**
+to x402 directories. Scanners may bind all OpenAPI paths to the submitted
+origin even when `servers` names another host, so the website does not mirror
+paid gateway routes in its own OpenAPI document. The manifest fails with 503
+when the gateway cannot provide matching network metadata.
+
 MCP tools execute gateway REST calls using `GATEWAY_INTERNAL_URL` when set,
 otherwise `GATEWAY_URL`. The server checks gateway chain metadata before tool
 execution, preserves payer signatures and gateway-bound resource URLs, and
@@ -107,6 +123,33 @@ npm run test:runtime # verify the built agent interface and the server start aga
 npm run preview  # serve the production build locally
 npm start        # equivalent to: node ./dist/server/entry.mjs
 ```
+
+## Search and link previews
+
+Every HTML route renders its title, description, canonical URL, robots directive,
+Open Graph tags, and X card tags on the server. Static page copy is in
+`src/lib/seo.ts`; service and provider metadata comes from the same catalog data
+as the page. Titles use the Daski brand without a domain suffix, and sandbox
+pages identify themselves as Daski Testnet. The home page also publishes
+`WebSite` structured data for the site name.
+
+The shared social preview is `public/assets/social/daski-card.png` (1200 × 630),
+using the published Daski wordmark, brand colors, and Inter typography. Its
+editable SVG source sits alongside it; render with Inter installed when updating
+it. Social tags use the PNG for crawler compatibility and include dimensions
+and alternative text.
+
+`/sitemap.xml` includes public pages, the whitepaper, and the current catalog’s
+service and provider URLs. It is advertised in `/robots.txt` when `SITE_ROBOTS`
+is `index`. Legal documents retain their production canonical URLs and are
+omitted from other origins’ sitemaps. `noindex` instances publish an empty
+sitemap. Catalog outages return 503 instead of a depleted sitemap; unavailable
+service/provider pages return 503 with `Retry-After`, while unknown pages
+return 404. Error pages carry `noindex` metadata.
+
+The metadata runtime checks exercise every page type, the image response,
+canonical URLs, sitemap, and failure states against an offline catalog in
+mainnet, testnet, preview, prelaunch, and outage configurations.
 
 ## Deploy
 

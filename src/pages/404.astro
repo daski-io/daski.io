@@ -1,14 +1,12 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { NotFoundPage } from '../views/NotFoundPage';
-import { siteName } from '../lib/chains';
-import { networkConfig } from '../lib/network';
-
-const title = `404 · ${siteName(networkConfig())}`;
+Astro.response.status = 404;
 ---
 <BaseLayout
-  title={title}
-  description="Page not found."
+  title="Page not found"
+  description="This page could not be found. Browse Daski’s service marketplace or find the agent and provider guides."
+  noindex
 >
   <NotFoundPage client:load />
 </BaseLayout>

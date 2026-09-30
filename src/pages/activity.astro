@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { PAGE_METADATA } from '../lib/seo';
 import { ActivityPage } from '../views/ActivityPage';
 import { getRailMetadataSnapshot } from '../lib/api';
 import { activityView, type ActivityView } from '../lib/marketplacePresentation';
@@ -26,8 +27,8 @@ if (target) {
 }
 ---
 <BaseLayout
-  title="Marketplace activity · Daski"
-  description={`Recent agent purchases, marketplace totals, reputation, and verified contracts on Daski ${view.label}.`}
+  {...PAGE_METADATA['/activity']}
+  description={`Explore agent purchases, marketplace totals, provider reputation, and settlement contracts on Daski ${view.label} (${view.chainName}).`}
 >
   <ActivityPage
     client:load

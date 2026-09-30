@@ -13,7 +13,7 @@ const gateway = createServer(async (req, res) => {
   const body = chunks.length ? JSON.parse(Buffer.concat(chunks).toString()) : null;
   calls.push({ path: req.url, body });
   res.setHeader('content-type', 'application/json');
-  if (req.url === '/.well-known/mcp.json') { res.end(JSON.stringify({ confirmationSigning: { chainId: 84532 }, transport: { type: 'streamable-http', url: 'https://gateway.example/mcp' }, buyerCli: { version: '0.4.3' } })); return; }
+  if (req.url === '/.well-known/mcp.json') { res.end(JSON.stringify({ name: 'daski-gateway', version: 'gateway-fixture', description: 'Gateway runtime', confirmationSigning: { chainId: 84532 }, transport: { type: 'streamable-http', url: 'https://gateway.example/mcp' }, buyerCli: { version: '0.4.3' } })); return; }
   if (req.url === '/public/v2/outcomes/search') { res.end(JSON.stringify({ outcomes: [], searchHint: { terms: ['domain'] } })); return; }
   if (req.url === '/outcomes/42/domain/purchase') {
     if (!body.paymentPayload) { res.writeHead(402); res.end(JSON.stringify({ x402Version: 2, accepts: [] })); }
@@ -35,9 +35,9 @@ await listen(site);
 siteUrl = `http://127.0.0.1:${site.address().port}`;
 process.env.SITE_URL = siteUrl;
 const contract = JSON.parse(await readFile(new URL('../test/fixtures/gateway-wire/mcp-tool-surface.json', import.meta.url), 'utf8'));
-async function rpc(base, method, params = {}) {
+async function rpc(base, method, params = {}, protocolVersion = '2025-06-18') {
   const response = await fetch(`${base}/mcp`, { method: 'POST', headers: {
-    'content-type': 'application/json', accept: 'application/json, text/event-stream', 'mcp-protocol-version': '2025-06-18',
+    'content-type': 'application/json', accept: 'application/json, text/event-stream', 'mcp-protocol-version': protocolVersion, 'mcp-method': method,
   }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }) });
   const raw = await response.text();
   assert.equal(response.status, 200, raw);
@@ -45,6 +45,43 @@ async function rpc(base, method, params = {}) {
   const value = JSON.parse(text); assert.ok(value.result, JSON.stringify(value)); return value.result;
 }
 try {
+  const clientInfo = { name: 'daski-website-runtime-test', version: '1.0.0' };
+  const initialized = await rpc(siteUrl, 'initialize', {
+    protocolVersion: '2025-11-25', capabilities: {}, clientInfo,
+  }, '2025-11-25');
+  const discovered = await rpc(siteUrl, 'server/discover', { _meta: {
+    'io.modelcontextprotocol/protocolVersion': '2026-07-28',
+    'io.modelcontextprotocol/clientCapabilities': {},
+    'io.modelcontextprotocol/clientInfo': clientInfo,
+  } }, '2026-07-28');
+  const info = initialized.serverInfo;
+  assert.deepEqual(discovered._meta?.['io.modelcontextprotocol/serverInfo'], info);
+  assert.equal(info.name, 'daski');
+  assert.equal(info.title, 'Daski');
+  assert.ok(info.description?.trim());
+  assert.equal(info.websiteUrl, siteUrl);
+  assert.deepEqual(info.icons.map(icon => icon.theme).sort(), ['dark', 'light']);
+  for (const icon of info.icons) {
+    assert.equal(new URL(icon.src).origin, siteUrl);
+    const response = await fetch(icon.src);
+    assert.equal(response.status, 200, icon.src);
+    assert.equal(icon.mimeType, 'image/png');
+    assert.match(response.headers.get('content-type'), /^image\/png/);
+    const png = Buffer.from(await response.arrayBuffer());
+    assert.deepEqual(png.subarray(0, 8), Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
+    assert.deepEqual(icon.sizes, [`${png.readUInt32BE(16)}x${png.readUInt32BE(20)}`]);
+  }
+  assert.equal(calls.length, 0, 'MCP branding discovery must not depend on gateway availability');
+
+  const manifest = await (await fetch(`${siteUrl}/.well-known/mcp.json`)).json();
+  for (const key of Object.keys(info)) assert.deepEqual(manifest[key], info[key], key);
+  assert.deepEqual(manifest.gateway, { name: 'daski-gateway', version: 'gateway-fixture' });
+  assert.deepEqual(manifest.buyerCli, { version: '0.4.3' });
+  assert.deepEqual(manifest.confirmationSigning, { chainId: 84532 });
+  assert.equal(manifest.discovery.openapi, `${gatewayUrl}/openapi.json`);
+  assert.equal(manifest.discovery.x402, `${gatewayUrl}/.well-known/x402`);
+  assert.equal((await fetch(`${siteUrl}/openapi.json`)).status, 404, 'Paid routes belong to the gateway origin');
+
   const indexResponse = await fetch(`${siteUrl}/.well-known/agent-skills/index.json`);
   assert.equal(indexResponse.status, 200);
   const index = await indexResponse.json();
@@ -74,7 +111,7 @@ try {
   const paid = await rpc(gatewayUrl, 'tools/call', { name: 'daski_buy_outcome', arguments: { ...args, paymentPayload: { fixture: true } } });
   assert.equal(paid.structuredContent.status, 'DISPATCHED');
   assert.equal(calls.filter(call => call.path === '/outcomes/42/domain/purchase' && call.body.paymentPayload).length, 1);
-  console.log('Built website: all guide routes, rendered prompt, MCP contract, legacy redirect, and REST purchase handoff passed.');
+  console.log('Built website: MCP branding and icons, all guide routes, rendered prompt, MCP contract, legacy redirect, and REST purchase handoff passed.');
 } finally {
   for (const server of [site, gateway]) { server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); }
 }

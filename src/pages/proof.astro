@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { PAGE_METADATA } from '../lib/seo';
 
 // Unlinked marketing page: evidence that Daski registered its own entity
 // through Daski rails, with the Wyoming state filing linked below.
@@ -36,8 +37,7 @@ const cards = [
 ];
 ---
 <BaseLayout
-  title="Proof · Daski"
-  description="Daski registered its own entity through the Daski marketplace. Watch the recording and verify the settlement transaction on Base."
+  {...PAGE_METADATA['/proof']}
 >
   <main class="proof-page">
     <header class="proof-hero">
