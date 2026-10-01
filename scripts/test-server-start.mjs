@@ -1,3 +1,4 @@
+import { existsSync, readFileSync } from "node:fs";
 import { spawn } from 'node:child_process';
 import { createServer } from 'node:http';
 import { createServer as createSocketServer } from 'node:net';
@@ -10,7 +11,9 @@ import { fileURLToPath } from 'node:url';
 // one a deployment runs, is exercised only here. The gateway is an offline
 // stub: both routes must answer without it.
 const ENTRY = fileURLToPath(new URL('../dist/server/entry.mjs', import.meta.url));
-const COMMIT = '0123456789abcdef0123456789abcdef01234567';
+const ENV_COMMIT = '0123456789abcdef0123456789abcdef01234567';
+const capabilityFile = new URL('../dist/release-capabilities.json', import.meta.url);
+const COMMIT = existsSync(capabilityFile) ? JSON.parse(readFileSync(capabilityFile,'utf8')).commit : ENV_COMMIT;
 const DEADLINE_MS = 30_000; // to listen and answer both routes
 const STOP_MS = 5_000; // grace between SIGTERM and SIGKILL
 
@@ -32,7 +35,7 @@ const siteUrl = `http://127.0.0.1:${port}`;
 
 const env = {
   ...process.env, NODE_ENV: 'production', HOST: '127.0.0.1', PORT: String(port), DASKI_NETWORK: 'testnet',
-  GATEWAY_URL: gatewayUrl, GATEWAY_INTERNAL_URL: gatewayUrl, RELEASE_SOURCE_SHA: COMMIT,
+  GATEWAY_URL: gatewayUrl, GATEWAY_INTERNAL_URL: gatewayUrl, RELEASE_SOURCE_SHA: ENV_COMMIT,
 };
 // An inherited override must not skip the start path under test.
 delete env.ASTRO_NODE_AUTOSTART;

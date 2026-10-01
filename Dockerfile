@@ -13,7 +13,11 @@ RUN npm ci --no-audit --no-fund
 COPY tsconfig.json astro.config.mjs ./
 COPY public ./public
 COPY src ./src
-RUN npm run build
+COPY scripts/release-capabilities.mjs ./scripts/release-capabilities.mjs
+ARG RAILWAY_GIT_COMMIT_SHA
+ARG SOURCE_SHA=$RAILWAY_GIT_COMMIT_SHA
+ENV SOURCE_SHA=$SOURCE_SHA
+RUN npm run build && node scripts/release-capabilities.mjs
 
 FROM ${NODE_IMAGE} AS runtime
 WORKDIR /app
@@ -25,7 +29,8 @@ RUN npm ci --omit=dev --no-audit --no-fund
 
 COPY --from=builder /app/dist ./dist
 
-ARG SOURCE_SHA
+ARG RAILWAY_GIT_COMMIT_SHA
+ARG SOURCE_SHA=$RAILWAY_GIT_COMMIT_SHA
 ENV RELEASE_SOURCE_SHA=$SOURCE_SHA
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0
