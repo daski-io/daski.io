@@ -62,15 +62,19 @@ jobs:
           DIGEST: ${{ steps.build.outputs.digest }}
           IMAGE: ghcr.io/${{ github.repository }}
         run: node scripts/release-image.mjs
+      - name: Record exact OCI platform descriptors
+        run: node scripts/release-oci.mjs
       - uses: actions/upload-artifact@v4
         with:
           name: release-image-${{ github.sha }}
           path: |
             release-image.json
             release-capabilities.json
+            release-oci.json
           retention-days: 90
       # Candidate dispatch starts only after explicit engine ownership handoff.
       - name: Notify the sandbox coordinator
+        continue-on-error: true
         if: vars.RELEASE_ENGINE_HANDOVER == 'enabled'
         env:
           GH_TOKEN: ${{ secrets.RELEASE_DISPATCH_TOKEN }}
