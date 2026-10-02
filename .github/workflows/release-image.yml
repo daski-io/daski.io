@@ -78,8 +78,9 @@ jobs:
           retention-days: 90
       # Candidate dispatch starts only after explicit engine ownership handoff.
       - name: Notify the sandbox coordinator
+        id: notify
         continue-on-error: true
-        if: vars.RELEASE_ENGINE_HANDOVER == 'enabled'
+        if: vars.RELEASE_ENGINE_HANDOVER == 'enabled' && github.event_name == 'push' && github.ref == 'refs/heads/develop'
         env:
           GH_TOKEN: ${{ secrets.RELEASE_DISPATCH_TOKEN }}
         run: |
@@ -88,3 +89,9 @@ jobs:
           jq -n --arg repo "$GITHUB_REPOSITORY" --arg commit "$GITHUB_SHA" --argjson runId "$GITHUB_RUN_ID" \
             '{event_type:"release-image",client_payload:{repo:$repo,commit:$commit,runId:$runId}}' > dispatch.json
           gh api --method POST repos/daski-io/deploy-mainnet/dispatches --input dispatch.json
+      - name: Report coordinator notification failure
+        if: always() && steps.notify.outcome == 'failure'
+        run: |
+          echo "::warning title=Sandbox coordinator not notified::Image publication succeeded, but its coordinator notification failed. Check RELEASE_DISPATCH_TOKEN and the receiver before preparing a release."
+          echo "### Coordinator notification failed" >> "$GITHUB_STEP_SUMMARY"
+          echo "The immutable image and its evidence were published successfully. Sandbox evidence is pending because dispatch failed. Check RELEASE_DISPATCH_TOKEN and the deploy-mainnet receiver, then retry notification." >> "$GITHUB_STEP_SUMMARY"
