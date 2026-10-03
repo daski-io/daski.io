@@ -1,4 +1,4 @@
-import { mcpClientAddress } from '../src/mcp/clientAddress.ts';
+import { mcpClientAdmission, normalizeAddress } from '../src/mcp/clientAddress.ts';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
@@ -281,11 +281,26 @@ test('ingress rejects foreign origins, duplicate keys, batches and oversized bod
   assert.equal(calls.length, 0);
 });
 
-test('MCP client admission counts proxy hops from the socket and ignores spoofed prefixes', () => {
-  assert.equal(mcpClientAddress('10.0.0.1', '198.51.100.1, 192.0.2.4', 1), '192.0.2.4');
-  assert.equal(mcpClientAddress('192.0.2.4', '198.51.100.1', 0), '192.0.2.4');
-  assert.equal(mcpClientAddress('10.0.0.1', 'not-an-ip', 1), '10.0.0.1');
-  assert.throws(() => resolveNetworkConfig({ MCP_TRUST_PROXY: '-1' }), /MCP_TRUST_PROXY/);
+test('MCP client admission trusts only the address Cloudflare names behind the edge secret', () => {
+  const secret = 'e'.repeat(48);
+  const edge = (secretHeader, connectingIp, socketAddress = '100.64.0.7') => mcpClientAdmission({ socketAddress, secretHeader, connectingIp }, secret, true);
+  assert.deepEqual(edge(secret, '203.0.113.9'), { admit: true, clientAddress: '203.0.113.9' });
+  assert.deepEqual(edge(secret, '2001:db8::1'), { admit: true, clientAddress: '2001:db8::1' });
+  // Forwarding chains are never counted: a caller-written X-Forwarded-For has no effect, and
+  // a request that bypassed Cloudflare (no or wrong secret) is refused whatever it claims.
+  assert.equal(edge(null, '203.0.113.9').status, 403);
+  assert.equal(edge('f'.repeat(48), '203.0.113.9').status, 403);
+  assert.equal(edge(secret.slice(1), '203.0.113.9').status, 403);
+  assert.equal(edge(secret, null).status, 400);
+  assert.equal(edge(secret, 'not-an-ip').status, 400);
+  // Mainnet refuses until the secret is configured; a local run keys by the socket peer.
+  assert.equal(mcpClientAdmission({ socketAddress: '192.0.2.4', secretHeader: null, connectingIp: null }, null, true).status, 503);
+  assert.deepEqual(mcpClientAdmission({ socketAddress: '::ffff:192.0.2.4', secretHeader: null, connectingIp: '198.51.100.1' }, null, false),
+    { admit: true, clientAddress: '192.0.2.4' });
+  assert.equal(normalizeAddress('[2001:db8::1]'), '2001:db8::1');
+  assert.throws(() => resolveNetworkConfig({ EDGE_SECRET: 'short' }), /EDGE_SECRET/);
+  assert.equal(resolveNetworkConfig({ EDGE_SECRET: secret }).edgeSecret, secret);
+  assert.equal(resolveNetworkConfig({ MCP_TRUST_PROXY: '1' }).edgeSecret, null);
 });
 
 

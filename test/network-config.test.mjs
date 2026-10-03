@@ -132,13 +132,15 @@ test('typos fail loudly instead of quietly serving another network', () => {
 });
 
 test('the island view is the serializable slice of the config', () => {
-  const config = resolveNetworkConfig({ GATEWAY_INTERNAL_URL: 'http://gateway.railway.internal:8080' });
+  const config = resolveNetworkConfig({ GATEWAY_INTERNAL_URL: 'http://gateway.railway.internal:8080', EDGE_SECRET: 's'.repeat(48) });
   const view = networkView(config);
 
   assert.deepEqual(Object.keys(view).sort(), [
     'chainId', 'chainName', 'explorerUrl', 'gatewayUrl', 'id', 'label', 'notice', 'siteUrls',
   ]);
   assert.equal('gatewayInternalUrl' in view, false);
+  assert.equal('edgeSecret' in view, false);
+  assert.equal(JSON.stringify(view).includes('s'.repeat(48)), false);
   assert.equal(JSON.parse(JSON.stringify(view)).gatewayUrl, DEFAULT_TESTNET_GATEWAY_URL);
 });
 
