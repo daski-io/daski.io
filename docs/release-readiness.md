@@ -1,12 +1,13 @@
 # Release readiness
 
-Releases are run by the deploy-testnet coordinator
-([daski-io/deploy-testnet](https://github.com/daski-io/deploy-testnet)) with two
-commands: `prep` makes the next release green, fixing whatever blocks it in the
-owning repository, and `go` ships it. The coordinator only checks that CI passed
-on the exact `develop` commit and promotes the image CI built
-(`ghcr.io/daski-io/daski.io:<sha>`, recorded by the Release image workflow), so
-`develop` must always be releasable.
+Releases are run by the release engine in the coordinator
+([daski-io/deploy-mainnet](https://github.com/daski-io/deploy-mainnet)) with two
+commands per target: `prep` prints exactly what the release deploys and the
+wording that authorizes it, and `go` ships it. The engine only checks that CI
+passed on the exact `develop` commit and deploys the image CI built
+(`ghcr.io/daski-io/daski.io:<sha>`, recorded by the Release image workflow) by
+digest; no service deploys from a branch. `develop` must therefore always be
+releasable.
 
 ## Definition of done for develop
 
@@ -16,17 +17,18 @@ on the exact `develop` commit and promotes the image CI built
   `.github/workflows/release-image.yml` that builds and pushes the image.
 - A new environment variable read by the site is declared in a
   `Release-Variable` trailer on the commit that introduces it (see below).
-- Never merge to `sandbox` or `main` or tag by hand. The coordinator merges the
-  release pull request into `sandbox` and tags the merge commit through its
-  authorized `go`, and only for a commit CI proved. `main` is the production
-  branch: only the production coordinator moves it, by fast-forward to a
-  release commit that already ran on the sandbox.
+- Never push, merge or tag `sandbox` or `main` by hand. After a release is
+  verified serving, the release engine fast-forwards `sandbox` (testnet) or
+  `main` (production) to the released commit, as history; neither branch
+  deploys anything. The testnet sandbox has been released this way since
+  2026-10-04; production moves to the engine at its installation, until then
+  promoted by the retained production coordinator.
 - Emergency fixes branch from `main` as `hotfix/<id>`. Their pushes run the
-  `verify` workflow, and so does the release merge commit on `sandbox`.
+  `verify` workflow and build their image the same way.
 
 ## Hand-off to the release agent
 
-The release agent reads nothing but your commits. If a change needs anything at deploy time beyond merging, put it in git trailers on the commit that needs it, one per line at the end of the commit message:
+The release agent reads nothing but your commits. If a change needs anything at deploy time beyond its image, put it in git trailers on the commit that needs it, one per line at the end of the commit message:
 
 ```
 Release-Variable: daski-website GATEWAY_INTERNAL_URL=staged before-deploy

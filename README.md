@@ -174,14 +174,13 @@ at sandbox.daski.io, and the production service with `DASKI_NETWORK=mainnet`
 at daski.io. Launching mainnet is setting `GATEWAY_URL` and
 `GATEWAY_INTERNAL_URL` on the production service; nothing else changes.
 
-Releases (develop→sandbox merges, versioning) are coordinated from
-[daski-io/deploy-testnet](https://github.com/daski-io/deploy-testnet): its
-coordinator merges the release pull request into `sandbox` and tags the merge
-commit, and Railway deploys the sandbox site from `sandbox`. `main` is the
-production branch and moves only by fast-forward, performed by the production
-coordinator, to a release commit that already ran on the sandbox. Emergency
-fixes branch from `main` as `hotfix/<id>`, and their pushes run CI. Never
-merge to `sandbox` or `main` or tag by hand.
+Releases are coordinated by the release engine in
+[daski-io/deploy-mainnet](https://github.com/daski-io/deploy-mainnet): it
+deploys the image CI built for a `develop` commit by digest, and after a
+verified release fast-forwards `sandbox` (testnet) or `main` (production) to
+the released commit, as history. No Railway service deploys the site from a
+branch. Emergency fixes branch from `main` as `hotfix/<id>`, and their pushes
+run CI. Never push, merge or tag `sandbox` or `main` by hand.
 
 `/llms.txt` and `/robots.txt` are rendered from the instance configuration,
 and contract addresses come from the gateway's chain metadata, so nothing in
