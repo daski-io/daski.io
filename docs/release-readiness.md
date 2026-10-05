@@ -14,7 +14,13 @@ releasable.
 - CI is green on the pushed commit: the `verify` job (`npm run lint`,
   `npm test`, `npm run build`, `npm run test:runtime`) and the `handoff` job in
   `.github/workflows/verify.yml`, and the `image` job in
-  `.github/workflows/release-image.yml` that builds and pushes the image.
+  `.github/workflows/release-image.yml` that builds and pushes the image, then
+  scans the pushed digest with Trivy 0.67.2 (pinned by digest): a fixable
+  MEDIUM-or-higher OS or Node package advisory fails it. The Dockerfile keeps
+  this green by installing Debian's patched PCRE2 and Perl
+  (`libpcre2-8-0=10.42-1+deb12u2`, `perl-base=5.36.0-7+deb12u4`, as the gateway
+  and provider do) and by removing npm/npx from the runtime stage. When the
+  scan flags the base image, refresh its digest as the Dockerfile describes.
 - A new environment variable read by the site is declared in a
   `Release-Variable` trailer on the commit that introduces it (see below).
 - Never push, merge or tag `sandbox` or `main` by hand. After a release is
