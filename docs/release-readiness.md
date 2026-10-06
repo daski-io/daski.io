@@ -30,7 +30,10 @@ releasable.
   2026-10-04; production moves to the engine at its installation, until then
   promoted by the retained production coordinator.
 - Emergency fixes branch from `main` as `hotfix/<id>`. Their pushes run the
-  `verify` workflow and build their image the same way.
+  `verify` workflow and build their image the same way. The release engine
+  deploys the hotfix image only when it descends from what the target serves,
+  and once it serves, `main` is merged into `develop` at once (drilled on the
+  testnet sandbox with `hotfix/drill-2026-10-06`).
 
 ## Hand-off to the release agent
 
