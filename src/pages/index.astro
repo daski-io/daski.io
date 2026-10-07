@@ -29,7 +29,7 @@ if (target) {
   {/* The hero is static HTML. Only the directory filter needs JavaScript on
       load; the demo, the standards diagram, and the prompt copy button
       hydrate once they scroll into view. */}
-  <Hero networkLabel={view.label} />
+  <Hero network={view} />
   <ServicesDirectory
     client:load
     services={services}

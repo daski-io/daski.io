@@ -1,11 +1,14 @@
 import { Section } from '../ui/Section';
 import { Caption } from '../ui/Mono';
+import type { NetworkView } from '../../lib/chains';
 
-export function Hero({ networkLabel }: { networkLabel: string }) {
+export function Hero({ network }: { network: Pick<NetworkView, 'id' | 'label'> }) {
   return (
     <Section pad="88px 32px 56px" style={{ position: 'relative' }}>
       <div style={{ maxWidth: 920 }}>
-        <Caption style={{ marginBottom: 20 }}>{networkLabel.toLowerCase()} · public preview</Caption>
+        <Caption style={{ marginBottom: 20 }}>
+          {network.label.toLowerCase()}{network.id === 'testnet' && ' · public preview'}
+        </Caption>
         <h1
           className="hero-headline"
           style={{
