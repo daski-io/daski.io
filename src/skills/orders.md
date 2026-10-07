@@ -48,6 +48,15 @@ review before submission. On `CONFIRMATION_SUBMISSION_PENDING`, run
 with fresh order-action authorization. `--check` reads the current final review;
 a pending operation is not proof that the review succeeded.
 
+When an answer's `expected.disposition` is `operator_attention`, the gateway
+has parked the review for its operator, under either
+`CONFIRMATION_SUBMISSION_PENDING` or, for an EAS 1.0.1 signature without a
+deadline, `CONFIRMATION_AUTHORIZATION_STILL_LIVE`. Neither resuming nor
+reaffirming moves it. Keep the saved signature, stop polling, and contact
+support for the order with the operation ID. Buyer CLI 0.5.2 and later report
+this as `state: "attention"`, and a review still waiting for the chain as
+`state: "pending"` with `pollAfterSeconds`.
+
 The gateway admits and relays a review for a bounded period. Closing that local
 window does not cancel the wallet's EAS signature. In particular, the EAS 1.0.1
 profile has no signed expiry. If the saved authorization remains live and the

@@ -47,10 +47,10 @@ Use the response's `retryable`, `requiresNewSignature`, `paymentMayHaveSettled`,
 | SIGNATURE_VERIFICATION_UNAVAILABLE / SIGNATURE_VERIFICATION_BUSY | The signature was not evaluated. Retry the identical request shortly; do not sign again. |
 | CONFIRMATION_SPONSORED_REQUIRES_EOA | Sponsored confirmation needs a plain wallet. Repeat with submission direct; the CLI selects it for contract signers. |
 | CONFIRMATION_SPONSORSHIP_LIMIT | The sponsored budget is exhausted. Reconcile saved authorizations first. When chainEligible is true and no previous authorization remains live, a direct wallet submission is available. |
-| CONFIRMATION_SUBMISSION_PENDING | Keep the saved signature and operation ID; run daski order confirm with --resume. Do not prepare another review. |
+| CONFIRMATION_SUBMISSION_PENDING | Keep the saved signature and operation ID; run daski order confirm with --resume. Do not prepare another review. When expected.disposition is operator_attention, the review is held for the operator: stop resuming and contact support with the operation ID. |
 | CONFIRMATION_CLIENT_UPGRADE_REQUIRED | Install the gateway-pinned buyer CLI and retain its saved state before resuming. |
 | CONFIRMATION_EAS_INCOMPATIBLE | Keep the saved review and report the compatibility failure. Do not edit signing fields or repeat paid attempts. |
-| CONFIRMATION_AUTHORIZATION_STILL_LIVE | The saved signature can still execute. Use --reaffirm for the same admitted intent, or explicitly approve a same-nonce replacement as described in orders.md. |
+| CONFIRMATION_AUTHORIZATION_STILL_LIVE | The saved signature can still execute. Use --reaffirm for the same admitted intent, or explicitly approve a same-nonce replacement as described in orders.md. When expected.disposition is operator_attention, do not reaffirm: the review is held for the operator, so contact support with the operation ID. |
 | CONFIRMATION_SUBMISSION_FAILED | Inspect expected.operationId, expected.disposition, and expected.safeRetired. Prepare a fresh review only when safeRetired is true; otherwise retain the journal and reconcile or contact support. |
 | CONFIRMATION_REVIEWS_PAUSED | Wait for maintenance to finish, then resume the saved submission. Do not create another signature. |
 | PAYMENT_IDENTIFIER_UNKNOWN | Compare the submitted identifier with the one the challenge issued. Follow the gateway's no-settlement response to correct the submission. |
