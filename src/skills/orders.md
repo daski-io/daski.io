@@ -106,7 +106,8 @@ daski order confirm <handle> --submit --approve-call <displayedCallHash>
 Keep the vendor submission ID and transaction hash. `--resume` reads the saved
 vendor submission; it does not issue another wallet transaction. If the
 response is uncertain, reconcile that journal before attempting another
-submission. A started vendor submission cannot be abandoned.
+submission. A started Circle submission can be abandoned only after Circle
+reports its transaction FAILED, DENIED or CANCELLED; `--resume` says when.
 
 A Circle agent wallet submits its review only through the buyer CLI.
 `circle wallet execute` passes the call's tuple argument as a string, which the

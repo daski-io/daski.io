@@ -67,6 +67,8 @@ test('setup uses live gateway version authority and preserves the purchase and w
   assert.match(await document('/skills/orders.md').text(), /--check reports the final state/);
   // A Circle agent wallet reviews only through the buyer CLI's adapter.
   assert.match(await document('/skills/orders.md').text(), /`circle wallet execute` passes the call's tuple argument as a string/);
+  // 0.5.3 abandons a started Circle submission only after Circle reports it failed.
+  assert.match(await document('/skills/orders.md').text(), /A started Circle submission can be abandoned only after Circle\s+reports its transaction FAILED, DENIED or CANCELLED/);
 });
 
 test('mainnet instructions use only the configured mainnet endpoints', () => {
