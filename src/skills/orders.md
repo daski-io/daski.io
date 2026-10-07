@@ -108,7 +108,14 @@ vendor submission; it does not issue another wallet transaction. If the
 response is uncertain, reconcile that journal before attempting another
 submission. A started vendor submission cannot be abandoned.
 
-The prepared call can also be submitted with the wallet's own supported tool.
+A Circle agent wallet submits its review only through the buyer CLI.
+`circle wallet execute` passes the call's tuple argument as a string, which the
+CLI's Circle adapter corrects, so it is not a way to send the review. Until
+`confirmation.directReview.circleExecute` is true on this network, `--submit`
+answers `DASKI_CIRCLE_EXECUTION_NOT_QUALIFIED` and sends nothing: keep the
+prepared review and tell the user it waits for that capability.
+
+Another contract wallet submits the prepared call with its own supported tool.
 Record the resulting hash and check it:
 
 ```bash

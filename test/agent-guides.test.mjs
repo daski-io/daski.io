@@ -61,10 +61,12 @@ test('setup uses live gateway version authority and preserves the purchase and w
   assert.match(setup, /daski buy --provider/);
   assert.match(setup, /daski_get_payment_challenge/);
   const buy = await document('/skills/buy.md').text();
-  for (const code of ['PAYMENT_IDENTIFIER_UNKNOWN', 'PAYMENT_IDENTIFIER_CONFLICT', 'SIGNATURE_COUNTERFACTUAL_REJECTED', 'CONFIRMATION_SPONSORED_REQUIRES_EOA', 'CONFIRMATION_SPONSORSHIP_LIMIT']) assert.ok(buy.includes(code));
+  for (const code of ['PAYMENT_IDENTIFIER_UNKNOWN', 'PAYMENT_IDENTIFIER_CONFLICT', 'SIGNATURE_COUNTERFACTUAL_REJECTED', 'CONFIRMATION_SPONSORED_REQUIRES_EOA', 'CONFIRMATION_SPONSORSHIP_LIMIT', 'DASKI_CIRCLE_EXECUTION_NOT_QUALIFIED']) assert.ok(buy.includes(code));
   assert.match(await document('/skills/wallets.md').text(), /\| Circle agent wallet \| contract \|/);
   assert.match(await document('/skills/orders.md').text(), /daski order confirm <handle> --tx <hash>/);
   assert.match(await document('/skills/orders.md').text(), /--check reports the final state/);
+  // A Circle agent wallet reviews only through the buyer CLI's adapter.
+  assert.match(await document('/skills/orders.md').text(), /`circle wallet execute` passes the call's tuple argument as a string/);
 });
 
 test('mainnet instructions use only the configured mainnet endpoints', () => {

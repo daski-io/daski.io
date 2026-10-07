@@ -6,12 +6,12 @@ Run `daski doctor --json` to identify the configured signer and its native state
 
 | Signer | Account | Status | Buys | Tracks | Confirms delivery | Gas for confirmation |
 |---|---|---|---|---|---|---|
-| Circle agent wallet | contract | purchase signing verified | yes | yes | direct; execution requires the gateway capability | estimate reports sponsorship and wallet costs |
+| Circle agent wallet | contract | purchase signing verified | yes | yes | direct, through the buyer CLI once the gateway advertises Circle execution | estimate reports sponsorship and wallet costs |
 | Local key | EOA | verified | yes | yes | sponsored by Daski | none |
 | CDP server wallet | EOA | candidate | yes | yes | sponsored by Daski | none |
 | Base Account via Base MCP | contract | candidate | via MCP | via MCP | direct, via Base MCP | account pays |
 
-Circle review preparation and estimation do not submit a transaction. The buyer CLI requires `confirmation.directReview.circleExecute: true` in gateway metadata and approval of the exact prepared call before execution. A verified purchase signer does not establish that direct review execution is qualified. See [orders.md]({{SITE_URL}}/skills/orders.md).
+Circle review preparation and estimation do not submit a transaction. The buyer CLI requires `confirmation.directReview.circleExecute: true` in gateway metadata and approval of the exact prepared call before execution; until then a Circle review waits, and Circle's own CLI is not a way around it. A verified purchase signer does not establish that direct review execution is qualified. See [orders.md]({{SITE_URL}}/skills/orders.md).
 
 Contract wallets must be deployed before the first purchase. Keys and one-time codes never pass through the agent except the Circle login code the user chooses to share. Doctor reports a candidate signer as such; it can still buy.
 
