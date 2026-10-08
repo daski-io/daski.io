@@ -109,9 +109,9 @@ response is uncertain, reconcile that journal before attempting another
 submission. A started Circle submission can be abandoned only after Circle
 reports its transaction FAILED, DENIED or CANCELLED; `--resume` says when.
 
-A Circle agent wallet submits its review only through the buyer CLI.
-`circle wallet execute` passes the call's tuple argument as a string, which the
-CLI's Circle adapter corrects, so it is not a way to send the review. Until
+A Circle agent wallet submits its review only through the buyer CLI, which
+journals the submission so it can be resumed and verified; sending the call
+with `circle wallet execute` directly keeps no such record. Until
 `confirmation.directReview.circleExecute` is true on this network, `--submit`
 answers `DASKI_CIRCLE_EXECUTION_NOT_QUALIFIED` and sends nothing: keep the
 prepared review and tell the user it waits for that capability.

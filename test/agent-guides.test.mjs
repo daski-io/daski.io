@@ -65,8 +65,8 @@ test('setup uses live gateway version authority and preserves the purchase and w
   assert.match(await document('/skills/wallets.md').text(), /\| Circle agent wallet \| contract \|/);
   assert.match(await document('/skills/orders.md').text(), /daski order confirm <handle> --tx <hash>/);
   assert.match(await document('/skills/orders.md').text(), /--check reports the final state/);
-  // A Circle agent wallet reviews only through the buyer CLI's adapter.
-  assert.match(await document('/skills/orders.md').text(), /`circle wallet execute` passes the call's tuple argument as a string/);
+  // A Circle agent wallet reviews only through the buyer CLI, whose journal can resume and verify it.
+  assert.match(await document('/skills/orders.md').text(), /sending the call\s+with `circle wallet execute` directly keeps no such record/);
   // 0.5.3 abandons a started Circle submission only after Circle reports it failed.
   assert.match(await document('/skills/orders.md').text(), /A started Circle submission can be abandoned only after Circle\s+reports its transaction FAILED, DENIED or CANCELLED/);
 });
