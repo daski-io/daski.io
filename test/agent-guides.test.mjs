@@ -64,6 +64,8 @@ test('setup uses live gateway version authority and preserves the purchase and w
   for (const code of ['PAYMENT_IDENTIFIER_UNKNOWN', 'PAYMENT_IDENTIFIER_CONFLICT', 'SIGNATURE_COUNTERFACTUAL_REJECTED', 'CONFIRMATION_SPONSORED_REQUIRES_EOA', 'CONFIRMATION_SPONSORSHIP_LIMIT', 'DASKI_CIRCLE_EXECUTION_NOT_QUALIFIED']) assert.ok(buy.includes(code));
   assert.match(await document('/skills/wallets.md').text(), /\| Circle agent wallet \| contract \|/);
   assert.match(await document('/skills/orders.md').text(), /daski order confirm <handle> --tx <hash>/);
+  assert.match(await document('/skills/orders.md').text(), /resubmit the complete corrected request as order input/);
+  assert.match(await document('/skills/orders.md').text(), /`withheld` values \(an SSN, dates of birth\) are never shown back/);
   assert.match(await document('/skills/orders.md').text(), /--check reports the final state/);
   // A Circle agent wallet reviews only through the buyer CLI, whose journal can resume and verify it.
   assert.match(await document('/skills/orders.md').text(), /sending the call\s+with `circle wallet execute` directly keeps no such record/);
