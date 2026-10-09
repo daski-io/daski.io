@@ -32,7 +32,7 @@ Artifacts exist once an order is completed or completed after recovery. Earlier,
 
 For an interrupted payment, use `daski order reconcile <intentId> --json`. It queries the gateway for that payment identifier and recovers the handle when settlement is established.
 
-Inspect `operations` on authorized status reads. `fulfillment.phase: dns_pending` means the paid order waits for DNS and rechecks every five minutes; `nextCheckAt` and `missingRecords` describe the next check and required corrections. `waiting_capacity` means ready and queued. Do not pay again. `recovery.state` distinguishes queued, pending, running, attention, completed, and stopped recovery. Show completed recovery as **Completed after recovery**, while retaining the original failed financial/reputation history. Recovery does not create a new purchase or rewrite its receipt.
+Inspect `operations` on authorized status reads. `fulfillment.phase: dns_pending` means the paid order waits for DNS and rechecks every five minutes; `nextCheckAt` and `missingRecords` describe the next check and required corrections. `waiting_capacity` means ready and queued. Do not pay again. `recovery.state` distinguishes queued, pending, running, attention, completed, and stopped recovery. Show completed recovery as **Completed after recovery**, while retaining the original failed financial/reputation history. Recovery does not create a new purchase or rewrite its receipt. The original Failed outcome is never changed; when the provider records the recovery on-chain, public reputation shows it as **N failed orders later recovered** beside unchanged completion figures.
 
 ## Contact support
 

@@ -77,6 +77,72 @@ test('joins provider services and purchases to standard-rail outcomes', () => {
   assert.equal(presentation.purchases[0].buyerName, 'Test Buyer');
 });
 
+// The vector's outcome joined to the catalog provider, with the recovered
+// counts set (or left absent) on a copy of its reputation blocks.
+function joinedPresentation(recovered) {
+  const service = catalogService();
+  const provider = providerDetailFromServices([service], service.providerAgentId);
+  const raw = structuredClone(railFixture);
+  const source = raw.outcomes[0];
+  // Two failed orders at provider scope, so both can be recovered.
+  Object.assign(source.providerReputation, {
+    transactionCount: '3', failedCount: '2', completionSampleSize: '3', completionRate: 33.33,
+  });
+  if ('provider' in recovered) source.providerReputation.recoveredCount = recovered.provider;
+  if ('service' in recovered) source.serviceReputation.recoveredCount = recovered.service;
+  const metadata = parseRailMetadata(raw);
+  const outcome = metadata.outcomes[0];
+  outcome.providerAgentId = provider.providerAgentId;
+  outcome.serviceId = service.serviceId;
+  return providerProfilePresentation(provider, metadata);
+}
+
+test('shows nothing for no recovered orders and never changes the completion rate', () => {
+  for (const recovered of [{}, { provider: null, service: null }, { provider: '0', service: '0' }]) {
+    const presentation = joinedPresentation(recovered);
+    assert.equal(presentation.recovered, null);
+    assert.equal(presentation.services[0].recovered, null);
+    assert.equal(presentation.reputation?.completionRate, 33.33);
+    assert.equal(presentation.services[0].reputation?.completionRate, 50);
+  }
+});
+
+test('notes failed orders later recovered beside each unchanged completion rate', () => {
+  const presentation = joinedPresentation({ provider: '2', service: '1' });
+  const unrecovered = joinedPresentation({});
+
+  assert.equal(presentation.recovered, '2 failed orders later recovered');
+  assert.equal(presentation.services[0].recovered, '1 failed order later recovered');
+  // Recovery is an additional fact: every other figure stays as read.
+  assert.deepEqual(
+    { ...presentation.reputation, recoveredCount: null },
+    unrecovered.reputation,
+  );
+  assert.deepEqual(
+    { ...presentation.services[0].reputation, recoveredCount: null },
+    unrecovered.services[0].reputation,
+  );
+  assert.equal(presentation.reputation?.completionRate, 33.33);
+  assert.equal(presentation.reputation?.failedCount, '2');
+  assert.equal(presentation.services[0].reputation?.completionRate, 50);
+  assert.equal(presentation.services[0].reputation?.failedCount, '1');
+});
+
+test('renders the recovered note next to the provider and service completion rates', async () => {
+  const view = await read('src/views/ProviderProfilePage.tsx');
+
+  assert.match(
+    view,
+    /label="Completion Rate"\s+value=\{reputationRate\(reputation\?\.completionRate \?\? null\)\}\s+note=\{presentation\.recovered\}/,
+  );
+  assert.match(view, /\{note && <span style=\{statNoteStyle\}>\{note\}<\/span>\}/);
+  assert.match(view, /rows\.map\(\(\{ service, reputation, recovered \}, index\)/);
+  assert.match(
+    view,
+    /\{reputationRate\(reputation\?\.completionRate \?\? null\)\}\s*<\/Mono>\s*\{recovered && <span style=\{tableNoteStyle\}>\{recovered\}<\/span>\}/,
+  );
+});
+
 test('serves provider details from the catalog and links them from services', async () => {
   const [route, view, serviceDetails] = await Promise.all([
     read('src/pages/provider/[providerAgentId].astro'),

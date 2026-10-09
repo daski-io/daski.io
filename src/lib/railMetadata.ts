@@ -113,7 +113,7 @@ function parseReputation(value: unknown, label: string): StandardOutcome['servic
     'valueWeightedBuyerSatisfactionRate', 'totalPaid', 'totalRefunded',
     'averageFulfillmentSeconds', 'fulfillmentSampleSize', 'recentPurchases',
     'safeBlock',
-  ], label);
+  ], label, ['recoveredCount']);
   if (!Array.isArray(reputation.recentPurchases)) {
     throw new Error(`${label} recent purchases are invalid`);
   }
@@ -173,6 +173,10 @@ function parseReputation(value: unknown, label: string): StandardOutcome['servic
     safeBlock: reputation.safeBlock === null
       ? null
       : decimal(reputation.safeBlock, 'safe block'),
+    // Additive: a gateway that cannot read recoveries sends null or omits it.
+    recoveredCount: reputation.recoveredCount === undefined || reputation.recoveredCount === null
+      ? null
+      : decimal(reputation.recoveredCount, 'recovered count'),
   };
 }
 

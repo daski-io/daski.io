@@ -71,6 +71,8 @@ test('setup uses live gateway version authority and preserves the purchase and w
   assert.match(await document('/skills/orders.md').text(), /sending the call\s+with `circle wallet execute` directly keeps no such record/);
   // 0.5.3 abandons a started Circle submission only after Circle reports it failed.
   assert.match(await document('/skills/orders.md').text(), /A started Circle submission can be abandoned only after Circle\s+reports its transaction FAILED, DENIED or CANCELLED/);
+  // A recovery recorded on-chain is shown beside the failure, never in place of it.
+  assert.match(await document('/skills/orders.md').text(), /The original Failed outcome is never changed; when the provider records the recovery on-chain, public reputation shows it as \*\*N failed orders later recovered\*\* beside unchanged completion figures\./);
 });
 
 test('mainnet instructions use only the configured mainnet endpoints', () => {

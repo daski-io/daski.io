@@ -1,7 +1,5 @@
 import {
-  atomicUsdc,
-  reputationRate,
-  reputationRates,
+  reputationTiles,
   type ReputationStats,
   type ServiceDetail,
 } from '../../lib/api';
@@ -36,16 +34,7 @@ export function ServicePurchasesAndUsage({ service }: { service: ServiceDetail }
 }
 
 function ReputationRow({ label, stats }: { label: string; stats: ReputationStats }) {
-  const rates = reputationRates(stats);
-  const tiles = [
-    { label: 'Purchases', value: String(rates.purchases) },
-    { label: 'Completed', value: stats.completed },
-    { label: 'Completion rate', value: reputationRate(rates.completionRate) },
-    { label: 'Buyer satisfaction', value: reputationRate(rates.buyerSatisfaction) },
-    ...(stats.refundedAmount !== null
-      ? [{ label: 'Refunded', value: `${atomicUsdc(stats.refundedAmount)} USDC` }]
-      : []),
-  ];
+  const tiles = reputationTiles(stats);
   return (
     <div style={{ border: '1px solid var(--pro-border)', borderRadius: 12, background: 'var(--pro-surface)', padding: '20px 24px' }}>
       <Mono dim style={{ display: 'block', fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 12 }}>
@@ -56,6 +45,11 @@ function ReputationRow({ label, stats }: { label: string; stats: ReputationStats
           <div key={tile.label}>
             <div style={{ color: 'var(--pro-text)', fontSize: 20, fontWeight: 600 }}>{tile.value}</div>
             <div style={{ color: 'var(--pro-text-dim)', fontSize: 12 }}>{tile.label}</div>
+            {tile.note && (
+              <div style={{ color: 'var(--pro-text-dim)', fontSize: 11, lineHeight: 1.4, marginTop: 4 }}>
+                {tile.note}
+              </div>
+            )}
           </div>
         ))}
       </div>

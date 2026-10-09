@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import {
   parseServiceIndex,
   priceRange,
   reputationRates,
+  reputationTiles,
   serviceCardData,
   servicePath,
 } from '../src/lib/api.ts';
@@ -100,6 +102,90 @@ test('rejects malformed reputation counters', () => {
     }),
     /transactions is invalid/,
   );
+});
+
+const aggregateStats = {
+  completed: '8', failed: '2', canceled: '0', confirmed: '6',
+  notConfirmed: '2', transactions: '10', safeBlock: '4575440',
+};
+
+test('accepts an optional recovered count on aggregate reputation', () => {
+  const parse = (extra) => parseServiceIndex({
+    services: [{
+      ...service,
+      serviceReputation: { ...aggregateStats, ...extra },
+      providerReputation: { ...aggregateStats, ...extra },
+    }],
+  }).services[0];
+  for (const [extra, expected] of [
+    [{}, null], [{ recovered: null }, null], [{ recovered: '0' }, '0'], [{ recovered: '2' }, '2'],
+  ]) {
+    const parsed = parse(extra);
+    assert.equal(parsed.serviceReputation.recovered, expected);
+    assert.equal(parsed.providerReputation.recovered, expected);
+    assert.equal(parsed.serviceReputation.failed, '2');
+  }
+  for (const recovered of [2, '1.5', '-1', '', 'many', {}]) {
+    assert.throws(
+      () => parseServiceIndex({
+        services: [{ ...service, serviceReputation: { ...aggregateStats, recovered } }],
+      }),
+      /service reputation recovered is invalid/,
+      `accepted ${JSON.stringify(recovered)}`,
+    );
+    assert.throws(
+      () => parseServiceIndex({
+        services: [{ ...service, providerReputation: { ...aggregateStats, recovered } }],
+      }),
+      /provider reputation recovered is invalid/,
+      `accepted ${JSON.stringify(recovered)}`,
+    );
+  }
+});
+
+test('notes failed orders later recovered beside an unchanged completion rate', () => {
+  const stats = { ...aggregateStats, refundedAmount: '2500000', recovered: null };
+  const baseline = reputationTiles(stats);
+  assert.deepEqual(baseline, [
+    { label: 'Purchases', value: '10', note: null },
+    { label: 'Completed', value: '8', note: null },
+    { label: 'Completion rate', value: '80%', note: null },
+    { label: 'Buyer satisfaction', value: '75%', note: null },
+    { label: 'Refunded', value: '2.5 USDC', note: null },
+  ]);
+  const withoutNotes = (tiles) => tiles.map(({ note: _note, ...tile }) => tile);
+  for (const [recovered, note] of [
+    [undefined, null], [null, null], ['0', null],
+    ['1', '1 failed order later recovered'], ['2', '2 failed orders later recovered'],
+  ]) {
+    const tiles = reputationTiles({ ...stats, recovered });
+    assert.deepEqual(withoutNotes(tiles), withoutNotes(baseline));
+    assert.deepEqual(tiles.map((tile) => tile.note), [null, null, note, null, null]);
+    assert.deepEqual(reputationRates({ ...stats, recovered }), reputationRates(stats));
+  }
+});
+
+test('each service reputation row notes its own recovered count', async () => {
+  const parsed = parseServiceIndex({
+    services: [{
+      ...service,
+      serviceReputation: { ...aggregateStats, recovered: '1' },
+      providerReputation: { ...aggregateStats, failed: '3', recovered: '2' },
+    }],
+  }).services[0];
+  const completionNote = (stats) => reputationTiles(stats)
+    .find((tile) => tile.label === 'Completion rate').note;
+  assert.equal(completionNote(parsed.serviceReputation), '1 failed order later recovered');
+  assert.equal(completionNote(parsed.providerReputation), '2 failed orders later recovered');
+
+  const component = await readFile(
+    new URL('../src/components/service/ServicePurchasesAndUsage.tsx', import.meta.url),
+    'utf8',
+  );
+  assert.match(component, /stats: service\.serviceReputation/);
+  assert.match(component, /stats: service\.providerReputation/);
+  assert.match(component, /const tiles = reputationTiles\(stats\);/);
+  assert.match(component, /\{tile\.label\}<\/div>\s*\{tile\.note && \(/);
 });
 
 test('trims catalog rows to the fields a service card renders', () => {

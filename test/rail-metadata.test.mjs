@@ -66,6 +66,45 @@ test('ignores and reports additive fields once per shape', () => {
   assert.match(warnings[0], /standard outcome ignored unknown fields: futureProvenance/);
 });
 
+test('accepts an optional recovered count on reputation blocks without reporting it', () => {
+  const absent = parseRailMetadata(copy());
+  assert.equal(absent.outcomes[0].providerReputation.recoveredCount, null);
+  assert.equal(absent.outcomes[0].serviceReputation.recoveredCount, null);
+
+  for (const value of [null, '0', '1']) {
+    const reported = copy();
+    reported.outcomes[0].providerReputation.recoveredCount = value;
+    reported.outcomes[0].serviceReputation.recoveredCount = value;
+    const warnings = [];
+    const originalWarn = console.warn;
+    console.warn = (...values) => warnings.push(values.join(' '));
+    let parsed;
+    try {
+      parsed = parseRailMetadata(reported);
+    } finally {
+      console.warn = originalWarn;
+    }
+    assert.deepEqual(warnings, []);
+    assert.equal(parsed.outcomes[0].providerReputation.recoveredCount, value);
+    assert.equal(parsed.outcomes[0].serviceReputation.recoveredCount, value);
+    // A recovery is an additional fact: the failure and the rate stay as read.
+    assert.equal(parsed.outcomes[0].serviceReputation.failedCount, '1');
+    assert.equal(parsed.outcomes[0].serviceReputation.completionRate, 50);
+  }
+});
+
+test('rejects a malformed recovered count like the other counters', () => {
+  for (const value of [1, '01', '-1', '1.5', '', 'many', {}]) {
+    const malformed = copy();
+    malformed.outcomes[0].serviceReputation.recoveredCount = value;
+    assert.throws(
+      () => parseRailMetadata(malformed),
+      /recovered count is invalid/,
+      `accepted ${JSON.stringify(value)}`,
+    );
+  }
+});
+
 test('still fails closed on missing or malformed Activity fields', () => {
   const missingName = copy();
   delete missingName.outcomes[0].service.name;
