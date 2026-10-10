@@ -97,49 +97,38 @@ function joinedPresentation(recovered) {
   return providerProfilePresentation(provider, metadata);
 }
 
-test('shows nothing for no recovered orders and never changes the completion rate', () => {
+test('leaves every figure as read when no order was recovered', () => {
   for (const recovered of [{}, { provider: null, service: null }, { provider: '0', service: '0' }]) {
     const presentation = joinedPresentation(recovered);
-    assert.equal(presentation.recovered, null);
-    assert.equal(presentation.services[0].recovered, null);
     assert.equal(presentation.reputation?.completionRate, 33.33);
+    assert.equal(presentation.reputation?.failedCount, '2');
     assert.equal(presentation.services[0].reputation?.completionRate, 50);
   }
 });
 
-test('notes failed orders later recovered beside each unchanged completion rate', () => {
+test('counts failed orders later recovered as completed, completion rate included', () => {
   const presentation = joinedPresentation({ provider: '2', service: '1' });
   const unrecovered = joinedPresentation({});
-
-  assert.equal(presentation.recovered, '2 failed orders later recovered');
-  assert.equal(presentation.services[0].recovered, '1 failed order later recovered');
-  // Recovery is an additional fact: every other figure stays as read.
-  assert.deepEqual(
-    { ...presentation.reputation, recoveredCount: null },
-    unrecovered.reputation,
+  assert.equal(presentation.reputation?.failedCount, '0');
+  assert.equal(
+    presentation.reputation?.completedCount,
+    String(BigInt(unrecovered.reputation.completedCount) + 2n),
   );
-  assert.deepEqual(
-    { ...presentation.services[0].reputation, recoveredCount: null },
-    unrecovered.services[0].reputation,
-  );
-  assert.equal(presentation.reputation?.completionRate, 33.33);
-  assert.equal(presentation.reputation?.failedCount, '2');
-  assert.equal(presentation.services[0].reputation?.completionRate, 50);
-  assert.equal(presentation.services[0].reputation?.failedCount, '1');
+  assert.equal(presentation.reputation?.completionRate, 100);
+  assert.equal(presentation.services[0].reputation?.failedCount, '0');
+  assert.equal(presentation.services[0].reputation?.completionRate, 100);
+  assert.equal('recovered' in presentation, false);
+  assert.equal('recovered' in presentation.services[0], false);
+  // More recoveries than failures never make a count negative.
+  assert.equal(joinedPresentation({ provider: '5', service: '5' }).reputation?.failedCount, '0');
 });
 
-test('renders the recovered note next to the provider and service completion rates', async () => {
+test('renders no separate recovered figure', async () => {
   const view = await read('src/views/ProviderProfilePage.tsx');
-
+  assert.doesNotMatch(view, /recovered/i);
   assert.match(
     view,
-    /label="Completion Rate"\s+value=\{reputationRate\(reputation\?\.completionRate \?\? null\)\}\s+note=\{presentation\.recovered\}/,
-  );
-  assert.match(view, /\{note && <span style=\{statNoteStyle\}>\{note\}<\/span>\}/);
-  assert.match(view, /rows\.map\(\(\{ service, reputation, recovered \}, index\)/);
-  assert.match(
-    view,
-    /\{reputationRate\(reputation\?\.completionRate \?\? null\)\}\s*<\/Mono>\s*\{recovered && <span style=\{tableNoteStyle\}>\{recovered\}<\/span>\}/,
+    /label="Completion Rate"\s+value=\{reputationRate\(reputation\?\.completionRate \?\? null\)\}\s+\/>/,
   );
 });
 

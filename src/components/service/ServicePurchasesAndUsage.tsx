@@ -45,11 +45,6 @@ function ReputationRow({ label, stats }: { label: string; stats: ReputationStats
           <div key={tile.label}>
             <div style={{ color: 'var(--pro-text)', fontSize: 20, fontWeight: 600 }}>{tile.value}</div>
             <div style={{ color: 'var(--pro-text-dim)', fontSize: 12 }}>{tile.label}</div>
-            {tile.note && (
-              <div style={{ color: 'var(--pro-text-dim)', fontSize: 11, lineHeight: 1.4, marginTop: 4 }}>
-                {tile.note}
-              </div>
-            )}
           </div>
         ))}
       </div>

@@ -6,7 +6,6 @@ import type {
   StandardRailMetadata,
   StandardReputation,
 } from './api.ts';
-import { recoveredOrdersNote } from './displayFormat.ts';
 
 export interface ProviderPurchase extends PublicMarketplacePurchase {
   outcome: StandardOutcome;
@@ -15,14 +14,10 @@ export interface ProviderPurchase extends PublicMarketplacePurchase {
 export interface ProviderServicePresentation {
   service: PublicService;
   reputation: StandardReputation | null;
-  /** Shown beside this service's completion rate, which it leaves unchanged. */
-  recovered: string | null;
 }
 
 export interface ProviderProfilePresentation {
   reputation: StandardReputation | null;
-  /** Shown beside the provider's completion rate, which it leaves unchanged. */
-  recovered: string | null;
   services: ProviderServicePresentation[];
   purchases: ProviderPurchase[];
 }
@@ -76,19 +71,12 @@ export function providerProfilePresentation(
     })
     .sort((left, right) => Date.parse(right.timestamp) - Date.parse(left.timestamp));
 
-  const reputation = providerOutcome?.providerReputation ?? null;
   return {
-    reputation,
-    recovered: recoveredOrdersNote(reputation?.recoveredCount),
-    services: provider.services.map((service) => {
-      const serviceReputation = outcomesByService.get(service.serviceId.toLowerCase())
-        ?.serviceReputation ?? null;
-      return {
-        service,
-        reputation: serviceReputation,
-        recovered: recoveredOrdersNote(serviceReputation?.recoveredCount),
-      };
-    }),
+    reputation: providerOutcome?.providerReputation ?? null,
+    services: provider.services.map((service) => ({
+      service,
+      reputation: outcomesByService.get(service.serviceId.toLowerCase())?.serviceReputation ?? null,
+    })),
     purchases,
   };
 }

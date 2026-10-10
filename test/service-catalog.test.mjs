@@ -109,7 +109,7 @@ const aggregateStats = {
   notConfirmed: '2', transactions: '10', safeBlock: '4575440',
 };
 
-test('accepts an optional recovered count on aggregate reputation', () => {
+test('counts failed orders later recovered as completed on aggregate reputation', () => {
   const parse = (extra) => parseServiceIndex({
     services: [{
       ...service,
@@ -117,13 +117,16 @@ test('accepts an optional recovered count on aggregate reputation', () => {
       providerReputation: { ...aggregateStats, ...extra },
     }],
   }).services[0];
-  for (const [extra, expected] of [
-    [{}, null], [{ recovered: null }, null], [{ recovered: '0' }, '0'], [{ recovered: '2' }, '2'],
+  for (const [extra, completed, failed] of [
+    [{}, '8', '2'], [{ recovered: null }, '8', '2'], [{ recovered: '0' }, '8', '2'],
+    [{ recovered: '2' }, '10', '0'], [{ recovered: '5' }, '10', '0'],
   ]) {
     const parsed = parse(extra);
-    assert.equal(parsed.serviceReputation.recovered, expected);
-    assert.equal(parsed.providerReputation.recovered, expected);
-    assert.equal(parsed.serviceReputation.failed, '2');
+    for (const stats of [parsed.serviceReputation, parsed.providerReputation]) {
+      assert.equal(stats.completed, completed);
+      assert.equal(stats.failed, failed);
+      assert.equal('recovered' in stats, false);
+    }
   }
   for (const recovered of [2, '1.5', '-1', '', 'many', {}]) {
     assert.throws(
@@ -143,49 +146,26 @@ test('accepts an optional recovered count on aggregate reputation', () => {
   }
 });
 
-test('notes failed orders later recovered beside an unchanged completion rate', () => {
-  const stats = { ...aggregateStats, refundedAmount: '2500000', recovered: null };
-  const baseline = reputationTiles(stats);
-  assert.deepEqual(baseline, [
-    { label: 'Purchases', value: '10', note: null },
-    { label: 'Completed', value: '8', note: null },
-    { label: 'Completion rate', value: '80%', note: null },
-    { label: 'Buyer satisfaction', value: '75%', note: null },
-    { label: 'Refunded', value: '2.5 USDC', note: null },
-  ]);
-  const withoutNotes = (tiles) => tiles.map(({ note: _note, ...tile }) => tile);
-  for (const [recovered, note] of [
-    [undefined, null], [null, null], ['0', null],
-    ['1', '1 failed order later recovered'], ['2', '2 failed orders later recovered'],
-  ]) {
-    const tiles = reputationTiles({ ...stats, recovered });
-    assert.deepEqual(withoutNotes(tiles), withoutNotes(baseline));
-    assert.deepEqual(tiles.map((tile) => tile.note), [null, null, note, null, null]);
-    assert.deepEqual(reputationRates({ ...stats, recovered }), reputationRates(stats));
-  }
-});
-
-test('each service reputation row notes its own recovered count', async () => {
+test('the reputation tiles show recovered orders as completed and nothing of their own', async () => {
   const parsed = parseServiceIndex({
     services: [{
       ...service,
-      serviceReputation: { ...aggregateStats, recovered: '1' },
-      providerReputation: { ...aggregateStats, failed: '3', recovered: '2' },
+      serviceReputation: { ...aggregateStats, refundedAmount: '2500000', recovered: '2' },
     }],
   }).services[0];
-  const completionNote = (stats) => reputationTiles(stats)
-    .find((tile) => tile.label === 'Completion rate').note;
-  assert.equal(completionNote(parsed.serviceReputation), '1 failed order later recovered');
-  assert.equal(completionNote(parsed.providerReputation), '2 failed orders later recovered');
-
+  assert.deepEqual(reputationTiles(parsed.serviceReputation), [
+    { label: 'Purchases', value: '10' },
+    { label: 'Completed', value: '10' },
+    { label: 'Completion rate', value: '100%' },
+    { label: 'Buyer satisfaction', value: '75%' },
+    { label: 'Refunded', value: '2.5 USDC' },
+  ]);
   const component = await readFile(
     new URL('../src/components/service/ServicePurchasesAndUsage.tsx', import.meta.url),
     'utf8',
   );
-  assert.match(component, /stats: service\.serviceReputation/);
-  assert.match(component, /stats: service\.providerReputation/);
   assert.match(component, /const tiles = reputationTiles\(stats\);/);
-  assert.match(component, /\{tile\.label\}<\/div>\s*\{tile\.note && \(/);
+  assert.doesNotMatch(component, /note/);
 });
 
 test('trims catalog rows to the fields a service card renders', () => {

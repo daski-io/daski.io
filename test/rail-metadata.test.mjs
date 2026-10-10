@@ -66,11 +66,8 @@ test('ignores and reports additive fields once per shape', () => {
   assert.match(warnings[0], /standard outcome ignored unknown fields: futureProvenance/);
 });
 
-test('accepts an optional recovered count on reputation blocks without reporting it', () => {
+test('counts failed orders later recovered as completed on reputation blocks', () => {
   const absent = parseRailMetadata(copy());
-  assert.equal(absent.outcomes[0].providerReputation.recoveredCount, null);
-  assert.equal(absent.outcomes[0].serviceReputation.recoveredCount, null);
-
   for (const value of [null, '0', '1']) {
     const reported = copy();
     reported.outcomes[0].providerReputation.recoveredCount = value;
@@ -85,11 +82,15 @@ test('accepts an optional recovered count on reputation blocks without reporting
       console.warn = originalWarn;
     }
     assert.deepEqual(warnings, []);
-    assert.equal(parsed.outcomes[0].providerReputation.recoveredCount, value);
-    assert.equal(parsed.outcomes[0].serviceReputation.recoveredCount, value);
-    // A recovery is an additional fact: the failure and the rate stay as read.
-    assert.equal(parsed.outcomes[0].serviceReputation.failedCount, '1');
-    assert.equal(parsed.outcomes[0].serviceReputation.completionRate, 50);
+    const service = parsed.outcomes[0].serviceReputation;
+    const before = absent.outcomes[0].serviceReputation;
+    assert.equal('recoveredCount' in service, false, 'no separate recovered figure');
+    if (value === '1') {
+      // Moved from failed to completed, and the completion rate follows.
+      assert.equal(service.completedCount, String(BigInt(before.completedCount) + 1n));
+      assert.equal(service.failedCount, '0');
+      assert.equal(service.completionRate, 100);
+    } else assert.deepEqual(service, before);
   }
 });
 

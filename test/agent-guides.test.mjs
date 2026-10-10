@@ -72,7 +72,8 @@ test('setup uses live gateway version authority and preserves the purchase and w
   // 0.5.3 abandons a started Circle submission only after Circle reports it failed.
   assert.match(await document('/skills/orders.md').text(), /A started Circle submission can be abandoned only after Circle\s+reports its transaction FAILED, DENIED or CANCELLED/);
   // A recovery recorded on-chain is shown beside the failure, never in place of it.
-  assert.match(await document('/skills/orders.md').text(), /The original Failed outcome is never changed; when the provider records the recovery on-chain, public reputation shows it as \*\*N failed orders later recovered\*\* beside unchanged completion figures\./);
+  assert.match(await document('/skills/orders.md').text(), /When the provider records the recovery on-chain, beside the original Failed outcome, Daski's public reputation counts the order as completed\./);
+  assert.doesNotMatch(await document('/skills/orders.md').text(), /later recovered/);
 });
 
 test('mainnet instructions use only the configured mainnet endpoints', () => {

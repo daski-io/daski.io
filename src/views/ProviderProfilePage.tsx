@@ -99,7 +99,6 @@ export function ProviderProfilePage({
             <ProviderStat
               label="Completion Rate"
               value={reputationRate(reputation?.completionRate ?? null)}
-              note={presentation.recovered}
             />
             <ProviderStat
               label="Buyer Satisfaction"
@@ -150,12 +149,10 @@ function ProviderStat({
   label,
   value,
   unit,
-  note,
 }: {
   label: string;
   value: string;
   unit?: string;
-  note?: string | null;
 }) {
   return (
     <div style={statCellStyle}>
@@ -164,7 +161,6 @@ function ProviderStat({
         {value}
         {unit && <span style={statUnitStyle}>{unit}</span>}
       </span>
-      {note && <span style={statNoteStyle}>{note}</span>}
     </div>
   );
 }
@@ -185,7 +181,7 @@ function ProviderServicesTable({ rows }: { rows: ProviderServicePresentation[] }
             <span>Buyer Satisfaction</span>
             <span />
           </div>
-          {rows.map(({ service, reputation, recovered }, index) => {
+          {rows.map(({ service, reputation }, index) => {
             const satisfaction = reputation
               ? reputation.valueWeightedBuyerSatisfactionRate
                 ?? reputation.buyerSatisfactionRate
@@ -216,12 +212,9 @@ function ProviderServicesTable({ rows }: { rows: ProviderServicePresentation[] }
                   {reputation ? atomicUsdc(reputation.totalPaid) : '–'}
                   {reputation && <span style={tableUnitStyle}>USDC</span>}
                 </Mono>
-                <span style={rateCellStyle}>
-                  <Mono style={{ fontSize: 13 }}>
-                    {reputationRate(reputation?.completionRate ?? null)}
-                  </Mono>
-                  {recovered && <span style={tableNoteStyle}>{recovered}</span>}
-                </span>
+                <Mono style={{ fontSize: 13 }}>
+                  {reputationRate(reputation?.completionRate ?? null)}
+                </Mono>
                 <Mono style={{ fontSize: 13 }}>{reputationRate(satisfaction)}</Mono>
                 <span style={{ justifySelf: 'end', color: 'var(--pro-text-dim)' }}>
                   <Icon name="arrow" size={12} />
@@ -395,12 +388,6 @@ const statUnitStyle: CSSProperties = {
   letterSpacing: '0.04em',
   marginLeft: 6,
 };
-const statNoteStyle: CSSProperties = {
-  fontFamily: 'var(--font-mono)',
-  fontSize: 11,
-  color: 'var(--pro-text-dim)',
-  lineHeight: 1.4,
-};
 const safeBlockStyle: CSSProperties = {
   display: 'block',
   fontSize: 11,
@@ -423,18 +410,6 @@ const tableUnitStyle: CSSProperties = {
   color: 'var(--pro-text-dim)',
   marginLeft: 6,
   fontSize: 11,
-};
-const rateCellStyle: CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: 4,
-  minWidth: 0,
-};
-const tableNoteStyle: CSSProperties = {
-  fontFamily: 'var(--font-mono)',
-  fontSize: 11,
-  color: 'var(--pro-text-dim)',
-  lineHeight: 1.4,
 };
 const buyerStyle: CSSProperties = {
   fontSize: 13,

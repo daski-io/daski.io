@@ -1,13 +1,9 @@
 import { parseRailMetadata } from './railMetadata.ts';
-import { atomicUsdc, recoveredOrdersNote, reputationRate } from './displayFormat.ts';
+import { atomicUsdc, reputationRate } from './displayFormat.ts';
+import { recoveredAsCompleted } from './recoveredAsCompleted.ts';
 import { assertGatewayChain } from './chains.ts';
 
-export {
-  atomicUsdc,
-  formatDuration,
-  recoveredOrdersNote,
-  reputationRate,
-} from './displayFormat.ts';
+export { atomicUsdc, formatDuration, reputationRate } from './displayFormat.ts';
 
 // Where a request goes. The public origin is what the browser also uses; the
 // optional internal origin is server-only and points at Railway private
@@ -69,9 +65,6 @@ export interface StandardReputation {
   fulfillmentSampleSize: string;
   recentPurchases: PublicMarketplacePurchase[];
   safeBlock: string | null;
-  /** Failed orders the provider later recorded as recovered; null when the
-   *  gateway did not report it. The failures stay in every other count. */
-  recoveredCount: string | null;
 }
 
 export interface PublicMarketplacePurchase {
@@ -158,9 +151,6 @@ export interface ReputationStats {
   transactions: string;
   refundedAmount: string | null;
   safeBlock: string;
-  /** Failed orders the provider later recorded as recovered; null when the
-   *  gateway did not report it. They still count in `failed`. */
-  recovered: string | null;
 }
 
 export function reputationRates(stats: ReputationStats): {
@@ -182,24 +172,17 @@ export function reputationRates(stats: ReputationStats): {
 export interface ReputationTile {
   label: string;
   value: string;
-  /** Shown beside the value. Only the completion rate carries one: the count
-   *  of failed orders later recovered, which leaves the rate unchanged. */
-  note: string | null;
 }
 
 export function reputationTiles(stats: ReputationStats): ReputationTile[] {
   const rates = reputationRates(stats);
   return [
-    { label: 'Purchases', value: String(rates.purchases), note: null },
-    { label: 'Completed', value: stats.completed, note: null },
-    {
-      label: 'Completion rate',
-      value: reputationRate(rates.completionRate),
-      note: recoveredOrdersNote(stats.recovered),
-    },
-    { label: 'Buyer satisfaction', value: reputationRate(rates.buyerSatisfaction), note: null },
+    { label: 'Purchases', value: String(rates.purchases) },
+    { label: 'Completed', value: stats.completed },
+    { label: 'Completion rate', value: reputationRate(rates.completionRate) },
+    { label: 'Buyer satisfaction', value: reputationRate(rates.buyerSatisfaction) },
     ...(stats.refundedAmount !== null
-      ? [{ label: 'Refunded', value: `${atomicUsdc(stats.refundedAmount)} USDC`, note: null }]
+      ? [{ label: 'Refunded', value: `${atomicUsdc(stats.refundedAmount)} USDC` }]
       : []),
   ];
 }
@@ -391,9 +374,17 @@ function parsePublicSkill(value: unknown): PublicSkill {
 
 function parseReputationStats(value: unknown, label: string): ReputationStats {
   const item = record(value, label);
+  // A failed order the provider later recovered counts as completed.
+  const counted = recoveredAsCompleted(
+    decimal(item.completed, `${label} completed`),
+    decimal(item.failed, `${label} failed`),
+    item.recovered === undefined || item.recovered === null
+      ? null
+      : decimal(item.recovered, `${label} recovered`),
+  );
   return {
-    completed: decimal(item.completed, `${label} completed`),
-    failed: decimal(item.failed, `${label} failed`),
+    completed: counted.completed,
+    failed: counted.failed,
     canceled: decimal(item.canceled, `${label} canceled`),
     confirmed: decimal(item.confirmed, `${label} confirmed`),
     notConfirmed: decimal(item.notConfirmed, `${label} not confirmed`),
@@ -402,10 +393,6 @@ function parseReputationStats(value: unknown, label: string): ReputationStats {
       ? null
       : decimal(item.refundedAmount, `${label} refunded amount`),
     safeBlock: decimal(item.safeBlock, `${label} safe block`),
-    // Additive: a gateway that cannot read recoveries sends null or omits it.
-    recovered: item.recovered === undefined || item.recovered === null
-      ? null
-      : decimal(item.recovered, `${label} recovered`),
   };
 }
 

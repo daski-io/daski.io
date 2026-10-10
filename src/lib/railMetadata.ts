@@ -1,3 +1,4 @@
+import { completionRateOf, recoveredAsCompleted } from './recoveredAsCompleted.ts';
 import type { StandardOutcome, StandardRailMetadata } from './api';
 
 const reportedUnknownShapes = new Set<string>();
@@ -147,13 +148,23 @@ function parseReputation(value: unknown, label: string): StandardOutcome['servic
       timestamp,
     };
   });
+  // A failed order the provider later recovered counts as completed.
+  const counted = recoveredAsCompleted(
+    decimal(reputation.completedCount, 'completed count'),
+    decimal(reputation.failedCount, 'failed count'),
+    reputation.recoveredCount === undefined || reputation.recoveredCount === null
+      ? null
+      : decimal(reputation.recoveredCount, 'recovered count'),
+  );
+  const completionSampleSize = decimal(reputation.completionSampleSize, 'completion sample size');
+  const completionRate = nullableRate(reputation.completionRate, 'completion rate');
   return {
     transactionCount: decimal(reputation.transactionCount, 'transaction count'),
-    completedCount: decimal(reputation.completedCount, 'completed count'),
-    failedCount: decimal(reputation.failedCount, 'failed count'),
+    completedCount: counted.completed,
+    failedCount: counted.failed,
     canceledCount: decimal(reputation.canceledCount, 'canceled count'),
-    completionSampleSize: decimal(reputation.completionSampleSize, 'completion sample size'),
-    completionRate: nullableRate(reputation.completionRate, 'completion rate'),
+    completionSampleSize,
+    completionRate: counted.moved ? completionRateOf(counted.completed, completionSampleSize) : completionRate,
     confirmedCount: decimal(reputation.confirmedCount, 'confirmed count'),
     notConfirmedCount: decimal(reputation.notConfirmedCount, 'not-confirmed count'),
     confirmationSampleSize: decimal(reputation.confirmationSampleSize, 'confirmation sample size'),
@@ -173,10 +184,6 @@ function parseReputation(value: unknown, label: string): StandardOutcome['servic
     safeBlock: reputation.safeBlock === null
       ? null
       : decimal(reputation.safeBlock, 'safe block'),
-    // Additive: a gateway that cannot read recoveries sends null or omits it.
-    recoveredCount: reputation.recoveredCount === undefined || reputation.recoveredCount === null
-      ? null
-      : decimal(reputation.recoveredCount, 'recovered count'),
   };
 }
 
