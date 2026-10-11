@@ -108,6 +108,8 @@ Standard-rail payments are final at launch. Daski does not advertise or operate 
 
 A Provider may require identity, business, sanctions, eligibility, or other compliance information after payment when the signed listing and Provider terms disclose that possibility. Failure or refusal to complete that review does not make an on-chain payment reversible. Any cancellation, credit, or refund a Provider separately offers is governed and performed outside the launch payment rail under the Provider's own terms.
 
+Daski may offer promotions, such as USDC cash back on qualifying orders, under separate promotion terms published with each promotion. Cash back is a separate payment funded by Daski. It is not a refund, does not reverse or change the original payment, and does not change any Provider's terms.
+
 The Operator must report service-delivery disputes to the Provider and may contact Daski for marketplace-routing or payment-coordination assistance. Daski does not hold a reserve or retain the gross payment: release sends the disclosed shares directly to the Provider and Daski wallets.
 
 For a stock-fixed outcome, retrying the identical signed payment authorization is a transport retry of the same purchase. Creating a new signature or authorization nonce creates a distinct final purchase, even when its request and price are identical. Distinct purchases are not merged or reversed by operator discretion.
@@ -116,9 +118,9 @@ For a stock-fixed outcome, retrying the identical signed payment authorization i
 
 Daski issues a signed confidential receipt bound to the payer wallet, order, listing, amount, settlement evidence, release evidence, and Provider task. The receipt is a technical record of the marketplace workflow, not an endorsement, certification, warranty, or public reputation statement.
 
-Daski may index and display transaction facts already recorded publicly, including the payer wallet, a publicly registered Agent identity when resolvable, the service, amount, timestamp, settlement transaction, Provider-attested outcome, and payer confirmation. Daski does not publish request contents, confidential receipts, Provider task identifiers, or private lifecycle and asset data, and the payer-authorized private order history remains access-controlled.
+Daski may index and display transaction facts already recorded publicly, including the payer wallet, a publicly registered Agent identity when resolvable, the service, amount, timestamp, settlement transaction, Provider-attested outcome, and payer confirmation. Daski does not publish request contents, confidential receipts, Provider task identifiers, or private lifecycle and asset data, and the payer-authorized private order history remains access-controlled. A promotion page may also list each qualifying order's settlement transaction and its cash back transaction.
 
-A Provider outcome is a statement by the Provider. A payer confirmation is a statement by the Operator on whose behalf it is submitted. Neither is a statement, endorsement, certification, warranty, or guarantee by Daski. The Operator must not use self-dealing, fabricated purchases, coordinated activity, or misleading claims to manipulate reputation, marketplace discovery, or apparent demand.
+A Provider outcome is a statement by the Provider. A payer confirmation is a statement by the Operator on whose behalf it is submitted. Neither is a statement, endorsement, certification, warranty, or guarantee by Daski. The Operator must not use self-dealing, fabricated purchases, coordinated activity, or misleading claims to manipulate reputation, marketplace discovery, apparent demand, or promotion eligibility.
 
 ## 10. Acceptable use
 
@@ -201,7 +203,7 @@ Daski may retain ordinary business copies of its own prior Terms but does not pr
 
 ## 21. General
 
-These Terms, the final quote or payment challenge, and Daski policies expressly incorporated into them are the entire agreement between Daski and the Operator concerning the Daski Platform. Provider terms separately govern each Provider Service.
+These Terms, the final quote or payment challenge, the terms of any promotion that applies, and Daski policies expressly incorporated into them are the entire agreement between Daski and the Operator concerning the Daski Platform. Provider terms separately govern each Provider Service.
 
 Daski may assign these Terms in connection with a merger, reorganization, sale of assets, or transfer to an affiliate. The Operator may not assign them without Daski's consent and may not transfer Agent credentials or payment authority outside their intended scope.
 

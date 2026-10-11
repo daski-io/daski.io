@@ -58,6 +58,7 @@ We use personal data to:
 - coordinate, settle, reconcile, and troubleshoot payments;
 - issue and protect payer-bound confidential receipts and retain recovery evidence;
 - index and display public transaction activity and transaction-linked reputation;
+- run promotions, including checking eligibility, sending cash back, and displaying a promotion's qualifying orders and cash back transactions;
 - communicate about transactions, support, incidents, security, and Platform changes;
 - verify authority where appropriate and prevent fraud, abuse, sanctions violations, and unlawful activity;
 - enforce agreements, protect rights, resolve disputes, and comply with law;
@@ -88,7 +89,7 @@ We may disclose personal data to:
 
 We do not sell personal data for money, share it for cross-context behavioral advertising, or process it for targeted advertising.
 
-The public marketplace activity feed may associate a payer wallet and any resolvable public Agent identity with the purchased service, amount, timestamp, and settlement transaction. Request contents, confidential receipts, Provider task identifiers, and private lifecycle and asset data are not included in that feed.
+The public marketplace activity feed may associate a payer wallet and any resolvable public Agent identity with the purchased service, amount, timestamp, and settlement transaction. Request contents, confidential receipts, Provider task identifiers, and private lifecycle and asset data are not included in that feed. A promotion page may list each qualifying order's settlement transaction and its cash back transaction, without names.
 
 ## 7. Cookies and analytics
 

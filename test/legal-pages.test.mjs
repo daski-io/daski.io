@@ -38,7 +38,8 @@ test('publishes approved legal metadata once through the shared layout', async (
     assert.doesNotMatch(body, /^\*\*(Version|Effective date|Marketplace operator|Controller):\*\*/m);
     assert.equal(body.match(/^## /gm)?.length, legalPage.sectionCount);
     assert.match(page, new RegExp(`canonicalUrl="${legalPage.canonicalUrl}"`));
-    assert.equal(page.match(/effectiveDate="July 14, 2026"/g)?.length, 1);
+    assert.equal(page.match(/version="1\.1"/g)?.length, 1);
+    assert.equal(page.match(/effectiveDate="October 11, 2026"/g)?.length, 1);
   }
 });
 
@@ -56,6 +57,19 @@ test('discloses direct-transfer and post-payment identity review consequences', 
   assert.match(terms, /outside the exact signed HTTP 402 purchase flow is not a Daski purchase/);
   assert.match(terms, /require identity, business, sanctions, eligibility, or other compliance information after payment/);
   assert.match(privacy, /post-payment identity, business, eligibility, sanctions, or similar review/);
+});
+
+test('discloses promotion cash back as a Daski-funded payment, not a refund', async () => {
+  const [terms, privacy] = await Promise.all([
+    read('src/content/legal/terms-of-use.md'),
+    read('src/content/legal/privacy-policy.md'),
+  ]);
+  assert.match(terms, /Cash back is a separate payment funded by Daski\. It is not a refund/);
+  assert.match(terms, /A promotion page may also list each qualifying order's settlement transaction and its cash back transaction\./);
+  assert.match(terms, /apparent demand, or promotion eligibility\./);
+  assert.match(terms, /the terms of any promotion that applies, and Daski policies expressly incorporated/);
+  assert.match(privacy, /run promotions, including checking eligibility, sending cash back/);
+  assert.match(privacy, /A promotion page may list each qualifying order's settlement transaction and its cash back transaction, without names\./);
 });
 
 test('exposes marketplace and provider legal links on service details', async () => {
