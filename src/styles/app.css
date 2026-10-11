@@ -370,3 +370,55 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   border: 1px solid var(--pro-border);
   letter-spacing: 0.02em;
 }
+
+/* =====================================================================
+   Cash back promotions: the /promo/<id> page and the home page teaser.
+   The spot strip reads its column counts from --dk-promo-cols (at most 10)
+   and --dk-promo-cols-sm (at most 5), set inline from the spot count.
+   ===================================================================== */
+.dk-pulse-dot { animation: dk-pulse 1.6s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .dk-pulse-dot { animation: none; }
+}
+
+.dk-promo-teaser {
+  transition: border-color 160ms var(--ease);
+}
+.dk-promo-teaser:hover { border-color: var(--mint-400); }
+
+.dk-promo-meta {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  gap: 0 40px;
+}
+.dk-promo-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.dk-promo-stat {
+  min-width: 0;
+  padding: 24px 28px;
+  border-right: 1px solid var(--pro-border);
+}
+.dk-promo-stat:last-child { border-right: none; }
+.dk-promo-strip {
+  display: grid;
+  grid-template-columns: repeat(var(--dk-promo-cols, 10), minmax(0, 1fr));
+  gap: 8px;
+}
+.dk-promo-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 720px) {
+  .dk-promo-meta { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .dk-promo-stats, .dk-promo-steps { grid-template-columns: minmax(0, 1fr); }
+  .dk-promo-stat { border-right: none; border-bottom: 1px solid var(--pro-border); }
+  .dk-promo-stat:last-child { border-bottom: none; }
+  .dk-promo-strip { grid-template-columns: repeat(var(--dk-promo-cols-sm, 5), minmax(0, 1fr)); }
+}

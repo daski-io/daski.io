@@ -52,3 +52,14 @@ test('sitemap uses catalog IDs, deduplicates providers, and lists canonical cont
   const hidden = sitemapXml(resolveNetworkConfig({ SITE_ROBOTS: 'noindex' }), services);
   assert.doesNotMatch(hidden, /<loc>/);
 });
+
+test('sitemap lists each activated promotion page and no promotion index', () => {
+  const network = resolveNetworkConfig({ DASKI_NETWORK: 'mainnet' });
+  const xml = sitemapXml(network, services, [{ id: 'launch' }, { id: 'spring-2027' }]);
+  const urls = [...xml.matchAll(/<loc>(.*?)<\/loc>/g)].map(match => match[1]);
+  assert.ok(urls.includes('https://daski.io/promo/launch'));
+  assert.ok(urls.includes('https://daski.io/promo/spring-2027'));
+  assert.ok(!urls.some(url => /\/promo\/?$/.test(url)));
+  assert.equal(sitemapXml(network, services), sitemapXml(network, services, []));
+  assert.doesNotMatch(sitemapXml(resolveNetworkConfig({ SITE_ROBOTS: 'noindex' }), services, [{ id: 'launch' }]), /<loc>/);
+});

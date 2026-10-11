@@ -90,6 +90,7 @@ at `https://sandbox-gateway.daski.io`.
 | `TESTNET_SITE_URL`, `MAINNET_SITE_URL` | header switch targets | `https://sandbox.daski.io`, `https://daski.io` |
 | `EXPLORER_URL` | block explorer origin | Basescan for the configured chain |
 | `SITE_ROBOTS` | `index` or `noindex` | `index` |
+| `PROMOTIONS_INTERNAL_URL` | server-only origin of the private promotions service over Railway private networking; unset hides promotions | unset |
 
 Chain facts (chain ID, name, explorer) live in `src/lib/chains.ts`, keyed by
 network. A mainnet instance without `GATEWAY_URL` renders its empty states and
@@ -120,6 +121,26 @@ GATEWAY_INTERNAL_URL=http://gateway.railway.internal:8080
 Gateway payloads are cached in the server process for 30 seconds and
 refreshed in the background, so pages render from the last good payload
 instead of waiting on the gateway.
+
+## Cash back promotions
+
+Each activated promotion has a page at `/promo/<id>`, and the same parsed view
+as JSON at `/promo/<id>.json` for agents and for the page's 30-second refresh.
+There is no `/promo` index. The data comes from the private promotions service
+at `PROMOTIONS_INTERNAL_URL`: only the server reads it, so the browser never
+calls the service. Its payloads are parsed strictly, a view for another chain
+is refused, and they are cached like gateway payloads.
+
+Without the variable (or with a malformed one) promotion pages return 404 and
+nothing else changes, so the site can ship before the service exists. An
+unknown ID returns 404; an unreachable service with no cached copy returns 503
+with `Retry-After`. While the service reports an open promotion (Active or
+Fully claimed, not paused), a mainnet instance shows a teaser under the home
+page hero and adds one line to `/llms.txt`; any error hides both without
+affecting the rest of the page. The sitemap lists every activated promotion
+while the service is configured. The testnet sandbox renders its own
+environment's promotions with the testnet labeling, and no teaser or
+`/llms.txt` line.
 
 ## Build
 
@@ -155,7 +176,8 @@ return 404. Error pages carry `noindex` metadata.
 
 The metadata runtime checks exercise every page type, the image response,
 canonical URLs, sitemap, and failure states against an offline catalog in
-mainnet, testnet, preview, prelaunch, and outage configurations.
+mainnet, testnet, preview, prelaunch, and outage configurations, and the
+promotion pages against an offline promotions service on mainnet and testnet.
 
 ## Deploy
 

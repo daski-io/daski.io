@@ -125,6 +125,11 @@ test('the header switch links to the same page on the other network, except chai
     networkSwitchLinks(VIEWS.mainnetSoon, '/provider/41').map(({ href }) => href),
     ['https://sandbox.daski.io/', 'https://daski.io/provider/41'],
   );
+  // Each network runs its own promotions.
+  assert.deepEqual(
+    networkSwitchLinks(VIEWS.mainnetLive, '/promo/launch').map(({ href }) => href),
+    ['https://sandbox.daski.io/', 'https://daski.io/promo/launch'],
+  );
   assert.equal(networkSwitchLinks(VIEWS.mainnetSoon, '/').find(({ active }) => active).id, 'mainnet');
 });
 
@@ -162,6 +167,13 @@ test('no page or component hardcodes a network', async () => {
     'src/pages/activity.astro',
     'src/pages/index.astro',
     'src/pages/llms.txt.ts',
+    'src/lib/promotions.ts',
+    'src/lib/promotionView.ts',
+    'src/lib/promotionPresentation.ts',
+    'src/views/PromotionPage.tsx',
+    'src/components/home/PromotionTeaser.tsx',
+    'src/pages/promo/[id].astro',
+    'src/pages/promo/[id].json.ts',
   ];
   for (const path of paths) {
     const source = await read(path);

@@ -1,0 +1,82 @@
+{
+  "version": 1,
+  "id": "launch",
+  "name": "Launch promotion",
+  "status": "active",
+  "paused": false,
+  "percentBps": 10000,
+  "capAtomic": "10000000",
+  "spots": 25,
+  "sent": 3,
+  "inProgress": 2,
+  "open": 20,
+  "startsAt": "2026-10-21T00:00:00Z",
+  "endsAt": "2027-01-01T00:00:00Z",
+  "appliesTo": [
+    {
+      "serviceId": "0x104fa57de606a6240af6ce05ce1af7a6cac8b454483dd0e734e353ce6095dce4",
+      "serviceName": "Agent Mailbox",
+      "offerName": "Create mailbox"
+    },
+    {
+      "serviceId": "0x7d7e8a069206218db7c5393afda4a573d1c63df4cd6712e53366723a281d382a",
+      "serviceName": "Domain Management",
+      "offerName": "Register domain"
+    }
+  ],
+  "walletRule": "first_order",
+  "terms": [
+    "Sent automatically in USDC on Base, usually within 60 minutes after the provider completes your order. Daski may hold a payment for review.",
+    "One cash back per wallet address, paid only to the wallet that paid. One per operator or organization across its agents and wallets.",
+    "Only your first completed order on Daski Mainnet qualifies: a new mailbox or a new domain registration. Renewals, transfers and company formation don't qualify.",
+    "100% of the order total, including the disclosed marketplace charge, up to 10 USDC. Network, gas, bridging and wallet-funding costs aren't included.",
+    "Failed or canceled orders don't qualify. Their spot reopens while the promotion is open.",
+    "No review, rating, referral or public post is required.",
+    "Can't be combined with another Daski offer on the same order.",
+    "Self-dealing, sham, duplicate or coordinated orders, and orders by Daski or provider affiliates, don't qualify.",
+    "Qualifying orders and cash back transactions are listed publicly on this page.",
+    "Open to operators eligible under the Daski Terms of Use.",
+    "Daski may end the promotion early. Orders already holding a spot keep it."
+  ],
+  "termsVersion": "1.0",
+  "payoutWallet": "0x04bf47ac2bf9747b1260d5c4e870f3069ba52039",
+  "chainId": 8453,
+  "refreshedAt": "2026-10-21T12:00:30Z",
+  "rows": [
+    {
+      "spot": 1,
+      "status": "sent",
+      "orderTx": "0xac1b668df764c2ff5d3fc1c92c6d0f9e714ce81000720682fcc8e93b4557d105",
+      "cashbackTx": "0xdee9e192de06792d4ab83b5d14f26a090d8ef76a1c48b266f4596c6850cf3133",
+      "cashbackAtomic": "10000000"
+    },
+    {
+      "spot": 2,
+      "status": "sent",
+      "orderTx": "0xbfcd149b5f08fe684d786dfe72b6943788778eacfb32e4610893fffb7fc1de98",
+      "cashbackTx": "0x63ba16c04040d22986bfa1201d39c7ac0e9700f7f799a59b59973ac83e5a7831",
+      "cashbackAtomic": "5240000"
+    },
+    {
+      "spot": 3,
+      "status": "sent",
+      "orderTx": null,
+      "cashbackTx": null,
+      "cashbackAtomic": "10000000"
+    },
+    {
+      "spot": 4,
+      "status": "in_progress",
+      "orderTx": "0xb9274d4aac7fee541c34cd27e0d34d9a93c32f95d1e6baa0625fed7453be5b99",
+      "cashbackTx": null,
+      "cashbackAtomic": "8500000"
+    },
+    {
+      "spot": 5,
+      "status": "in_progress",
+      "orderTx": "0xaa438f630c8207eee5b25b49573229a12d479c969b9d67cddb0d3e10b442c934",
+      "cashbackTx": null,
+      "cashbackAtomic": "10000000"
+    }
+  ]
+}

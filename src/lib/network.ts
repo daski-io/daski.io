@@ -13,6 +13,7 @@ import {
   type NetworkView,
 } from './chains.ts';
 import type { GatewayTarget } from './api.ts';
+import type { PromotionsTarget } from './promotions.ts';
 
 export type Robots = 'index' | 'noindex';
 
@@ -21,6 +22,8 @@ export interface NetworkConfig extends NetworkView {
   gatewayInternalUrl: string | null;
   /** Server-only value Cloudflare adds as X-Daski-Edge-Secret; null when unset (a local run). */
   edgeSecret: string | null;
+  /** Server-only origin of the private promotions service; null when unset or malformed, which hides promotions. */
+  promotionsInternalUrl: string | null;
   /** This instance's canonical origin. */
   siteUrl: string;
   robots: Robots;
@@ -65,6 +68,18 @@ function origin(value: string | undefined, name: string): string | undefined {
   return parsed.origin;
 }
 
+// Promotions are optional, so a malformed origin hides them instead of failing
+// every page: the value is checked like the other origins, reported, and
+// treated as unset.
+function optionalOrigin(value: string | undefined, name: string): string | null {
+  try {
+    return origin(value, name) ?? null;
+  } catch (error) {
+    console.error(`${error instanceof Error ? error.message : String(error)}; ignoring it`);
+    return null;
+  }
+}
+
 export function resolveNetworkConfig(env: ProcessEnv): NetworkConfig {
   const id = oneOf(read(env, 'DASKI_NETWORK'), NETWORK_IDS, 'DASKI_NETWORK', 'testnet');
   const chain = CHAINS[id];
@@ -93,6 +108,7 @@ export function resolveNetworkConfig(env: ProcessEnv): NetworkConfig {
     gatewayUrl,
     gatewayInternalUrl,
     edgeSecret,
+    promotionsInternalUrl: optionalOrigin(read(env, 'PROMOTIONS_INTERNAL_URL'), 'PROMOTIONS_INTERNAL_URL'),
     notice: oneOf(read(env, 'NETWORK_NOTICE'), NOTICES, 'NETWORK_NOTICE', derivedNotice),
     siteUrls,
     siteUrl,
@@ -120,5 +136,14 @@ export function networkView(config: NetworkConfig): NetworkView {
 export function gatewayTarget(config: NetworkConfig): GatewayTarget | null {
   return config.gatewayUrl
     ? { url: config.gatewayUrl, internalUrl: config.gatewayInternalUrl, chainId: config.chainId }
+    : null;
+}
+
+/** Where server-side promotion reads go, or null while no promotions service is configured. */
+export function promotionsTarget(
+  config: Pick<NetworkConfig, 'promotionsInternalUrl' | 'chainId'>,
+): PromotionsTarget | null {
+  return config.promotionsInternalUrl
+    ? { url: config.promotionsInternalUrl, chainId: config.chainId }
     : null;
 }

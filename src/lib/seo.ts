@@ -1,6 +1,7 @@
 import type { NetworkConfig } from './network.ts';
 import { siteName } from './chains.ts';
 import { providerPath, servicePath, type PublicService } from './api.ts';
+import { promotionPath, type PromotionSummary } from './promotionView.ts';
 
 export const SOCIAL_IMAGE = {
   path: '/assets/social/daski-card.png',
@@ -73,7 +74,11 @@ export function canonicalPageUrl(pathname: string, siteUrl: string): string {
   return url.href;
 }
 
-export function sitemapXml(network: Pick<NetworkConfig, 'siteUrl' | 'robots'>, services: PublicService[]): string {
+export function sitemapXml(
+  network: Pick<NetworkConfig, 'siteUrl' | 'robots'>,
+  services: PublicService[],
+  promotions: Pick<PromotionSummary, 'id'>[] = [],
+): string {
   const urls = new Set<string>();
   if (network.robots === 'index') {
     urls.add(canonicalPageUrl('/', network.siteUrl));
@@ -86,6 +91,9 @@ export function sitemapXml(network: Pick<NetworkConfig, 'siteUrl' | 'robots'>, s
     for (const service of services) {
       urls.add(canonicalPageUrl(servicePath(service), network.siteUrl));
       urls.add(canonicalPageUrl(providerPath(service), network.siteUrl));
+    }
+    for (const promotion of promotions) {
+      urls.add(canonicalPageUrl(promotionPath(promotion), network.siteUrl));
     }
   }
   const escape = (value: string) => value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');

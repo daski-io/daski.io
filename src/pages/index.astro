@@ -5,12 +5,18 @@ import { ServicesDirectory } from '../components/home/ServicesDirectory';
 import { DemoBlock } from '../components/home/DemoBlock';
 import { OpenStandards } from '../components/home/OpenStandards';
 import { BottomCTAs } from '../components/home/BottomCTAs';
+import { PromotionTeaser } from '../components/home/PromotionTeaser';
 import { getServices, serviceCardData, type ServiceCardData } from '../lib/api';
 import { gatewayTarget, networkConfig, networkView } from '../lib/network';
+import { advertisedPromotion } from '../lib/promotions';
 
 const network = networkConfig();
 const view = networkView(network);
 const target = gatewayTarget(network);
+
+// Read alongside the catalog. It never throws and waits only briefly, so the
+// promotions service cannot delay or break the home page.
+const promotionRequest = advertisedPromotion(network);
 
 let services: ServiceCardData[] = [];
 let error: string | null = null;
@@ -24,12 +30,15 @@ if (target) {
     error = e instanceof Error ? e.message : 'unknown error';
   }
 }
+
+const promotion = await promotionRequest;
 ---
 <BaseLayout>
-  {/* The hero is static HTML. Only the directory filter needs JavaScript on
-      load; the demo, the standards diagram, and the prompt copy button
-      hydrate once they scroll into view. */}
+  {/* The hero and the promotion teaser are static HTML. Only the directory
+      filter needs JavaScript on load; the demo, the standards diagram, and
+      the prompt copy button hydrate once they scroll into view. */}
   <Hero network={view} />
+  {promotion && <PromotionTeaser promotion={promotion} />}
   <ServicesDirectory
     client:load
     services={services}

@@ -1,0 +1,59 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { PromotionPage } from '../../views/PromotionPage';
+import { canonicalPageUrl } from '../../lib/seo';
+import { networkConfig, networkView, promotionsTarget } from '../../lib/network';
+import { getPromotionSnapshot, PromotionsHttpError } from '../../lib/promotions';
+import { promotionDescription } from '../../lib/promotionPresentation';
+import { isPromotionId, promotionPath, type PromotionView } from '../../lib/promotionView';
+
+// One page per promotion; there is no /promo index. Without the promotions
+// service, or for an ID that is not an activated promotion, this is the
+// site's not-found page.
+const { id } = Astro.params;
+const network = networkConfig();
+const view = networkView(network);
+const target = promotionsTarget(network);
+
+if (!target || !isPromotionId(id)) return Astro.rewrite('/404');
+
+let promotion: PromotionView | null = null;
+let fetchedAt = 0;
+try {
+  const snapshot = await getPromotionSnapshot(target, id);
+  promotion = snapshot.value;
+  fetchedAt = snapshot.fetchedAt;
+} catch (error) {
+  if (error instanceof PromotionsHttpError && error.status === 404) return Astro.rewrite('/404');
+  console.error(`Failed to load promotion ${id} during SSR`, error);
+}
+
+// The service is unreachable or answered with something unusable, and no
+// earlier copy is cached.
+if (!promotion) {
+  Astro.response.status = 503;
+  Astro.response.headers.set('Retry-After', '60');
+}
+---
+<BaseLayout
+  title={promotion?.name ?? 'Promotion temporarily unavailable'}
+  description={promotion ? promotionDescription(promotion) : 'Promotion details are temporarily unavailable. Please try again later.'}
+  canonicalUrl={promotion ? canonicalPageUrl(promotionPath(promotion), network.siteUrl) : undefined}
+  noindex={!promotion}
+>
+  {promotion ? (
+    <PromotionPage
+      client:load
+      network={view}
+      initialView={promotion}
+      initialFetchedAt={fetchedAt}
+      renderedAt={Date.now()}
+    />
+  ) : (
+    <div style="padding: 88px 32px 48px; max-width: 1280px; margin: 0 auto;">
+      <h1 style="color: var(--pro-text); font-size: 32px;">Promotion temporarily unavailable</h1>
+      <p style="color: var(--pro-text-dim);">Promotion details are temporarily unavailable. Please try again later.</p>
+      <a href="/" style="color: var(--mint-400);">← Back to services</a>
+    </div>
+  )}
+</BaseLayout>

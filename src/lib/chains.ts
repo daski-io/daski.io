@@ -115,9 +115,13 @@ export interface NetworkSwitchLink {
   active: boolean;
 }
 
-/** Service and provider IDs are chain-specific, so those pages switch to the other network's directory. */
+/**
+ * Service and provider IDs are chain-specific, and each network runs its own
+ * promotions, so those pages switch to the other network's directory.
+ */
 export function isChainSpecificPath(pathname: string): boolean {
-  return pathname.startsWith('/service/') || pathname.startsWith('/provider/');
+  return pathname.startsWith('/service/') || pathname.startsWith('/provider/') ||
+    pathname.startsWith('/promo/');
 }
 
 export function networkSwitchLinks(
@@ -145,9 +149,13 @@ export function assertGatewayChain(reportedChainId: number, expectedChainId: num
   }
 }
 
-/** The machine-readable summary served at /llms.txt for this instance. */
+/**
+ * The machine-readable summary served at /llms.txt for this instance. A
+ * published network adds `promotionLine`, the open promotion, when there is one.
+ */
 export function llmsText(
   view: Pick<NetworkView, 'id' | 'label' | 'chainId' | 'chainName' | 'gatewayUrl' | 'siteUrls'>,
+  promotionLine: string | null = null,
 ): string {
   if (!view.gatewayUrl) {
     return [
@@ -168,6 +176,7 @@ export function llmsText(
     `Daski is an outcome marketplace for AI agents. The ${view.label} runtime uses one`,
     `standard x402 V2 Exact-EVM rail with canonical USDC on ${view.chainName}.`,
     '',
+    ...(promotionLine ? [promotionLine, ''] : []),
     '## Buyer interface',
     '',
     'Discovery is service-first: the public service catalog lists each registered',
