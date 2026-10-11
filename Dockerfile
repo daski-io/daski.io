@@ -1,12 +1,14 @@
-# syntax=docker/dockerfile:1
+# syntax=mirror.gcr.io/docker/dockerfile:1
 # One base for every stage, pinned by digest: the sandbox and production build
 # the same commit days apart, so the base must not drift between them. The
 # explicit bookworm tag keeps the Debian package pins below valid if the
 # node:22-slim alias moves to a newer Debian. To refresh it when the image scan
 # flags the base, run `docker buildx imagetools inspect node:22-bookworm-slim`,
 # copy the top-level Digest (the manifest list) here, then rebuild and test the
-# image.
-ARG NODE_IMAGE=node:22-bookworm-slim@sha256:83f487e0a63425e5b4d146fb5e5be574bcbe1b7b843d3ebafdd95eaf7767a7e5
+# image. Docker Hub images, this base and the syntax frontend above, come
+# through Google's mirror with the same digests: anonymous Docker Hub pulls
+# from shared CI runners hit its rate limit.
+ARG NODE_IMAGE=mirror.gcr.io/library/node:22-bookworm-slim@sha256:83f487e0a63425e5b4d146fb5e5be574bcbe1b7b843d3ebafdd95eaf7767a7e5
 FROM ${NODE_IMAGE} AS base
 # Debian security updates for PCRE2 and Perl in the Node image, the versions the
 # gateway and provider images install. The develop image scan
