@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import test from 'node:test';
-import { createWebsiteMcp } from '../src/mcp/server.ts';
+import { createWebsiteMcp, MCP_CLIENT_REQUESTS_PER_MINUTE, MCP_REQUESTS_PER_MINUTE } from '../src/mcp/server.ts';
 import { resolveNetworkConfig } from '../src/lib/network.ts';
 import { GUIDE_FILES, renderGuide } from '../src/lib/agentGuides.ts';
 
@@ -324,4 +324,20 @@ test('entity download URL survives the MCP envelope without being fetched or rew
   assert.deepEqual(JSON.parse(bytes), result);
   assert.equal(calls.filter(call => call.path === '/wallet/assets/action').length, 1);
   assert.ok(calls.every(call => !call.url.includes('/entity-documents/')));
+});
+
+test('MCP admits six hundred requests a minute per client, then refuses with Retry-After', async t => {
+  // Several release acceptance lanes share one host's address.
+  assert.equal(MCP_CLIENT_REQUESTS_PER_MINUTE, 600);
+  assert.equal(MCP_REQUESTS_PER_MINUTE, 3000);
+  t.mock.method(Date, 'now', () => 1_800_000_000_000);
+  const { server } = fixture(t);
+  // A request is counted before its body is read, so an unsupported one is cheap and still counts.
+  const request = () => new Request('https://website.example/mcp', { method: 'POST', headers: { 'content-type': 'text/plain' }, body: 'x' });
+  for (let i = 0; i < MCP_CLIENT_REQUESTS_PER_MINUTE; i++) assert.equal((await server.fetch(request(), '192.0.2.9')).status, 415);
+  const refused = await server.fetch(request(), '192.0.2.9');
+  assert.equal(refused.status, 429);
+  assert.equal(refused.headers.get('retry-after'), '60');
+  assert.equal((await refused.json()).error.message, 'MCP rate limit exceeded.');
+  assert.equal((await server.fetch(request(), '192.0.2.10')).status, 415, 'another client keeps its own budget');
 });

@@ -7,6 +7,14 @@ import { GatewayClient } from './gateway.ts';
 import { assertNoDuplicateJsonKeys } from './jsonIngress.ts';
 import { registerDaskiTools } from './tools.ts';
 
+// Requests a minute from one client address, and from all clients together.
+// Release acceptance runs several harness lanes from one host at once, each
+// opening with about twenty requests within seconds; sixty a minute refused
+// three lanes on 2026-10-12. The gateway still limits every paid and stateful
+// call per client: the client's address travels with each forwarded request.
+export const MCP_CLIENT_REQUESTS_PER_MINUTE = 600;
+export const MCP_REQUESTS_PER_MINUTE = 3000;
+
 export function createWebsiteMcp(config: NetworkConfig, readGuide: ReadGuide, request: typeof fetch = fetch) {
   const clients = new AsyncLocalStorage<string>();
   let window = 0;
@@ -55,7 +63,7 @@ export function createWebsiteMcp(config: NetworkConfig, readGuide: ReadGuide, re
       const minute = Math.floor(Date.now() / 60_000);
       if (minute !== window) { window = minute; total = 0; counts.clear(); }
       const count = counts.get(clientAddress) ?? 0;
-      if (count >= 60 || total >= 300) {
+      if (count >= MCP_CLIENT_REQUESTS_PER_MINUTE || total >= MCP_REQUESTS_PER_MINUTE) {
         const response = fail(429, 'MCP rate limit exceeded.');
         response.headers.set('retry-after', '60');
         return response;
