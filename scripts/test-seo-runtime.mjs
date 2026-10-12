@@ -211,7 +211,7 @@ try {
   // There is no /promo index, whether or not promotions are configured.
   for (const path of ['/promo', '/promo/']) assert.match((await page(path, 404)).title, /^Page not found/);
   if (!promotions) {
-    // Without PROMOTIONS_INTERNAL_URL no promotion page exists and nothing links to one.
+    // Off Railway without PROMOTIONS_INTERNAL_URL no promotion page exists and nothing links to one.
     assert.match((await page('/promo/launch', 404)).title, /^Page not found/);
     assert.equal((await fetch(local + '/promo/launch.json')).status, 404);
     assert.doesNotMatch(home.html, /href="\/promo\//);

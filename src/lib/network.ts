@@ -22,7 +22,7 @@ export interface NetworkConfig extends NetworkView {
   gatewayInternalUrl: string | null;
   /** Server-only value Cloudflare adds as X-Daski-Edge-Secret; null when unset (a local run). */
   edgeSecret: string | null;
-  /** Server-only origin of the private promotions service; null when unset or malformed, which hides promotions. */
+  /** Server-only origin of the private promotions service; null off Railway without PROMOTIONS_INTERNAL_URL, or when it is malformed, which hides promotions. */
   promotionsInternalUrl: string | null;
   /** This instance's canonical origin. */
   siteUrl: string;
@@ -80,6 +80,14 @@ function optionalOrigin(value: string | undefined, name: string): string | null 
   }
 }
 
+// Each network's promotions service, at its address on Railway's private
+// network: the project runs it as "promotions" beside the Testnet site and as
+// "promotions-production" beside the Mainnet site, API on port 8080.
+export const RAILWAY_PROMOTIONS_URLS: Readonly<Record<NetworkId, string>> = {
+  testnet: 'http://promotions.railway.internal:8080',
+  mainnet: 'http://promotions-production.railway.internal:8080',
+};
+
 export function resolveNetworkConfig(env: ProcessEnv): NetworkConfig {
   const id = oneOf(read(env, 'DASKI_NETWORK'), NETWORK_IDS, 'DASKI_NETWORK', 'testnet');
   const chain = CHAINS[id];
@@ -90,6 +98,13 @@ export function resolveNetworkConfig(env: ProcessEnv): NetworkConfig {
   const gatewayInternalUrl = gatewayUrl
     ? origin(read(env, 'GATEWAY_INTERNAL_URL'), 'GATEWAY_INTERNAL_URL') ?? null
     : null;
+  // On Railway (which sets RAILWAY_PRIVATE_DOMAIN) the network's promotions
+  // service is read at its private address. PROMOTIONS_INTERNAL_URL overrides
+  // it; off Railway, a local run, promotions stay hidden unless it is set.
+  const promotionsOverride = read(env, 'PROMOTIONS_INTERNAL_URL');
+  const promotionsInternalUrl = promotionsOverride !== undefined
+    ? optionalOrigin(promotionsOverride, 'PROMOTIONS_INTERNAL_URL')
+    : read(env, 'RAILWAY_PRIVATE_DOMAIN') ? RAILWAY_PROMOTIONS_URLS[id] : null;
   const siteUrls: Record<NetworkId, string> = {
     testnet: origin(read(env, 'TESTNET_SITE_URL'), 'TESTNET_SITE_URL') ?? CHAINS.testnet.siteUrl,
     mainnet: origin(read(env, 'MAINNET_SITE_URL'), 'MAINNET_SITE_URL') ?? CHAINS.mainnet.siteUrl,
@@ -108,7 +123,7 @@ export function resolveNetworkConfig(env: ProcessEnv): NetworkConfig {
     gatewayUrl,
     gatewayInternalUrl,
     edgeSecret,
-    promotionsInternalUrl: optionalOrigin(read(env, 'PROMOTIONS_INTERNAL_URL'), 'PROMOTIONS_INTERNAL_URL'),
+    promotionsInternalUrl,
     notice: oneOf(read(env, 'NETWORK_NOTICE'), NOTICES, 'NETWORK_NOTICE', derivedNotice),
     siteUrls,
     siteUrl,

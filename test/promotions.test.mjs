@@ -287,7 +287,7 @@ test('llms.txt gains one line for the open promotion on a published network', ()
   assert.doesNotMatch(llmsText(unpublished, line), /promo/);
 });
 
-test('PROMOTIONS_INTERNAL_URL is a server-only origin and a malformed one hides promotions', () => {
+test('the promotions service is a server-only origin, found on Railway by network, and a malformed override hides promotions', () => {
   const configured = resolveNetworkConfig({
     DASKI_NETWORK: 'mainnet',
     PROMOTIONS_INTERNAL_URL: 'http://promotions.railway.internal:8080/',
@@ -301,6 +301,14 @@ test('PROMOTIONS_INTERNAL_URL is a server-only origin and a malformed one hides 
   assert.equal(unset.promotionsInternalUrl, null);
   assert.equal(promotionsTarget(unset), null);
 
+  // On Railway each network reads its own promotions service at its private address, unless overridden.
+  const railway = { RAILWAY_PRIVATE_DOMAIN: 'daski-website.railway.internal' };
+  assert.equal(resolveNetworkConfig(railway).promotionsInternalUrl, 'http://promotions.railway.internal:8080');
+  assert.deepEqual(promotionsTarget(resolveNetworkConfig(railway)), { url: 'http://promotions.railway.internal:8080', chainId: 84532 });
+  assert.equal(resolveNetworkConfig({ ...railway, DASKI_NETWORK: 'mainnet' }).promotionsInternalUrl, 'http://promotions-production.railway.internal:8080');
+  assert.equal(resolveNetworkConfig({ ...railway, PROMOTIONS_INTERNAL_URL: 'http://promotions.test:8080' }).promotionsInternalUrl, 'http://promotions.test:8080');
+  assert.equal(JSON.stringify(networkView(resolveNetworkConfig(railway))).includes('promotions.railway.internal'), false);
+
   const originalError = console.error;
   const reported = [];
   console.error = (...args) => reported.push(args.join(' '));
@@ -310,10 +318,12 @@ test('PROMOTIONS_INTERNAL_URL is a server-only origin and a malformed one hides 
       assert.equal(config.promotionsInternalUrl, null, value);
       assert.equal(config.id, 'mainnet');
     }
+    // A malformed override hides promotions on Railway too; it never falls back to the default.
+    assert.equal(resolveNetworkConfig({ ...railway, PROMOTIONS_INTERNAL_URL: 'ftp://promotions.internal' }).promotionsInternalUrl, null);
   } finally {
     console.error = originalError;
   }
-  assert.equal(reported.length, 3);
+  assert.equal(reported.length, 4);
   assert.match(reported[0], /PROMOTIONS_INTERNAL_URL/);
 });
 

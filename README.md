@@ -90,7 +90,7 @@ at `https://sandbox-gateway.daski.io`.
 | `TESTNET_SITE_URL`, `MAINNET_SITE_URL` | header switch targets | `https://sandbox.daski.io`, `https://daski.io` |
 | `EXPLORER_URL` | block explorer origin | Basescan for the configured chain |
 | `SITE_ROBOTS` | `index` or `noindex` | `index` |
-| `PROMOTIONS_INTERNAL_URL` | server-only origin of the private promotions service over Railway private networking; unset hides promotions | unset |
+| `PROMOTIONS_INTERNAL_URL` | server-only origin of the private promotions service, overriding the network's service on Railway; off Railway, unset hides promotions | on Railway `http://promotions.railway.internal:8080` (testnet) or `http://promotions-production.railway.internal:8080` (mainnet), otherwise unset |
 
 Chain facts (chain ID, name, explorer) live in `src/lib/chains.ts`, keyed by
 network. A mainnet instance without `GATEWAY_URL` renders its empty states and
@@ -126,13 +126,14 @@ instead of waiting on the gateway.
 
 Each activated promotion has a page at `/promo/<id>`, and the same parsed view
 as JSON at `/promo/<id>.json` for agents and for the page's 30-second refresh.
-There is no `/promo` index. The data comes from the private promotions service
-at `PROMOTIONS_INTERNAL_URL`: only the server reads it, so the browser never
-calls the service. Its payloads are parsed strictly, a view for another chain
+There is no `/promo` index. The data comes from the private promotions service:
+on Railway the network's own service at its private address, or
+`PROMOTIONS_INTERNAL_URL` when set. Only the server reads it, so the browser
+never calls the service. Its payloads are parsed strictly, a view for another chain
 is refused, and they are cached like gateway payloads.
 
-Without the variable (or with a malformed one) promotion pages return 404 and
-nothing else changes, so the site can ship before the service exists. An
+Off Railway without the variable (or with a malformed one) promotion pages
+return 404 and nothing else changes. An
 unknown ID returns 404; an unreachable service with no cached copy returns 503
 with `Retry-After`. While the service reports an open promotion (Active or
 Fully claimed, not paused), a mainnet instance shows a teaser under the home
