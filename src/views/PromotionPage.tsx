@@ -5,6 +5,7 @@ import { Pill } from '../components/ui/Pill';
 import { Section } from '../components/ui/Section';
 import { explorerAddress, explorerTx, type NetworkView } from '../lib/chains';
 import {
+  appliesToEntries,
   browseServicesHref,
   delayedMinutes,
   delayedText,
@@ -168,10 +169,10 @@ function HeaderCard({ view, now, delayed }: { view: PromotionView; now: number; 
 function Offers({ view }: { view: PromotionView }) {
   return (
     <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
-      {view.appliesTo.map((offer) => (
-        <li key={`${offer.serviceId} ${offer.offerName}`}>
-          <a href={`/service/${offer.serviceId}`} style={offerLinkStyle}>{offer.offerName}</a>
-          <span style={{ color: 'var(--pro-text-dim)', fontWeight: 400 }}> · {offer.serviceName}</span>
+      {appliesToEntries(view).map((entry) => (
+        <li key={`${entry.href} ${entry.label}`}>
+          <a href={entry.href} style={offerLinkStyle}>{entry.label}</a>
+          {entry.service && <span style={{ color: 'var(--pro-text-dim)', fontWeight: 400 }}> · {entry.service}</span>}
         </li>
       ))}
     </ul>

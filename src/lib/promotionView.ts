@@ -53,6 +53,8 @@ export interface PromotionView extends PromotionSummary {
   /** spots − sent − inProgress. */
   open: number;
   appliesTo: PromotionOffer[];
+  /** The promotion covers every offer listed on its chain. A service that does not send it reads as false. */
+  appliesToAll: boolean;
   walletRule: PromotionWalletRule;
   /** The promotion's approved terms, rendered verbatim and in order. */
   terms: string[];
@@ -239,6 +241,7 @@ export function parsePromotionView(value: unknown, expectedChainId: number): Pro
     inProgress,
     open,
     appliesTo: list(item.appliesTo, 'offers', 1, 100).map(parseOffer),
+    appliesToAll: item.appliesToAll === undefined ? false : flag(item.appliesToAll, 'applies-to-all flag'),
     walletRule: oneOf(item.walletRule, WALLET_RULES, 'wallet rule'),
     terms: list(item.terms, 'terms', 1, 50).map((term, index) => text(term, `term ${index}`, 2_000)),
     termsVersion: text(item.termsVersion, 'terms version', 64),

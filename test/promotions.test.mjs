@@ -5,6 +5,7 @@ import test from 'node:test';
 import { llmsText } from '../src/lib/chains.ts';
 import { networkView, promotionsTarget, resolveNetworkConfig } from '../src/lib/network.ts';
 import {
+  appliesToEntries,
   browseServicesHref,
   delayedMinutes,
   delayedText,
@@ -61,6 +62,7 @@ test('parses the launch promotion view and ignores unknown keys', () => {
     'Agent Mailbox: Create mailbox',
     'Domain Management: Register domain',
   ]);
+  assert.equal(view.appliesToAll, false, 'a service that does not send the flag lists its offers');
   assert.equal(view.walletRule, 'first_order');
   assert.equal(view.terms.length, 11);
   assert.equal(view.terms[0], vector.terms[0]);
@@ -125,6 +127,7 @@ test('rejects malformed views', () => {
     'end before start': (value) => { value.endsAt = value.startsAt; },
     'no offers': (value) => { value.appliesTo = []; },
     'bad service ID': (value) => { value.appliesTo[0].serviceId = '0x01'; },
+    'non-boolean applies-to-all flag': (value) => { value.appliesToAll = 'yes'; },
     'unknown wallet rule': (value) => { value.walletRule = 'first'; },
     'no terms': (value) => { value.terms = []; },
     'term with a control character': (value) => { value.terms[0] = 'Sent\u0007 automatically.'; },
@@ -138,6 +141,16 @@ test('rejects malformed views', () => {
     assert.throws(() => parsePromotionView(replaced ?? value, MAINNET), Error, name);
   }
   assert.throws(() => parsePromotionView(null, MAINNET), /not an object/);
+});
+
+test('a promotion for every listed offer reads "All services"; any other lists its offers', () => {
+  const all = parsePromotionView(variant((value) => { value.appliesToAll = true; }), MAINNET);
+  assert.deepEqual(appliesToEntries(all), [{ label: 'All services', href: '/#directory' }]);
+  const some = parsePromotionView(variant((value) => { value.appliesToAll = false; }), MAINNET);
+  assert.deepEqual(appliesToEntries(some), some.appliesTo.map((offer) => ({
+    label: offer.offerName, href: `/service/${offer.serviceId}`, service: offer.serviceName,
+  })));
+  assert.deepEqual(appliesToEntries(some).map((entry) => entry.label), ['Create mailbox', 'Register domain']);
 });
 
 test('parses the promotion index for the sitemap', () => {

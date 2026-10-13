@@ -123,6 +123,22 @@ export function showsBrowseServices(view: Pick<PromotionView, 'status' | 'paused
   return isOpenStatus(view.status) && !view.paused;
 }
 
+export interface AppliesToEntry {
+  label: string;
+  href: string;
+  /** The service an offer belongs to, shown after it. */
+  service?: string;
+}
+
+/**
+ * What "Applies to" shows: "All services" when the promotion covers every
+ * listed offer, otherwise each offer with its service.
+ */
+export function appliesToEntries(view: Pick<PromotionView, 'appliesTo' | 'appliesToAll'>): AppliesToEntry[] {
+  if (view.appliesToAll) return [{ label: 'All services', href: '/#directory' }];
+  return view.appliesTo.map((offer) => ({ label: offer.offerName, href: `/service/${offer.serviceId}`, service: offer.serviceName }));
+}
+
 /** One eligible service links to its page; several link to the services directory. */
 export function browseServicesHref(view: Pick<PromotionView, 'appliesTo'>): string {
   const serviceIds = [...new Set(view.appliesTo.map((offer) => offer.serviceId))];
