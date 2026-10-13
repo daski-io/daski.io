@@ -110,9 +110,12 @@ GATEWAY_URL=http://localhost:3000 npm run dev
 
 Server rendering can reach the gateway over a different origin than the
 browser does. `GATEWAY_INTERNAL_URL` is server-only; when set, SSR fetches use
-it and the browser keeps using `GATEWAY_URL`. If the internal origin fails,
-SSR falls back to the public origin and retries the internal one a minute
-later.
+it and the browser keeps using `GATEWAY_URL`. If the internal origin cannot be
+reached or answers with a server error, SSR falls back to the public origin
+and retries the internal one a minute later. A request that times out is not
+replayed against the public origin, which reaches the same gateway: it fails,
+pages keep showing their last good data, and later requests use the public
+origin until the internal one is retried.
 
 ```bash
 GATEWAY_INTERNAL_URL=http://gateway.railway.internal:8080

@@ -8,8 +8,9 @@ export { atomicUsdc, formatDuration, reputationRate } from './displayFormat.ts';
 // Where a request goes. The public origin is what the browser also uses; the
 // optional internal origin is server-only and points at Railway private
 // networking (for example http://gateway.railway.internal:8080). When the
-// internal origin fails, the request falls back to the public origin and the
-// internal one is skipped for a minute. `chainId` is the chain this instance
+// internal origin fails, the request falls back to the public origin, unless
+// it timed out (see internalFailure), and the internal one is skipped for a
+// minute. `chainId` is the chain this instance
 // is configured for: rail metadata reporting another chain is refused.
 export interface GatewayTarget {
   url: string;
@@ -498,6 +499,29 @@ async function fetchJsonFrom<T>(
   return response.json() as Promise<T>;
 }
 
+/**
+ * What a failed request to the internal origin means.
+ *
+ * - `final`: the gateway answered (a 4xx) or the caller gave up. The error
+ *   stands and the internal origin stays in use.
+ * - `timeout`: the gateway was slow or the private path stalled. The request
+ *   is not replayed against the public origin, which reaches the same
+ *   gateway: on 2026-10-10 three timed-out detail refreshes replayed there
+ *   and queued behind their own first copies, doubling the gateway's work.
+ *   Later requests skip the internal origin for a minute.
+ * - `retry`: anything else, such as a refused connection or a 5xx. The
+ *   request goes to the public origin at once, and later requests skip the
+ *   internal origin for a minute.
+ */
+export function internalFailure(
+  error: unknown,
+  signal?: AbortSignal,
+): 'final' | 'timeout' | 'retry' {
+  if (error instanceof GatewayHttpError) return error.status < 500 ? 'final' : 'retry';
+  if (signal?.aborted) return 'final';
+  return (error as { name?: unknown } | null)?.name === 'TimeoutError' ? 'timeout' : 'retry';
+}
+
 async function fetchJson<T>(
   target: GatewayTarget,
   path: string,
@@ -508,9 +532,16 @@ async function fetchJson<T>(
     try {
       return await fetchJsonFrom<T>(internal, path, signal);
     } catch (error) {
-      // A 4xx is the gateway's answer rather than a transport failure.
-      if (error instanceof GatewayHttpError && error.status < 500) throw error;
+      const failure = internalFailure(error, signal);
+      if (failure === 'final') throw error;
       internalDisabledUntil.set(internal, Date.now() + INTERNAL_RETRY_MS);
+      if (failure === 'timeout') {
+        console.error(
+          `gateway internal origin ${internal} timed out; later requests use ${target.url}`,
+          error,
+        );
+        throw error;
+      }
       console.error(
         `gateway internal origin ${internal} failed; using ${target.url}`,
         error,
