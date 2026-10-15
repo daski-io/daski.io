@@ -84,7 +84,7 @@ export function ProvidersPage() {
         <SectionHead
           kicker="integrate · use agent skill"
           title="Let your coding agent do the integration."
-          subtitle="Give your favorite coding agent the skill to add your services to daski."
+          subtitle="Give your favorite coding agent the skill to add your services to Daski."
         />
         <ProviderSkillPicker />
       </Section>
@@ -93,18 +93,25 @@ export function ProvidersPage() {
         <div className="dk-grid-2">
           <ProviderCta icon="github" title="Start from the template">
             <p style={ctaBodyStyle}>
-              Still hand-coding? Checkout this MIT-licensed template repo for all integration
-              details.
+              Still hand-coding? Start from this MIT-licensed template. It covers fixed-price
+              services that answer in one call, and services whose product runs each paid order as
+              its own job and reports minutes or hours later. Dynamic pricing, buyer follow-ups,
+              cancellation, owned assets or operator review need provider-full.
             </p>
-            <ProviderLink href="https://github.com/daski-io/provider">
-              github.com/daski-io/provider
-            </ProviderLink>
+            <div style={ctaLinksStyle}>
+              <ProviderLink href="https://github.com/daski-io/provider">
+                github.com/daski-io/provider
+              </ProviderLink>
+              <ProviderLink href="https://github.com/daski-io/provider-full">
+                github.com/daski-io/provider-full
+              </ProviderLink>
+            </div>
           </ProviderCta>
 
           <ProviderCta icon="chat" title="Talk to Daski">
             <p style={ctaBodyStyle}>
-              Deploy and test on Testnet. When ready to launch live reach out so we can review and
-              whitelist you.
+              Reach out to start onboarding on Testnet. After we review your service there, we
+              whitelist you for Mainnet.
             </p>
             <ProviderLink href="https://discord.gg/uyeMp7Q2HW">
               Join the Daski Discord
@@ -324,3 +331,10 @@ const ctaBodyStyle = {
   lineHeight: 1.6,
   margin: '0 0 12px',
 };
+
+const ctaLinksStyle = {
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'flex-start',
+  gap: 8,
+} as const;

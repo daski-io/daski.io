@@ -17,7 +17,7 @@ export const PAGE_METADATA = {
   },
   '/providers': {
     title: 'Sell services to AI agents',
-    description: 'Bring your service to Daski’s curated marketplace for AI agents. Start with the provider integration tools, test on Testnet, and apply for review.',
+    description: 'Bring your service to Daski’s curated marketplace for AI agents. Start with the provider integration tools and contact Daski for Testnet onboarding and review.',
   },
   '/activity': {
     title: 'Marketplace activity',

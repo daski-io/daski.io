@@ -61,7 +61,9 @@ test('setup uses live gateway version authority and preserves the purchase and w
   assert.match(setup, /daski buy --provider/);
   assert.match(setup, /daski_get_payment_challenge/);
   const buy = await document('/skills/buy.md').text();
-  for (const code of ['PAYMENT_IDENTIFIER_UNKNOWN', 'PAYMENT_IDENTIFIER_CONFLICT', 'SIGNATURE_COUNTERFACTUAL_REJECTED', 'CONFIRMATION_SPONSORED_REQUIRES_EOA', 'CONFIRMATION_SPONSORSHIP_LIMIT', 'DASKI_CIRCLE_EXECUTION_NOT_QUALIFIED']) assert.ok(buy.includes(code));
+  for (const code of ['PAYMENT_IDENTIFIER_UNKNOWN', 'PAYMENT_IDENTIFIER_CONFLICT', 'SIGNATURE_COUNTERFACTUAL_REJECTED', 'CONFIRMATION_SPONSORED_REQUIRES_EOA', 'CONFIRMATION_SPONSORSHIP_LIMIT', 'DASKI_CIRCLE_EXECUTION_NOT_QUALIFIED', 'ORDER_ACTION_UNSUPPORTED', 'ORDER_ACTION_CONFLICT', 'PROVIDER_LIFECYCLE_UNAVAILABLE']) assert.ok(buy.includes(code));
+  // The gateway's provider refusals point their docs link at this errors table.
+  assert.match(buy, /\| PROVIDER_LIFECYCLE_UNAVAILABLE \| The action may already have taken effect\. Wait for Retry-After \(10 seconds\), then retry at most three times with the identical request, keeping any requestId\. A signed action needs a fresh order-action authorization each time, because a spent one is never restored; a read capability is reused\. Then read the order status\. \|/);
   assert.match(await document('/skills/wallets.md').text(), /\| Circle agent wallet \| contract \|/);
   assert.match(await document('/skills/orders.md').text(), /daski order confirm <handle> --tx <hash>/);
   assert.match(await document('/skills/orders.md').text(), /resubmit the complete corrected request as order input/);
@@ -74,6 +76,13 @@ test('setup uses live gateway version authority and preserves the purchase and w
   // A recovery recorded on-chain is shown beside the failure, never in place of it.
   assert.match(await document('/skills/orders.md').text(), /When the provider records the recovery on-chain, beside the original Failed outcome, Daski's public reputation counts the order as completed\./);
   assert.doesNotMatch(await document('/skills/orders.md').text(), /later recovered/);
+  // Some providers serve only status and artifact reads; a refused signed action stays spent.
+  assert.match(await document('/skills/orders.md').text(), /some serve only status and artifact reads\. An action the provider does not offer answers `ORDER_ACTION_UNSUPPORTED` and changes nothing/);
+  assert.match(await document('/skills/orders.md').text(), /A refusal never restores a spent authorization, so each retry of a signed action carries a fresh order-action authorization; a read capability is reused\./);
+  assert.match(await document('/skills/orders.md').text(), /\]\(https:\/\/docs\.example\/skills\/buy\.md#errors\) for every code/);
+  // An expired deadline fails the gateway order without stopping the provider's work.
+  assert.match(await document('/skills/orders.md').text(), /never shorter than the duration in the order's checkout snapshot and can only grow; paused sales do not suspend it\./);
+  assert.match(await document('/skills/orders.md').text(), /show `fulfillmentState: "completed"` and return the artifact while `orderState` stays `PROVIDER_FAILED`\. Only a Daski operator can revive the order\./);
 });
 
 test('mainnet instructions use only the configured mainnet endpoints', () => {

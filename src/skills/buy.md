@@ -59,6 +59,9 @@ Use the response's `retryable`, `requiresNewSignature`, `paymentMayHaveSettled`,
 | Timeout / PAYMENT_PENDING_RECONCILIATION / paymentMayHaveSettled: true | Run daski order reconcile with the recorded identifier. |
 | WALLET_AUTHORIZATION_INVALID | Repeat the order command to obtain fresh read access or action authorization. |
 | ARTIFACT_NOT_AVAILABLE | The order is neither completed nor recovered. Read its status; fetch the artifact once it completes. |
+| ORDER_ACTION_UNSUPPORTED | The provider does not offer this order action; some serve only status and artifact reads. Nothing changed. Do not retry; read the order status. |
+| ORDER_ACTION_CONFLICT | The requestId already carries different content, and the provider keeps the first. Do not resend it; a new message needs a new requestId and a fresh authorization. |
+| PROVIDER_LIFECYCLE_UNAVAILABLE | The action may already have taken effect. Wait for Retry-After (10 seconds), then retry at most three times with the identical request, keeping any requestId. A signed action needs a fresh order-action authorization each time, because a spent one is never restored; a read capability is reused. Then read the order status. |
 | INTERNAL_ERROR | Report correlationId. Reconcile if the signature was submitted and settlement is uncertain. |
 
 ## Reconciliation
