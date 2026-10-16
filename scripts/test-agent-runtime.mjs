@@ -91,10 +91,26 @@ try {
     const text = await response.text(); assert.doesNotMatch(text, /\{\{/);
     assert.equal(createHash('sha256').update(text).digest('hex'), guide.sha256);
   }
-  for (const path of ['/llms.txt', '/llms-full.txt', '/skill.md', '/SKILL.md', '/.well-known/skills/index.json', '/.well-known/skills/daski/SKILL.md']) {
+  for (const path of ['/llms.txt', '/llms-full.txt', '/.well-known/skills/index.json']) {
     assert.equal((await fetch(siteUrl + path)).status, 200, path);
   }
-  assert.equal((await fetch(`${siteUrl}/skills/not-a-guide.md`)).status, 404);
+  const skillResponse = await fetch(`${siteUrl}/skills/SKILL.md`);
+  assert.equal(skillResponse.status, 200);
+  const skillContent = await skillResponse.text();
+  const skillHeaders = ['content-type', 'cache-control', 'access-control-allow-origin', 'x-content-type-options', 'etag'];
+  for (const path of ['/skill.md', '/SKILL.md', '/.well-known/skills/daski/SKILL.md']) {
+    const response = await fetch(siteUrl + path, { redirect: 'manual' });
+    assert.equal(response.status, 200, path);
+    assert.equal(await response.text(), skillContent, path);
+    for (const header of skillHeaders) assert.equal(response.headers.get(header), skillResponse.headers.get(header), `${path}: ${header}`);
+    const head = await fetch(siteUrl + path, { method: 'HEAD', redirect: 'manual' });
+    assert.equal(head.status, 200, path);
+    assert.equal(await head.text(), '', path);
+    for (const header of skillHeaders) assert.equal(head.headers.get(header), skillResponse.headers.get(header), `${path} HEAD: ${header}`);
+  }
+  for (const path of ['/not-a-guide.md', '/Skill.md', '/skills/not-a-guide.md']) {
+    assert.equal((await fetch(siteUrl + path, { redirect: 'manual' })).status, 404, path);
+  }
   const metadata = await (await fetch(`${siteUrl}/.well-known/mcp.json`)).json();
   assert.equal(metadata.transport.url, siteUrl + '/mcp');
   const agents = await (await fetch(siteUrl + '/agents')).text();
