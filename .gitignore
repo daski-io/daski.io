@@ -17,3 +17,9 @@ dist-ssr
 *.sw?
 _design_reference
 .claude
+
+# Repository-wide agent instructions are private workspace material.
+# Public setup and contributor guidance belongs in README.md.
+AGENTS.md
+AGENT.md
+CLAUDE.md

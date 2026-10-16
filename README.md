@@ -1,3 +1,17 @@
+---
+title: "daski.io"
+status: canonical
+authority: current repository implementation and approved maintainer workflow
+owner: repository maintainers
+effective-date: 2026-10-16
+last-verified: 2026-10-16 (documentation placement; no live release verification)
+supersedes: repository-wide agent files as the home of general repository guidance
+superseded-by: none
+sensitivity: public-safe
+related-repositories: daski-io/daski.io
+review-trigger: setup, architecture, interface or workflow change
+---
+
 # daski.io
 
 [Daski](https://sandbox.daski.io) is marketplace infrastructure for the agent
@@ -217,6 +231,28 @@ and contract addresses come from the gateway's chain metadata, so nothing in
 Push to `develop` only when [docs/release-readiness.md](docs/release-readiness.md)
 is satisfied: releases promote the exact commit CI proved, and anything a change
 needs at deploy time goes in that commit's `Release-*` trailers.
+
+## Implementation and content
+
+- Coordinate MCP, discovery and guide changes with the gateway REST contract and
+  buyer capabilities/exact CLI pin. Never blindly retry transaction requests.
+- Coordinate promotion displays with the promotions private API. Keep its internal
+  API and payout/customer details out of public surfaces.
+- Official brand, artwork, terms and business claims require current owner-approved
+  sources supplied by the maintainers. A design draft or old chat is not
+  evidence of approved claims.
+- Update tests and buyer-facing instructions with behavior. Keep private design
+  transcripts, audits and strategy out of public commits.
+- Verify rendered behavior and live-data assumptions at the appropriate stage;
+  an HTTP success code alone does not prove a correct release.
+
+## Development verification
+
+Use the current README/Docker/CI Node requirement (>=22.12, Node 22 runtime), install
+from the lockfile for the current host, then run `npm run lint`, `npm test`,
+`npm run build` and `npm run test:runtime` as required by the readiness guide.
+Build/runtime checks use controlled configuration. Publishing the site requires the
+engine's release authority; a content edit or green build is not publication.
 
 ## License
 

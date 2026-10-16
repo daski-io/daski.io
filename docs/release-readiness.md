@@ -1,9 +1,25 @@
+---
+title: Release readiness
+status: canonical
+authority: current release-engine implementation and approved owner decisions
+owner: repository maintainers
+effective-date: 2026-10-16
+last-verified: 2026-10-16
+supersedes: split-coordinator and pre-handover descriptions where inconsistent
+superseded-by: none
+sensitivity: public-safe
+related-repositories: daski-io/daski.io; daski-io/deploy-mainnet
+review-trigger: release process, interface or CI change
+---
+
 # Release readiness
 
 Releases are run by the release engine in the coordinator
-([daski-io/deploy-mainnet](https://github.com/daski-io/deploy-mainnet)) with two
-commands per target: `prep` prints exactly what the release deploys and the
-wording that authorizes it, and `go` ships it. The engine only checks that CI
+([daski-io/deploy-mainnet](https://github.com/daski-io/deploy-mainnet)) for both
+sandbox and production. Its current `README.md` and engine runbook define the
+owner-authorized release entrypoint and any additional GO stops. Even `prep`
+can sign a catalog epoch or propose a governance batch; it is not an unsigned
+local check. The engine checks that CI
 passed on the exact `develop` commit and deploys the image CI built
 (`ghcr.io/daski-io/daski.io:<sha>`, recorded by the Release image workflow) by
 digest; no service deploys from a branch. `develop` must therefore always be
@@ -27,8 +43,8 @@ releasable.
   verified serving, the release engine fast-forwards `sandbox` (testnet) or
   `main` (production) to the released commit, as history; neither branch
   deploys anything. The testnet sandbox has been released this way since
-  2026-10-04; production moves to the engine at its installation, until then
-  promoted by the retained production coordinator.
+  2026-10-04, as has production. The retired coordinator is not the release
+  path for either handed-over target.
 - Emergency fixes branch from `main` as `hotfix/<id>`. Their pushes run the
   `verify` workflow and build their image the same way. The release engine
   deploys the hotfix image only when it descends from what the target serves,
