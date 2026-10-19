@@ -45,6 +45,8 @@ Use the response's `retryable`, `requiresNewSignature`, `paymentMayHaveSettled`,
 | Payment shape, extension, nonce, or signature error | Use the pinned bridge and the challenge-bound payload. If paymentMayHaveSettled is true, reconcile first. |
 | SIGNATURE_COUNTERFACTUAL_REJECTED | The contract wallet is not deployed. Deploy it (Circle: a zero-value transfer to itself), run daski doctor, then obtain a fresh quote and sign again. |
 | SIGNATURE_VERIFICATION_UNAVAILABLE / SIGNATURE_VERIFICATION_BUSY | The signature was not evaluated. Retry the identical request shortly; do not sign again. |
+| PAYMENT_ADMISSION_UNAVAILABLE | The gateway could not admit the payment right now; nothing was claimed or settled. Wait for Retry-After (2 seconds), then resend the identical signed payment. With daski buy, run the same command again: it pays the same order. |
+| OUTCOME_CAPACITY_EXHAUSTED | The outcome is at its open-order capacity; nothing was claimed or settled. Try again later: resend the identical signed payment while its challenge is valid, otherwise obtain a fresh quote. |
 | CONFIRMATION_SPONSORED_REQUIRES_EOA | Sponsored confirmation needs a plain wallet. Repeat with submission direct; the CLI selects it for contract signers. |
 | DASKI_CIRCLE_EXECUTION_NOT_QUALIFIED | Nothing was sent and the prepared review is kept. This network does not offer Circle review execution yet (`confirmation.directReview.circleExecute`); tell the user the review waits for it. Do not send it with `circle wallet execute`. |
 | CONFIRMATION_SPONSORSHIP_LIMIT | The sponsored budget is exhausted. Reconcile saved authorizations first. When chainEligible is true and no previous authorization remains live, a direct wallet submission is available. |

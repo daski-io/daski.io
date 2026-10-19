@@ -61,7 +61,9 @@ test('setup uses live gateway version authority and preserves the purchase and w
   assert.match(setup, /daski buy --provider/);
   assert.match(setup, /daski_get_payment_challenge/);
   const buy = await document('/skills/buy.md').text();
-  for (const code of ['PAYMENT_IDENTIFIER_UNKNOWN', 'PAYMENT_IDENTIFIER_CONFLICT', 'SIGNATURE_COUNTERFACTUAL_REJECTED', 'CONFIRMATION_SPONSORED_REQUIRES_EOA', 'CONFIRMATION_SPONSORSHIP_LIMIT', 'DASKI_CIRCLE_EXECUTION_NOT_QUALIFIED', 'ORDER_ACTION_UNSUPPORTED', 'ORDER_ACTION_CONFLICT', 'PROVIDER_LIFECYCLE_UNAVAILABLE']) assert.ok(buy.includes(code));
+  for (const code of ['PAYMENT_IDENTIFIER_UNKNOWN', 'PAYMENT_IDENTIFIER_CONFLICT', 'SIGNATURE_COUNTERFACTUAL_REJECTED', 'CONFIRMATION_SPONSORED_REQUIRES_EOA', 'CONFIRMATION_SPONSORSHIP_LIMIT', 'DASKI_CIRCLE_EXECUTION_NOT_QUALIFIED', 'ORDER_ACTION_UNSUPPORTED', 'ORDER_ACTION_CONFLICT', 'PROVIDER_LIFECYCLE_UNAVAILABLE', 'PAYMENT_ADMISSION_UNAVAILABLE', 'OUTCOME_CAPACITY_EXHAUSTED']) assert.ok(buy.includes(code));
+  // A paid submission the gateway could not admit is resent unchanged.
+  assert.match(buy, /\| PAYMENT_ADMISSION_UNAVAILABLE \| The gateway could not admit the payment right now; nothing was claimed or settled\. Wait for Retry-After \(2 seconds\), then resend the identical signed payment\./);
   // The gateway's provider refusals point their docs link at this errors table.
   assert.match(buy, /\| PROVIDER_LIFECYCLE_UNAVAILABLE \| The action may already have taken effect\. Wait for Retry-After \(10 seconds\), then retry at most three times with the identical request, keeping any requestId\. A signed action needs a fresh order-action authorization each time, because a spent one is never restored; a read capability is reused\. Then read the order status\. \|/);
   assert.match(await document('/skills/wallets.md').text(), /\| Circle agent wallet \| contract \|/);
