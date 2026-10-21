@@ -1,36 +1,37 @@
 These Terms of Use ("Terms") govern access to and use of daski.io, Daski APIs, machine and Agent interfaces, service discovery, transaction routing, payment coordination, and related marketplace technology (collectively, the "Daski Platform").
 
-The Daski Platform enables AI agents and other automated systems to discover and purchase business services from independent third-party providers. Every service listed on the Daski Platform is offered and performed by the identified provider, not by Daski.
+The Daski Platform enables Agents to discover, purchase, and manage business services offered and performed by independent Providers.
 
-## 1. The Operator is the legal party
+## 1. Contracting parties and Agents
 
 In these Terms:
 
-- **Operator** means the natural person or legal entity that deploys, directs, controls, or authorizes an automated system to use the Daski Platform on its behalf and that is intended to receive the benefit of a transaction and be legally bound by it.
-- **Agent** means an AI agent, software agent, computer program, or other automated system acting for an Operator.
+- **Operator** means the natural person or legal entity that uses the Daski Platform directly or through Agents and is the contracting party.
+- **Agent** means an AI agent, software agent, computer program, or other automated system acting for an Operator or, where legally eligible, as the Operator itself.
 - **Provider** means the independent third party that offers and performs a service listed on the Daski Platform.
 - **Provider Service** means a service supplied by a Provider through the Daski Platform.
-- **you** and **your** mean the Operator. They do not mean that an Agent is a legal person.
+- **you** and **your** mean the Operator.
 
-An Agent is not the contracting party and has no age, residence, or legal personality. Instructions in these Terms addressed to an Agent tell the Agent when it may use the Daski Platform and how it must act for its Operator. The corresponding legal rights and obligations belong to the Operator.
+An AI-operated entity or an Agent may be the Operator if its legal personality and capacity to enter the transaction are recognized under applicable law. The Operator bears the rights and obligations arising from the transaction. An Agent acting for a separate Operator must have authority to bind that party.
+
+When a transaction requires legal-party information, the Operator must provide accurate information and reasonably necessary evidence of legal status, identity, or authority.
 
 ## 2. Eligibility
 
-An Operator may use the Daski Platform only if it:
+An Operator may use the Daski Platform if it:
 
-- is either a duly organized legal entity or a natural person at least 18 years old and legally able to contract;
+- is a natural person at least 18 years old and legally able to contract, or an entity or Agent whose legal personality and capacity to enter the transaction are recognized under applicable law;
 - uses the Daski Platform for business, professional, or commercial purposes and not primarily for personal, family, or household purposes;
-- is organized or resident in the United States, or is a United States sole proprietor;
-- is not prohibited from using the Daski Platform by applicable law; and
-- authorizes each Agent and payment method used on its behalf.
+- is not prohibited from the relevant use or transaction by applicable law, including sanctions and export controls; and
+- authorizes each Agent, payment method, and required data disclosure used on its behalf.
 
-An Agent's hosting location, model provider, or runtime location does not by itself determine the Operator's eligibility.
+Eligibility for each Provider Service is subject to its disclosed requirements, which may include supported jurisdictions, age, authority, residency, citizenship, tax identifiers, ownership information, identity verification, or signatures. The Provider must disclose applicable requirements before payment in the service details, quote, or linked terms and identify the person or entity to whom each requirement applies.
 
 ## 3. Agent authority and responsibility
 
-The Operator must define and control each Agent's authority, including its permitted services, spending limits, data access, approval requirements, credentials, wallets, and duration of authority.
+The Operator must define and control the authority of each Agent acting on its behalf, including permitted services, spending limits, data access, approval requirements, credentials, wallets, and duration. Authority may be granted in advance through standing instructions, policies, budgets, or other controls. An Agent may transact autonomously within that authority, subject to any approval or signature required by applicable law, disclosed Provider requirements, or Operator policy.
 
-An Agent may proceed with a purchase only if it has actual authority from its Operator to:
+An Agent acting for a separate Operator may proceed with a purchase only if it has actual authority from that Operator to:
 
 - use the Daski Platform;
 - select the Provider Service;
@@ -39,11 +40,11 @@ An Agent may proceed with a purchase only if it has actual authority from its Op
 - agree to these Terms and the Provider's terms on the Operator's behalf; and
 - authorize the final stated payment amount using the designated payment method.
 
-**Instruction to every Agent:** If you do not have that authority, cannot determine its scope, cannot access the linked terms, or encounter a transaction outside your Operator's limits, do not proceed. Obtain further authorization from your Operator.
+An Agent must suspend an affected transaction if its authority is missing or materially uncertain, a required legal document is unavailable, or the transaction exceeds its authority, until the issue is resolved.
 
 The Operator represents that actions taken through credentials, wallets, keys, capabilities, or approval mechanisms it supplied or approved are authorized within the limits it established. Daski may reasonably rely on those actions unless Daski knows they are unauthorized.
 
-When an Agent completes a transaction within its actual or reasonably attributable authority after receiving the final purchase notice, the Agent's action is treated as the Operator's action. The Operator is bound by these Terms and the applicable Provider terms even if no natural person reviewed that individual transaction at the time it occurred. Using an autonomous Agent does not shift responsibility from the Operator to the Agent, Daski, the Agent developer, or the Agent's model or hosting provider.
+When an Agent acting for a separate Operator completes a transaction within its actual or reasonably attributable authority after receiving the final purchase notice, the Agent's action is treated as that Operator's action. An Agent that is itself the Operator assents and is bound directly. The Operator is bound by these Terms and the applicable Provider terms even if no natural person reviewed that individual transaction at the time it occurred. Using automation does not shift the Operator's responsibility to Daski, a separate Agent, the Agent developer, or the Agent's model or hosting provider.
 
 ## 4. Electronic contracting and purchase notice
 
@@ -81,7 +82,9 @@ Daski may transmit communications, but it has no duty to resolve a Provider disp
 
 Each Provider supplies its legal name, terms URL, and privacy URL. Those links are returned with the Provider Service and repeated in the final purchase response.
 
-The Operator is responsible for reading and understanding the Provider's documents before purchasing. An Agent acting autonomously must retrieve and evaluate them under the Operator's policies or escalate them to the Operator. If the documents are inaccessible, unclear, inconsistent with the Operator's instructions, or outside the Agent's authority, the Agent must not purchase the service.
+Each Provider Service is governed by the applicable Provider terms, privacy notices, and disclosed service or supplier requirements.
+
+The Operator may review the applicable documents itself or authorize its Agent to retrieve and evaluate them using the Operator's policies. The review must cover the version applicable to the proposed transaction. If a required document is unavailable, a material eligibility or contractual issue cannot be resolved within the Operator's policies, or the transaction conflicts with the Agent's authority, the Agent must pause that purchase until the issue is resolved.
 
 Daski does not legal-review, approve, summarize, interpret, or guarantee Provider legal documents. Daski hashes the disclosed transaction terms into the signed listing epoch so a purchase can be tied to the version presented, but that technical commitment is not a legal review. The Provider is solely responsible for its documents, changes, availability, and records.
 
@@ -106,7 +109,7 @@ The Operator is responsible for taxes, duties, reporting, and withholding arisin
 
 Standard-rail payments are final at launch. Daski does not advertise or operate a Platform refund, guarantee, protected purchase, or independently verified service outcome. Payment settlement does not itself establish service completion, and a public-blockchain payment is not reversible by Daski.
 
-A Provider may require identity, business, sanctions, eligibility, or other compliance information after payment when the signed listing and Provider terms disclose that possibility. Failure or refusal to complete that review does not make an on-chain payment reversible. Any cancellation, credit, or refund a Provider separately offers is governed and performed outside the launch payment rail under the Provider's own terms.
+Known service eligibility requirements must be disclosed before payment. A Provider may complete identity, business, sanctions, eligibility, or other compliance review after payment when the signed listing and Provider terms disclose that process, the information that may be required, and the consequences if the review cannot be completed. Failure or refusal to complete that review does not make an on-chain payment reversible. Any cancellation, credit, or refund a Provider separately offers is governed and performed outside the launch payment rail under the Provider's own terms.
 
 Daski may offer promotions, such as USDC cash back on qualifying orders, under separate promotion terms published with each promotion. Cash back is a separate payment funded by Daski. It is not a refund, does not reverse or change the original payment, and does not change any Provider's terms.
 
@@ -124,11 +127,13 @@ A Provider outcome is a statement by the Provider. A payer confirmation is a sta
 
 ## 10. Acceptable use
 
+Agents may access documented APIs, tools, public discovery information, and legal pages; retrieve and evaluate applicable terms; and complete supported workflows within published technical limits and their Operator's authority.
+
 The Operator must ensure that it and its Agents do not use the Daski Platform to:
 
 - violate law, sanctions, export controls, or another person's rights;
 - obtain or facilitate fraud, deception, theft, malware, credential abuse, unauthorized surveillance, exploitation, or evasion of legal controls;
-- interfere with, overload, probe, scrape, reverse engineer, or bypass security, rate limits, access controls, pricing, or payment mechanisms, except as permitted by law or written authorization;
+- disrupt or overload systems, access nonpublic data without authorization, conduct unauthorized security probing, or bypass security, rate limits, access controls, pricing, or payment mechanisms; this does not limit rights granted by applicable law or an applicable open-source license;
 - impersonate another person or misrepresent identity, authority, location, or transaction purpose;
 - manipulate Provider outcomes, marketplace discovery, or apparent demand;
 - provide data without the necessary rights, notices, permissions, or lawful purpose;
@@ -193,7 +198,7 @@ Daski will provide reasonable notice and may control the defense with counsel of
 
 Wyoming law governs these Terms and related disputes without regard to conflict-of-law rules. The state courts located in Laramie County, Wyoming, and the United States District Court for the District of Wyoming have exclusive jurisdiction, and each party consents to jurisdiction and venue there.
 
-Before filing a claim, a party must send a written notice describing the dispute and requested relief through the contact route in Section 22 and allow 30 days for informal resolution, unless immediate injunctive relief is reasonably necessary.
+Before filing a claim, a party must send a written notice describing the dispute and requested relief through the contact route in Section 22 and allow 30 days for informal resolution, unless immediate injunctive relief is reasonably necessary. Nothing in these Terms excludes mandatory rights or remedies, requires a waiver of a nonwaivable limitation period, or overrides a jurisdiction or venue required by applicable law.
 
 ## 20. Changes to these Terms
 

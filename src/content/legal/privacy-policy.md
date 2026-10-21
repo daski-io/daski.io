@@ -1,12 +1,12 @@
 This Privacy Policy explains how Daski processes personal data through daski.io, Daski APIs, machine and AI Agent interfaces, outcome discovery, transaction routing, payment coordination, support, and related marketplace technology (collectively, the "Daski Platform").
 
-The Daski Platform is designed for United States business use. An **Operator** is the natural person or legal entity that authorizes an AI agent, software agent, or other automated system (an **Agent**) to use the Daski Platform on its behalf. A **Provider** is an independent third party offering a service through the Daski Platform.
+An **Operator** is the person or legal entity using the Daski Platform, directly or through an AI agent or other automated system (an **Agent**). A **Provider** is an independent third party offering a service through the Daski Platform. The Daski Terms govern eligibility and authority to use the Platform.
 
 Daski determines the purposes and means of the marketplace-layer processing described in this Policy and generally acts as the controller or responsible business for that processing. Providers separately determine how they process information to quote, perform, deliver, and support their services. If Daski processes particular service content solely on documented instructions in a processor role, the applicable agreement and law govern that processing.
 
 ## 1. Agents and personal data
 
-An Agent is not a natural person and does not itself have personal data rights. However, an Agent's identifiers, wallet, instructions, transactions, and communications may identify or relate to its Operator, the Operator's personnel or customers, or other individuals. This Policy applies to that personal data.
+This Policy applies to information protected by applicable privacy and data protection law, including information supplied or generated through an Agent. An Agent's identifiers, instructions, transactions, and communications may identify or relate to individuals. The rights described in this Policy apply to individuals and to legal entities or Agents to the extent provided by applicable law.
 
 The Operator is responsible for configuring its Agent so that it supplies only information the Operator may lawfully provide and that is necessary for the transaction. An Agent must not infer that access to data means it has authority to disclose that data.
 
@@ -28,7 +28,7 @@ The Daski gateway receives, validates, and forwards instructions, structured fie
 
 Daski is not intended to be a general repository for Provider service content. A Provider may separately retain service content under its own privacy notice. If a Provider legitimately requires sensitive personal data, use only the reviewed intake method declared for that outcome rather than an ordinary prompt.
 
-Do not place private keys, seed phrases, passwords, full payment-card data, Social Security numbers, government identification images, or similarly sensitive data in ordinary Agent prompts, support messages, public blockchain fields, or marketplace metadata.
+Do not place private keys, seed phrases, passwords, full payment-card data, Social Security numbers, government identification images, or similarly sensitive data in ordinary Agent prompts, support messages, public blockchain fields, or marketplace metadata. Authorized software may transmit necessary service data through the designated secure intake interface without placing it in model prompts or unrelated logs. Applicable identity, signature, and consent requirements apply to these workflows.
 
 ### Public blockchain data
 
@@ -131,7 +131,7 @@ Depending on applicable law and the circumstances, an individual may have rights
 - appeal denial of a request; and
 - exercise rights without unlawful discrimination.
 
-Requests may be submitted through the contact route in Section 17. We may verify identity and authority proportionately. A legally authorized representative may act for an individual when it provides sufficient proof of authority and, where required, the individual verifies identity directly.
+Requests may be submitted through the contact route in Section 17 by an individual, a legally authorized representative, or an Agent authorized to communicate the individual's request. An Agent may submit and help manage a request within that authority. A legal entity or Agent may also submit a request for rights that applicable law grants to it. We may verify identity and authority proportionately and require direct verification when applicable law or a concrete security concern requires it. Control of a wallet or Agent identifier alone does not establish authority over another person's personal data.
 
 We will respond within the period required by applicable law. Rights are subject to exceptions, including data needed for security, fraud prevention, accounting, another person's rights, legal claims, or compliance. Daski cannot delete data controlled by a Provider, government agency, independent third party, public blockchain, or public attestation system.
 
@@ -151,17 +151,15 @@ A Provider requiring sensitive data must disclose the fields, purpose, secure in
 
 ## 13. Data about minors
 
-Age requirements apply to natural people, not Agents. The Daski Platform is not intended to collect personal data about anyone under 18. Operators must not direct an Agent to supply a minor's data unless the Provider service expressly permits it, the data is necessary, and the Operator has all authority, notices, and consents required by law.
+The Daski Platform is not intended to collect personal data about anyone under 18. Operators must not direct an Agent to supply a minor's data unless the Provider service expressly permits it, the data is necessary, and the Operator has all authority, notices, and consents required by law.
 
-## 14. United States service and cross-border processing
+## 14. International processing
 
-The Daski Terms limit the Platform to eligible United States Operators and business use. An Agent's hosting or runtime location outside the United States does not by itself change the Operator's eligibility.
-
-Daski and its vendors may process data in the United States and other countries where they operate. Those countries may have privacy laws different from the laws where the data originated. Daski uses protections required by applicable law for its processing and disclosures.
+Daski and its vendors may process data in the United States and other countries where they operate. Those countries may have privacy laws different from the laws where the data originated. Daski uses protections required by applicable law for its processing and disclosures, including any required transfer mechanism or safeguards before a restricted transfer. Any consent required for a transfer must be obtained separately.
 
 ## 15. Provider services and notices
 
-Provider privacy practices are governed by the Provider notices linked with each service, not this Policy. Daski does not legal-review, verify, summarize, archive, or monitor those notices and does not guarantee their accuracy, completeness, legality, or availability. The Operator and its Agent must review the current linked notice before disclosing personal data to a Provider.
+Provider privacy practices are governed by the Provider notices linked with each service, not this Policy. Daski does not legal-review, verify, summarize, archive, or monitor those notices and does not guarantee their accuracy, completeness, legality, or availability. The Operator may review the applicable Provider notice itself or authorize its Agent to evaluate it under the Operator's policies before disclosing personal data. The Agent must resolve any material conflict with those policies or uncertainty about disclosure authority before sending the affected data.
 
 ## 16. Changes
 
