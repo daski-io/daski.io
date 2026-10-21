@@ -22,7 +22,7 @@ const LEGAL_PAGES = [
   },
 ];
 
-test('publishes approved legal metadata once through the shared layout', async () => {
+test('renders legal revision metadata once through the shared layout', async () => {
   const layout = await read('src/layouts/LegalLayout.astro');
   assert.equal(layout.match(/<h1>/g)?.length, 1);
   assert.match(layout, /<dt>Version<\/dt>/);
@@ -38,8 +38,8 @@ test('publishes approved legal metadata once through the shared layout', async (
     assert.doesNotMatch(body, /^\*\*(Version|Effective date|Marketplace operator|Controller):\*\*/m);
     assert.equal(body.match(/^## /gm)?.length, legalPage.sectionCount);
     assert.match(page, new RegExp(`canonicalUrl="${legalPage.canonicalUrl}"`));
-    assert.equal(page.match(/version="1\.1"/g)?.length, 1);
-    assert.equal(page.match(/effectiveDate="October 11, 2026"/g)?.length, 1);
+    assert.equal(page.match(/version="1\.2"/g)?.length, 1);
+    assert.equal(page.match(/effectiveDate="Upon publication"/g)?.length, 1);
   }
 });
 
@@ -55,7 +55,7 @@ test('discloses direct-transfer and post-payment identity review consequences', 
     read('src/content/legal/privacy-policy.md'),
   ]);
   assert.match(terms, /outside the exact signed HTTP 402 purchase flow is not a Daski purchase/);
-  assert.match(terms, /require identity, business, sanctions, eligibility, or other compliance information after payment/);
+  assert.match(terms, /complete identity, business, sanctions, eligibility, or other compliance review after payment/);
   assert.match(privacy, /post-payment identity, business, eligibility, sanctions, or similar review/);
 });
 
