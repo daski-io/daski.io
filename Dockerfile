@@ -8,7 +8,7 @@
 # image. Docker Hub images, this base and the syntax frontend above, come
 # through Google's mirror with the same digests: anonymous Docker Hub pulls
 # from shared CI runners hit its rate limit.
-ARG NODE_IMAGE=mirror.gcr.io/library/node:22-bookworm-slim@sha256:83f487e0a63425e5b4d146fb5e5be574bcbe1b7b843d3ebafdd95eaf7767a7e5
+ARG NODE_IMAGE=mirror.gcr.io/library/node:22-bookworm-slim@sha256:de170b39439eb0e5a3444ad7d60b015614a381e10fecae2e30ec9e735122f38d
 FROM ${NODE_IMAGE} AS base
 # Debian security updates for PCRE2 and Perl in the Node image, the versions the
 # gateway and provider images install. The develop image scan
