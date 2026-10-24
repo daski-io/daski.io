@@ -56,6 +56,20 @@ execution, preserves payer signatures and gateway-bound resource URLs, and
 never retries transaction requests or falls back to another origin after a
 failed request. An uncertain paid submission must be reconciled.
 
+The gateway can pause new sales for a few minutes while orders already paid
+continue, and reports it at `/public/v1/status`. While it reports
+`salesOpen: false`, the home, service, provider, agents and promotion pages show
+a banner with the pause's end in UTC, and `daski_get_payment_challenge` and
+`daski_buy_outcome` return `SALES_PAUSED` with the reason, `until` and
+`retryAfterSeconds` without calling the gateway. The gateway's own
+`SALES_PAUSED` refusal keeps its message, phase and next action (a payment it
+already holds must not be signed again) and gains the same pause fields.
+Discovery, order and wallet tools keep working. The status is read from the
+origin MCP tools call and used for the gateway's `max-age`; a failed read
+leaves the last one in use until it is 15 seconds old, and without a read in
+the last 15 seconds sales count as open, because the gateway refuses on its own
+while paused. A page waits at most half a second for a read.
+
 The MCP endpoint names its client the way the gateway does: Cloudflare adds
 `EDGE_SECRET` as `X-Daski-Edge-Secret` to every request it forwards, an MCP
 request without it is refused with 403, and the client is the address

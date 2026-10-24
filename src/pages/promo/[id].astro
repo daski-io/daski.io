@@ -40,6 +40,7 @@ if (!promotion) {
   description={promotion ? promotionDescription(promotion) : 'Promotion details are temporarily unavailable. Please try again later.'}
   canonicalUrl={promotion ? canonicalPageUrl(promotionPath(promotion), network.siteUrl) : undefined}
   noindex={!promotion}
+  leadsToBuying
 >
   {promotion ? (
     <PromotionPage

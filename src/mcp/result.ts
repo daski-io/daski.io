@@ -22,6 +22,12 @@ export interface McpErrorPayload {
   chainEligible?: boolean;
   docs?: string;
   correlationId?: string;
+  // SALES_PAUSED: the gateway operator's reason, the pause's start and end
+  // (ISO 8601, UTC), and the seconds until the end.
+  reason?: string | null;
+  since?: string | null;
+  until?: string | null;
+  retryAfterSeconds?: number;
 }
 
 // Index signature mirrors the SDK's CallToolResult shape (which extends

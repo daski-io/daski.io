@@ -17,11 +17,17 @@ const signature = '0x' + '22'.repeat(65);
 const actionAuthorization = { orderId: 'order-1', action: 'status', method: 'POST', absoluteResourceUri: 'https://gateway.example/orders/handle/actions/status',
   requestHash: '0x' + '3'.repeat(64), nonce: '0x' + '4'.repeat(64), issuedAt: 1, validBefore: 2, signature };
 
-function fixture(t, responder = () => json({ ok: true }), override = {}) {
+// Fresh for the whole 15 seconds, so a slow run never starts a background read.
+const salesOpen = () => json({ salesOpen: true }, 200, { 'cache-control': 'max-age=15' });
+
+function fixture(t, responder = () => json({ ok: true }), override = {}, salesStatus = salesOpen) {
   const selected = { ...config, ...override };
   const calls = [];
+  const statusReads = [];
   const fetcher = async (url, init) => {
     const call = { path: new URL(url).pathname, url, init, body: init.body && JSON.parse(init.body) };
+    // Sales status reads are counted apart, so each test counts only the gateway calls it makes.
+    if (call.path === '/public/v1/status') { statusReads.push(call); return salesStatus(call); }
     calls.push(call);
     if (call.path === '/.well-known/mcp.json') return json({ confirmationSigning: { chainId: 84532 } });
     return responder(call);
@@ -42,7 +48,7 @@ function fixture(t, responder = () => json({ ok: true }), override = {}) {
     assert.ok(value.result, JSON.stringify(value));
     return value.result;
   }
-  return { server, calls, rpc, tool: (name, args = {}, meta) => rpc('tools/call', { name, arguments: args }, meta) };
+  return { server, calls, statusReads, rpc, tool: (name, args = {}, meta) => rpc('tools/call', { name, arguments: args }, meta) };
 }
 
 test('website runs the existing full MCP tool contract and serves its local guide without the gateway', async t => {
@@ -340,4 +346,146 @@ test('MCP admits six hundred requests a minute per client, then refuses with Ret
   assert.equal(refused.headers.get('retry-after'), '60');
   assert.equal((await refused.json()).error.message, 'MCP rate limit exceeded.');
   assert.equal((await server.fetch(request(), '192.0.2.10')).status, 415, 'another client keeps its own budget');
+});
+
+const pausedStatus = (fields) => () => json({ salesOpen: false, ...fields }, 200, { 'cache-control': 'max-age=15' });
+const quoteArgs = { providerAgentId: '42', outcomeId: 'domain', request: { name: 'example.info' }, payerAddress: payer };
+const signedPayment = { x402Version: 2, payload: { signature } };
+const PAUSE_FIELDS = ['code', 'message', 'phase', 'retryable', 'requiresNewSignature', 'paymentMayHaveSettled',
+  'reason', 'since', 'until', 'retryAfterSeconds', 'next_action', 'docs'];
+
+test('while sales are paused, quote and purchase tools return SALES_PAUSED without calling the gateway', async t => {
+  const since = new Date(Date.now() - 60_000).toISOString();
+  const until = new Date(Date.now() + 10 * 60_000).toISOString();
+  const { tool, calls, statusReads } = fixture(t, undefined, {}, pausedStatus({ reason: 'Scheduled key switch', since, until }));
+  const steps = [
+    ['daski_get_payment_challenge', undefined, 'challenge', /Nothing was quoted or charged\.$/, /request the quote again/],
+    ['daski_buy_outcome', undefined, 'challenge', /Nothing was quoted or charged\.$/, /call daski_buy_outcome again/],
+    ['daski_buy_outcome', { 'x402/payment': signedPayment }, 'payment_validation', /This payment was not sent to the gateway\.$/,
+      /^Do not sign a new payment\. .*resend this identical signed payment.*reconcile its payment identifier first/],
+  ];
+  for (const [name, meta, phase, message, nextAction] of steps) {
+    const result = await tool(name, quoteArgs, meta);
+    assert.equal(result.isError, true, name);
+    const error = result.structuredContent;
+    assert.deepEqual(Object.keys(error).sort(), [...PAUSE_FIELDS].sort());
+    assert.equal(error.code, 'SALES_PAUSED');
+    assert.equal(error.phase, phase);
+    assert.match(error.message, new RegExp(`^Daski has paused new quotes and purchases until ${until}; orders already paid continue\\.`));
+    assert.match(error.message, message);
+    assert.match(error.next_action, nextAction);
+    assert.equal(error.reason, 'Scheduled key switch');
+    assert.equal(error.since, since);
+    assert.equal(error.until, until);
+    assert.ok(error.retryAfterSeconds > 590 && error.retryAfterSeconds <= 600, String(error.retryAfterSeconds));
+    assert.equal(error.retryable, true);
+    assert.equal(error.paymentMayHaveSettled, false);
+    assert.equal(error.requiresNewSignature, false);
+    assert.equal(error.docs, 'https://website.example/skills/buy.md#errors');
+    assert.deepEqual(JSON.parse(result.content[0].text), error);
+  }
+  assert.equal(calls.length, 0, 'no quote, purchase or network check reached the gateway');
+  assert.equal(statusReads.length, 1, 'one cached status read serves every call');
+  assert.equal(statusReads[0].url, 'http://gateway.internal:8080/public/v1/status');
+
+  // Discovery and orders already paid keep working.
+  for (const [name, args] of [
+    ['daski_list_outcomes', { text: 'domain' }],
+    ['daski_get_outcome', { providerAgentId: '42', outcomeId: 'domain' }],
+    ['daski_get_outcome_requirements', { providerAgentId: '42', outcomeId: 'domain' }],
+    ['daski_get_order_status', { orderHandle: 'handle', readCapability: 'c'.repeat(80) }],
+    ['daski_list_my_orders', { payer }],
+    ['daski_get_setup_guide', { topic: 'buy' }],
+  ]) assert.notEqual((await tool(name, args)).isError, true, name);
+  assert.deepEqual(calls.map(call => call.path).filter(path => path !== '/.well-known/mcp.json'),
+    ['/public/v2/outcomes/search', '/public/v2/outcomes/42/domain', '/outcomes/42/domain/requirements', '/orders/handle/actions/status', '/wallet/orders']);
+});
+
+test('an open or unreadable sales status lets quotes and purchases reach the gateway', async t => {
+  const logged = t.mock.method(console, 'error', () => {});
+  const ended = new Date(Date.now() - 1_000).toISOString();
+  const statuses = {
+    open: salesOpen,
+    'network failure': () => { throw new TypeError('fetch failed'); },
+    'gateway without the endpoint': () => json({ error: { code: 'NOT_FOUND', message: 'Unknown route' } }, 404),
+    'server error': () => json({ error: { code: 'INTERNAL_ERROR', message: 'Down' } }, 500),
+    'not JSON': () => new Response('<html></html>', { status: 200, headers: { 'content-type': 'text/html' } }),
+    'malformed status': () => json({ salesOpen: 'no' }),
+    'pause already ended': pausedStatus({ reason: 'Done', since: ended, until: ended }),
+  };
+  for (const [label, salesStatus] of Object.entries(statuses)) {
+    const { tool, calls, statusReads } = fixture(t, ({ path, body }) => {
+      if (path.endsWith('/quote')) return json({ orderHandle: 'draft', paymentRequired: { x402Version: 2, accepts: [] } });
+      return body.paymentPayload ? json({ state: 'DISPATCHED', orderHandle: 'paid', receipt: {} }) : json({ x402Version: 2, accepts: [] }, 402);
+    }, {}, salesStatus);
+    const quote = await tool('daski_get_payment_challenge', quoteArgs);
+    assert.equal(quote.structuredContent.orderHandle, 'draft', label);
+    const paid = await tool('daski_buy_outcome', quoteArgs, { 'x402/payment': signedPayment });
+    assert.equal(paid.structuredContent.status, 'DISPATCHED', label);
+    assert.equal(calls.filter(call => call.path.endsWith('/purchase')).length, 1, label);
+    assert.equal(statusReads.length, 1, label);
+  }
+  // Each unreadable status is logged once, when reads start failing.
+  assert.equal(logged.mock.callCount(), 5);
+});
+
+test('the gateway SALES_PAUSED refusal keeps its own message, phase and next action, with the pause fields added', async t => {
+  const until = new Date(Date.now() + 5 * 60_000).toISOString();
+  const quoteRefusal = { code: 'SALES_PAUSED', message: 'New sales are paused for a short maintenance window; nothing was charged',
+    phase: 'challenge', retryable: true, requiresNewSignature: false, paymentMayHaveSettled: false, until, reason: 'Incident response',
+    docs: 'https://gateway.example/skills/buy.md#errors', correlationId: '00000000-0000-4000-8000-0000000005a1' };
+  // A payment the gateway already claimed and verified, refused at settlement: it submits it once sales reopen.
+  const capturedRefusal = { ...quoteRefusal, phase: 'facilitator_settle',
+    message: 'New sales were paused before this authorization was submitted; nothing was charged yet' };
+  const capturedAction = 'Do not sign again. After Retry-After, resend the identical purchase or read the order by its handle: ' +
+    'the gateway submits this authorization once sales reopen, while it is still valid.';
+  const { tool, calls } = fixture(t, ({ path }) => path.endsWith('/quote')
+    ? json({ error: quoteRefusal }, 503, { 'retry-after': '120', 'daski-next-action': 'Wait for Retry-After (sales reopen at until), then retry the same request.' })
+    : json({ error: capturedRefusal }, 503, { 'retry-after': '120', 'daski-next-action': capturedAction }));
+
+  const quote = (await tool('daski_get_payment_challenge', quoteArgs)).structuredContent;
+  assert.deepEqual(quote, { ...quoteRefusal, since: null, retryAfterSeconds: 120,
+    next_action: 'Wait for Retry-After (sales reopen at until), then retry the same request.' });
+
+  const captured = await tool('daski_buy_outcome', quoteArgs, { 'x402/payment': signedPayment });
+  assert.equal(captured.isError, true);
+  assert.deepEqual(captured.structuredContent, { ...capturedRefusal, since: null, retryAfterSeconds: 120, next_action: capturedAction });
+  assert.equal(calls.filter(call => call.path.endsWith('/purchase')).length, 1, 'the paid purchase is sent once');
+
+  // The website's own refusal carries the same pause fields.
+  const { tool: checked } = fixture(t, undefined, {}, pausedStatus({ reason: 'Incident response', until }));
+  const local = (await checked('daski_get_payment_challenge', quoteArgs)).structuredContent;
+  for (const key of PAUSE_FIELDS) assert.ok(key in quote, key);
+  assert.deepEqual([local.code, local.phase, local.reason, local.since, local.until], [quote.code, quote.phase, quote.reason, quote.since, quote.until]);
+});
+
+test('a SALES_PAUSED refusal without the gateway layout falls back to safe pause fields', async t => {
+  const until = new Date(Date.now() + 5 * 60_000).toISOString();
+  const { tool } = fixture(t, ({ path }) => path === '/wallet/assets/action'
+    // An older layout: the pause in `expected`, an HTTP-date Retry-After, no next action.
+    ? json({ error: { code: 'SALES_PAUSED', message: 'Paused', expected: { until, reason: 'Incident response' } } }, 503,
+      { 'retry-after': new Date(Date.parse(until)).toUTCString() })
+    : json({ error: { code: 'SALES_PAUSED', message: 'Paused' } }, 503));
+  const asset = (await tool('daski_use_asset', { payer, providerAgentId: '42', actionId: 'renew',
+    providerAssetId: '00000000-0000-4000-8000-000000000001', input: {}, authorization: null })).structuredContent;
+  assert.equal(asset.code, 'SALES_PAUSED');
+  assert.equal(asset.until, until);
+  assert.equal(asset.reason, 'Incident response');
+  assert.ok(asset.retryAfterSeconds > 290 && asset.retryAfterSeconds <= 300, String(asset.retryAfterSeconds));
+  assert.equal(asset.paymentMayHaveSettled, false);
+  assert.equal(asset.requiresNewSignature, false);
+  assert.equal(asset.retryable, true);
+  assert.equal(asset.next_action, 'Once the pause ends (until, retryAfterSeconds), retry the same request.');
+
+  // A paid call whose refusal does not say whether the payment may have settled counts as possibly settled.
+  const paid = (await tool('daski_buy_outcome', quoteArgs, { 'x402/payment': signedPayment })).structuredContent;
+  assert.equal(paid.code, 'SALES_PAUSED');
+  assert.equal(paid.paymentMayHaveSettled, true);
+  assert.equal(paid.until, null);
+  assert.equal(paid.retryAfterSeconds, 60);
+  assert.match(paid.next_action, /^Reconcile the original payment identifier/);
+  // An unpaid purchase without the field settled nothing.
+  const unpaid = (await tool('daski_buy_outcome', quoteArgs)).structuredContent;
+  assert.equal(unpaid.paymentMayHaveSettled, false);
+  assert.equal(unpaid.next_action, 'Once the pause ends (until, retryAfterSeconds), retry the same request.');
 });

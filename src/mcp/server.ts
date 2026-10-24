@@ -2,6 +2,7 @@ import { AsyncLocalStorage } from 'node:async_hooks';
 import { McpServer, createMcpHandler } from '@modelcontextprotocol/server';
 import { mcpServerInfo } from './metadata.ts';
 import type { NetworkConfig } from '../lib/network.ts';
+import { createSalesStatusReader } from '../lib/salesStatus.ts';
 import { executeTool, type ReadGuide } from './execute.ts';
 import { GatewayClient } from './gateway.ts';
 import { assertNoDuplicateJsonKeys } from './jsonIngress.ts';
@@ -20,8 +21,10 @@ export function createWebsiteMcp(config: NetworkConfig, readGuide: ReadGuide, re
   let window = 0;
   let total = 0;
   const counts = new Map<string, number>();
+  // One cached sales status for every MCP request this server handles.
+  const sales = createSalesStatusReader(request);
   const handler = createMcpHandler(context => {
-    const gateway = new GatewayClient(config, context.requestInfo?.signal, request, clients.getStore());
+    const gateway = new GatewayClient(config, context.requestInfo?.signal, request, clients.getStore(), sales);
     const server = new McpServer(mcpServerInfo(config), {
       capabilities: { tools: { listChanged: false } },
       instructions: [
