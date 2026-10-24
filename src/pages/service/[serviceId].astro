@@ -37,6 +37,7 @@ if (!service) {
   description={service?.serviceDescription ?? error ?? 'Service not found.'}
   canonicalUrl={service ? canonicalPageUrl(servicePath(service), network.siteUrl) : undefined}
   noindex={!service}
+  leadsToBuying
 >
   {service ? (
     <ServiceDetailPage client:load service={service} explorerUrl={view.explorerUrl} />

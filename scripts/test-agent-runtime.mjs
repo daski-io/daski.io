@@ -127,6 +127,8 @@ try {
   const paid = await rpc(gatewayUrl, 'tools/call', { name: 'daski_buy_outcome', arguments: { ...args, paymentPayload: { fixture: true } } });
   assert.equal(paid.structuredContent.status, 'DISPATCHED');
   assert.equal(calls.filter(call => call.path === '/outcomes/42/domain/purchase' && call.body.paymentPayload).length, 1);
+  // This fixture has no sales status endpoint, like a gateway released before it: sales stay open.
+  assert.ok(calls.some(call => call.path === '/public/v1/status'));
   console.log('Built website: MCP branding and icons, all guide routes, rendered prompt, MCP contract, legacy redirect, and REST purchase handoff passed.');
 } finally {
   for (const server of [site, gateway]) { server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); }

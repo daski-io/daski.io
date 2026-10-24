@@ -53,6 +53,7 @@ if (provider && target) {
     : error ?? 'Provider not found.'}
   canonicalUrl={provider ? canonicalPageUrl(providerPath(provider), network.siteUrl) : undefined}
   noindex={!provider}
+  leadsToBuying
 >
   {provider ? (
     <ProviderProfilePage

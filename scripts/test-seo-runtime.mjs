@@ -38,6 +38,7 @@ const gateway = createServer((req, res) => {
   if (scenario === 'outage' || req.url.endsWith(unavailableId)) {
     res.writeHead(503); res.end(JSON.stringify({ error: 'temporarily unavailable' })); return;
   }
+  if (req.url === '/public/v1/status') { res.end(JSON.stringify({ salesOpen: true })); return; }
   if (req.url === '/public/v3/services?limit=100') { res.end(JSON.stringify(fixture)); return; }
   if (req.url === `/public/v3/services/${service.serviceId}`) { res.end(JSON.stringify(service)); return; }
   res.writeHead(404); res.end(JSON.stringify({ error: 'not found' }));
