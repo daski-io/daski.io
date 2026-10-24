@@ -20,6 +20,8 @@ if (!scenario) {
 
 const catalog = JSON.parse(await readFile(new URL('../test/vectors/public-v3-services.json', import.meta.url), 'utf8'));
 const rail = JSON.parse(await readFile(new URL('../test/vectors/daski-chain-v3.json', import.meta.url), 'utf8'));
+const promotion = { ...JSON.parse(await readFile(new URL('../test/vectors/promotion-launch.json', import.meta.url), 'utf8')),
+  id: 'launch', chainId: 84532, refreshedAt: new Date(Date.now() - 5_000).toISOString() };
 const service = catalog.services[0];
 // On a whole minute, so the banner shows it exactly.
 const until = new Date(Math.ceil((Date.now() + 10 * 60_000) / 60_000) * 60_000);
@@ -28,15 +30,17 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 const pad = value => String(value).padStart(2, '0');
 const untilText = `${MONTHS[until.getUTCMonth()]} ${until.getUTCDate()}, ${until.getUTCFullYear()}, ${pad(until.getUTCHours())}:${pad(until.getUTCMinutes())} UTC`;
 
+const CAPTURED_ACTION = 'Do not sign again. After Retry-After, resend the identical purchase or read the order by its handle: ' +
+  'the gateway submits this authorization once sales reopen, while it is still valid.';
 const calls = [];
 const gateway = createServer(async (req, res) => {
   for await (const _chunk of req);
   calls.push(req.url);
   const send = (status, body, headers = {}) => { res.writeHead(status, { 'content-type': 'application/json', ...headers }); res.end(JSON.stringify(body)); };
   if (req.url === '/public/v1/status') {
-    if (scenario === 'open') return send(200, { salesOpen: true }, { 'cache-control': 'max-age=5' });
+    if (scenario === 'open') return send(200, { salesOpen: true }, { 'cache-control': 'max-age=15' });
     if (scenario === 'paused') {
-      return send(200, { salesOpen: false, reason: 'Scheduled key switch', since: since.toISOString(), until: until.toISOString() }, { 'cache-control': 'max-age=5' });
+      return send(200, { salesOpen: false, reason: 'Scheduled key switch', since: since.toISOString(), until: until.toISOString() }, { 'cache-control': 'max-age=15' });
     }
   }
   if (req.url === '/.well-known/mcp.json') return send(200, { confirmationSigning: { chainId: 84532 } });
@@ -45,20 +49,28 @@ const gateway = createServer(async (req, res) => {
   if (req.url === `/public/v3/services/${service.serviceId}`) return send(200, service);
   if (req.url === '/public/v2/outcomes/search') return send(200, { outcomes: [] });
   if (req.url === '/outcomes/42/domain/quote') return send(200, { orderHandle: 'draft', paymentRequired: { x402Version: 2, accepts: [] } });
-  // The gateway refuses on its own while paused, for anyone calling it directly.
+  // The gateway refuses on its own while paused, for anyone calling it directly. Here it already holds the payment.
   if (req.url === '/outcomes/42/paused/purchase') {
-    return send(503, { error: { code: 'SALES_PAUSED', message: 'New sales are paused', retryable: true, paymentMayHaveSettled: false,
-      requiresNewSignature: false, expected: { reason: 'Incident response', until: until.toISOString() } } }, { 'retry-after': '120' });
+    return send(503, { error: { code: 'SALES_PAUSED', message: 'New sales were paused before this authorization was submitted; nothing was charged yet',
+      phase: 'facilitator_settle', retryable: true, requiresNewSignature: false, paymentMayHaveSettled: false,
+      until: until.toISOString(), reason: 'Incident response' } }, { 'retry-after': '120', 'daski-next-action': CAPTURED_ACTION });
   }
   send(404, { error: { code: 'NOT_FOUND', message: 'Unknown fixture route' } });
 });
+// The private promotions service, so the promotion page renders.
+const promotions = createServer((req, res) => {
+  const found = req.url === '/v1/promotions/launch' || req.url === '/v1/promotions/current';
+  res.writeHead(found ? 200 : 404, { 'content-type': 'application/json' });
+  res.end(JSON.stringify(found ? promotion : { error: 'not found' }));
+});
 const listen = server => new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
 await listen(gateway);
+await listen(promotions);
 process.env.ASTRO_NODE_AUTOSTART = 'disabled';
 process.env.DASKI_NETWORK = 'testnet';
 process.env.GATEWAY_URL = `http://127.0.0.1:${gateway.address().port}`;
 process.env.GATEWAY_INTERNAL_URL = '';
-process.env.PROMOTIONS_INTERNAL_URL = '';
+process.env.PROMOTIONS_INTERNAL_URL = `http://127.0.0.1:${promotions.address().port}`;
 const { handler } = await import('../dist/server/entry.mjs');
 const site = createServer(handler);
 await listen(site);
@@ -80,7 +92,7 @@ const visibleText = html => html.replace(/<script\b[\s\S]*?<\/script>/g, ' ').re
 try {
   const paused = scenario === 'paused';
   const banner = `Sales paused Sales are paused until ${untilText}. New quotes and purchases resume then. Orders already paid continue normally. Reason: Scheduled key switch`;
-  for (const path of ['/', `/service/${service.serviceId}`, `/provider/${service.providerAgentId}`, '/agents']) {
+  for (const path of ['/', `/service/${service.serviceId}`, `/provider/${service.providerAgentId}`, '/agents', '/promo/launch']) {
     const response = await fetch(siteUrl + path);
     assert.equal(response.status, 200, path);
     const html = await response.text();
@@ -109,6 +121,8 @@ try {
     assert.equal(refused.structuredContent.until, until.toISOString());
     assert.equal(refused.structuredContent.retryAfterSeconds, 120);
     assert.equal(refused.structuredContent.paymentMayHaveSettled, false);
+    assert.equal(refused.structuredContent.phase, 'facilitator_settle');
+    assert.equal(refused.structuredContent.next_action, CAPTURED_ACTION, 'the gateway says not to sign again');
     assert.equal(calls.filter(path => path === '/outcomes/42/paused/purchase').length, 1);
   }
   const search = await tool('daski_list_outcomes', { text: 'domain' });
@@ -118,5 +132,5 @@ try {
   assert.ok(reads >= 2 && reads <= 4, `${reads} status reads`);
   console.log(`Built website: sales ${scenario} — purchase page banners, MCP quote refusal or handoff, gateway SALES_PAUSED mapping and discovery passed.`);
 } finally {
-  for (const server of [site, gateway]) { server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); }
+  for (const server of [site, gateway, promotions]) { server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); }
 }

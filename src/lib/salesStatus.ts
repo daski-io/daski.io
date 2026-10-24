@@ -6,12 +6,13 @@
 // banner while sales are paused, and the MCP refuses to quote or buy before
 // calling the gateway, which refuses on its own too.
 //
-// A status is used for at most 15 seconds. Within the gateway's max-age it is
-// fresh; after that it is still served while one background read replaces
-// it; past 15 seconds the caller waits for a new read. A status that cannot
-// be read counts as open: the gateway still refuses while paused, and its
-// status endpoint failing must never stop sales. A pause whose end has passed
-// counts as open; the gateway ends it by itself then.
+// A status read is used for at most 15 seconds. Within the gateway's max-age
+// it is fresh; after that it is still served while one background read
+// replaces it, and a failed read leaves it in place; past 15 seconds the
+// caller waits for a new read. Without a status read in the last 15 seconds,
+// sales count as open: the gateway still refuses while paused, and its status
+// endpoint failing must never stop sales. A pause whose end has passed counts
+// as open; the gateway ends it by itself then.
 import type { NetworkConfig } from './network.ts';
 import { utcDateTime } from './promotionPresentation.ts';
 
@@ -27,15 +28,24 @@ export type SalesStatus = { salesOpen: true } | SalesPause;
 export type SalesStatusTarget = Pick<NetworkConfig, 'gatewayUrl' | 'gatewayInternalUrl'>;
 export type SalesStatusReader = (target: SalesStatusTarget) => Promise<SalesStatus>;
 
+/** Wall-clock time for a pause's end; monotonic time for the age of a read, so a clock step cannot stretch it. */
+export interface SalesStatusClock {
+  now(): number;
+  monotonic(): number;
+}
+
 export const SALES_STATUS_PATH = '/public/v1/status';
 /** The longest a status read is used for. */
 export const SALES_STATUS_MAX_AGE_MS = 15_000;
-/** How long an unreadable status counts as open before it is read again. */
+/** How long sales count as open after a failed read before it is tried again. */
 const UNREADABLE_FRESH_MS = 5_000;
 const FETCH_TIMEOUT_MS = 2_000;
+/** How long a page waits for a status read before rendering without the banner. */
+const PAGE_WAIT_MS = 500;
 /** Retry-After for a pause without a known end. */
 const UNKNOWN_END_RETRY_AFTER_SECONDS = 60;
 const SALES_OPEN: SalesStatus = { salesOpen: true };
+const systemClock: SalesStatusClock = { now: () => Date.now(), monotonic: () => performance.now() };
 
 function timestamp(value: unknown): string | null {
   if (typeof value !== 'string' || value.length > 64) return null;
@@ -46,7 +56,8 @@ function timestamp(value: unknown): string | null {
 function reasonText(value: unknown): string | null {
   if (typeof value !== 'string') return null;
   const text = value.trim();
-  return text && text.length <= 500 && !/[\u0000-\u001f\u007f]/.test(text) ? text : null;
+  // Control, formatting (such as bidirectional overrides) and line separator characters are refused.
+  return text && text.length <= 500 && !/[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/u.test(text) ? text : null;
 }
 
 /** A pause's fields, from the status endpoint or a gateway refusal; an unusable field is null. */
@@ -86,6 +97,7 @@ function freshFor(cacheControl: string | null): number {
 
 interface Reading {
   status: SalesStatus;
+  /** Monotonic time of the read. */
   readAt: number;
   freshFor: number;
   unreadable: boolean;
@@ -96,38 +108,44 @@ interface Reading {
  * one MCP tools call: GATEWAY_INTERNAL_URL when set, otherwise GATEWAY_URL.
  * It never throws.
  */
-export function createSalesStatusReader(request: typeof fetch = fetch, now: () => number = Date.now): SalesStatusReader {
+export function createSalesStatusReader(request: typeof fetch = fetch, clock: SalesStatusClock = systemClock): SalesStatusReader {
   const readings = new Map<string, Reading>();
   const pending = new Map<string, Promise<Reading>>();
+  const failing = new Set<string>();
 
-  async function read(origin: string, previous: Reading | undefined): Promise<Reading> {
+  async function read(origin: string): Promise<Reading> {
     try {
       const response = await request(`${origin}${SALES_STATUS_PATH}`, {
         headers: { accept: 'application/json' }, redirect: 'error', cache: 'no-store',
         signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
       });
-      if (!response.ok) {
+      const json = /^application\/json(?:;|$)/i.test(response.headers.get('content-type') ?? '');
+      if (!response.ok || !json) {
         await response.body?.cancel().catch(() => undefined);
-        throw new Error(`gateway ${SALES_STATUS_PATH} → ${response.status}`);
+        throw new Error(response.ok ? 'gateway sales status is not JSON' : `gateway ${SALES_STATUS_PATH} → ${response.status}`);
       }
-      if (!/^application\/json(?:;|$)/i.test(response.headers.get('content-type') ?? '')) throw new Error('gateway sales status is not JSON');
       const text = await response.text();
       if (text.length > 16_384) throw new Error('gateway sales status is too large');
       const status = parseSalesStatus(JSON.parse(text));
-      return { status, readAt: now(), freshFor: freshFor(response.headers.get('cache-control')), unreadable: false };
+      failing.delete(origin);
+      return { status, readAt: clock.monotonic(), freshFor: freshFor(response.headers.get('cache-control')), unreadable: false };
     } catch (error) {
-      // Logged when the status becomes unreadable, not on every read while it stays so.
-      if (!previous?.unreadable) {
-        console.error(`gateway sales status unreadable at ${origin}; treating sales as open: ${error instanceof Error ? error.message : String(error)}`);
+      // Logged when reads start failing, not on every failed read.
+      if (!failing.has(origin)) {
+        failing.add(origin);
+        console.error(`gateway sales status unreadable at ${origin} (${error instanceof Error ? error.message : String(error)}); ` +
+          'sales count as open once no status was read in the last 15 seconds');
       }
-      return { status: SALES_OPEN, readAt: now(), freshFor: UNREADABLE_FRESH_MS, unreadable: true };
+      const previous = readings.get(origin);
+      if (previous && !previous.unreadable && clock.monotonic() - previous.readAt < SALES_STATUS_MAX_AGE_MS) return previous;
+      return { status: SALES_OPEN, readAt: clock.monotonic(), freshFor: UNREADABLE_FRESH_MS, unreadable: true };
     }
   }
 
   function refresh(origin: string): Promise<Reading> {
     const running = pending.get(origin);
     if (running) return running;
-    const next = read(origin, readings.get(origin))
+    const next = read(origin)
       .then((reading) => { readings.set(origin, reading); return reading; })
       .finally(() => pending.delete(origin));
     pending.set(origin, next);
@@ -138,15 +156,30 @@ export function createSalesStatusReader(request: typeof fetch = fetch, now: () =
     const origin = target.gatewayInternalUrl ?? target.gatewayUrl;
     if (!origin) return SALES_OPEN;
     let reading = readings.get(origin);
-    const age = reading ? now() - reading.readAt : Infinity;
+    const age = reading ? clock.monotonic() - reading.readAt : Infinity;
     if (!reading || age >= SALES_STATUS_MAX_AGE_MS) reading = await refresh(origin);
     else if (age >= reading.freshFor) void refresh(origin);
-    return effectiveSalesStatus(reading.status, now());
+    return effectiveSalesStatus(reading.status, clock.now());
   };
 }
 
 /** The site's reader, shared by every page in this process. */
 export const readSalesStatus: SalesStatusReader = createSalesStatusReader();
+
+/**
+ * The status for a page. A page waits at most half a second for a read, then
+ * renders without the banner; the read still completes and fills the cache.
+ */
+export async function pageSalesStatus(target: SalesStatusTarget, read: SalesStatusReader = readSalesStatus,
+  waitMs = PAGE_WAIT_MS): Promise<SalesStatus> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const deadline = new Promise<SalesStatus>((resolve) => { timer = setTimeout(() => resolve(SALES_OPEN), waitMs); });
+  try {
+    return await Promise.race([read(target), deadline]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 export interface SalesPauseNotice {
   headline: string;

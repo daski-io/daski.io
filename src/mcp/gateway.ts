@@ -20,26 +20,31 @@ function retryAfter(value: string | null, now: number): number | null {
   return Number.isFinite(time) ? Math.max(1, Math.ceil((time - now) / 1000)) : null;
 }
 
+/** What the buyer tried while sales were paused: a quote, an unpaid purchase, or a signed payment. */
+export type SaleStep = 'quote' | 'purchase' | 'payment';
+
+const PAYMENT_WAIT = 'Do not sign a new payment. Once the pause ends (until, retryAfterSeconds), resend this identical signed payment ' +
+  'while its challenge is valid. If an earlier submission of it was uncertain, reconcile its payment identifier first; ' +
+  'order and wallet tools keep working.';
+
 /**
- * The one error a buyer sees while sales are paused, whether the website read
- * the pause from the gateway's status or the gateway refused the call itself.
+ * The SALES_PAUSED error the website returns itself, from the gateway's
+ * status, before any gateway call. It carries the same pause fields as the
+ * gateway's own refusal.
  */
-export function salesPausedError(pause: SalesPause, retryAfterSeconds: number, docs: string,
-  gateway: { paymentMayHaveSettled?: boolean; correlationId?: string } = {}): McpErrorPayload {
-  const settled = gateway.paymentMayHaveSettled === true;
+export function salesPausedError(pause: SalesPause, retryAfterSeconds: number, docs: string, step: SaleStep): McpErrorPayload {
   const end = pause.until ? `until ${pause.until}` : 'for a few minutes';
   return {
     code: 'SALES_PAUSED',
-    message: `Daski has paused new quotes and purchases ${end}. Orders already paid continue.`,
-    retryable: true, requiresNewSignature: false, paymentMayHaveSettled: settled,
+    message: `Daski has paused new quotes and purchases ${end}; orders already paid continue. ` +
+      (step === 'payment' ? 'This payment was not sent to the gateway.' : 'Nothing was quoted or charged.'),
+    phase: step === 'payment' ? 'payment_validation' : 'challenge',
+    retryable: true, requiresNewSignature: false, paymentMayHaveSettled: false,
     reason: pause.reason, since: pause.since, until: pause.until, retryAfterSeconds,
-    next_action: settled
-      ? 'Reconcile the original payment identifier before another purchase.'
-      : 'Nothing was charged. Retry once the pause ends (until, retryAfterSeconds): request the quote again, ' +
-        'or resend an identical signed payment while its challenge is still valid. Do not sign a new payment while sales are paused. ' +
-        'Discovery, order status, artifacts and other order actions keep working.',
+    next_action: step === 'payment' ? PAYMENT_WAIT
+      : `Once the pause ends (until, retryAfterSeconds), ${step === 'quote' ? 'request the quote again' : 'call daski_buy_outcome again'}. ` +
+        'Discovery, order status and order actions keep working.',
     docs,
-    ...(gateway.correlationId ? { correlationId: gateway.correlationId } : {}),
   };
 }
 
@@ -67,10 +72,10 @@ export class GatewayClient {
   }
 
   /** Refuses before any gateway call while the gateway reports sales paused. An unreadable status counts as open. */
-  async assertSalesOpen(): Promise<void> {
+  async assertSalesOpen(step: SaleStep): Promise<void> {
     const status = await this.sales?.(this.config);
     if (status && !status.salesOpen) {
-      throw new GatewayError(salesPausedError(status, pauseRetryAfterSeconds(status.until, Date.now()), this.docs));
+      throw new GatewayError(salesPausedError(status, pauseRetryAfterSeconds(status.until, Date.now()), this.docs, step));
     }
   }
 
@@ -115,7 +120,7 @@ export class GatewayClient {
       if (!response.ok && !(response.status === 402 && options.allow402 && data.x402Version === 2)) {
         const error = (data.error ?? data) as Record<string, unknown>;
         if (typeof error.code !== 'string' || typeof error.message !== 'string') throw new Error('Invalid gateway error');
-        if (error.code === 'SALES_PAUSED') throw new GatewayError(this.salesPausedRefusal(error, response.headers));
+        if (error.code === 'SALES_PAUSED') throw new GatewayError(salesPausedRefusal(error, response.headers, !!options.payment));
         throw new GatewayError({ ...error, code: error.code, message: error.message,
           ...(response.headers.get('daski-next-action') ? { next_action: response.headers.get('daski-next-action')! } : {}),
           retryable: typeof error.retryable === 'boolean' ? error.retryable : response.status >= 500 || response.status === 429 ||
@@ -133,15 +138,32 @@ export class GatewayClient {
     }
   }
 
-  /** The gateway's own SALES_PAUSED refusal (HTTP 503), as the same error the status check returns. */
-  private salesPausedRefusal(error: Record<string, unknown>, headers: Headers): McpErrorPayload {
-    const now = Date.now();
-    const sources = [error, record(error.expected), record(error.details)];
-    const field = (name: string) => sources.find(source => source[name] != null)?.[name];
-    const pause = salesPause({ reason: field('reason'), since: field('since'), until: field('until') });
-    return salesPausedError(pause, retryAfter(headers.get('retry-after'), now) ?? pauseRetryAfterSeconds(pause.until, now), this.docs, {
-      paymentMayHaveSettled: error.paymentMayHaveSettled === true,
-      ...(typeof error.correlationId === 'string' ? { correlationId: error.correlationId } : {}),
-    });
-  }
+}
+
+/**
+ * The gateway's own SALES_PAUSED refusal (HTTP 503). The gateway's message,
+ * phase and next action stand: a payment it already holds is submitted once
+ * sales reopen, so it must not be signed again. Only the pause fields are
+ * added in the website's shape. A paid call whose refusal does not say
+ * whether the payment may have settled counts as possibly settled.
+ */
+function salesPausedRefusal(error: Record<string, unknown>, headers: Headers, payment: boolean): McpErrorPayload {
+  const now = Date.now();
+  const sources = [error, record(error.expected), record(error.details)];
+  const field = (name: string) => sources.find(source => source[name] != null)?.[name];
+  const pause = salesPause({ reason: field('reason'), since: field('since'), until: field('until') });
+  const settled = typeof error.paymentMayHaveSettled === 'boolean' ? error.paymentMayHaveSettled : payment;
+  const nextAction = headers.get('daski-next-action') ?? (typeof error.next_action === 'string' ? error.next_action : null);
+  return {
+    ...error,
+    code: 'SALES_PAUSED',
+    message: String(error.message),
+    retryable: typeof error.retryable === 'boolean' ? error.retryable : true,
+    requiresNewSignature: typeof error.requiresNewSignature === 'boolean' ? error.requiresNewSignature : false,
+    paymentMayHaveSettled: settled,
+    reason: pause.reason, since: pause.since, until: pause.until,
+    retryAfterSeconds: retryAfter(headers.get('retry-after'), now) ?? pauseRetryAfterSeconds(pause.until, now),
+    next_action: nextAction ?? (settled ? 'Reconcile the original payment identifier before another purchase.'
+      : payment ? PAYMENT_WAIT : 'Once the pause ends (until, retryAfterSeconds), retry the same request.'),
+  };
 }

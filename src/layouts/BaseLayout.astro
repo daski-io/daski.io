@@ -4,7 +4,7 @@ import { Footer } from '../components/Footer';
 import { SalesPauseBanner } from '../components/SalesPauseBanner';
 import { siteName, siteTitle } from '../lib/chains';
 import { networkConfig, networkView } from '../lib/network';
-import { readSalesStatus, salesPauseNotice } from '../lib/salesStatus';
+import { pageSalesStatus, salesPauseNotice } from '../lib/salesStatus';
 import { canonicalPageUrl, descriptionExcerpt, homeDescription, pageTitle, SOCIAL_IMAGE } from '../lib/seo';
 import '../styles/app.css';
 
@@ -30,8 +30,8 @@ const {
   noindex = false,
   leadsToBuying = false,
 } = Astro.props;
-// Read only where it is shown; an unreadable status shows nothing.
-const salesPause = leadsToBuying ? salesPauseNotice(await readSalesStatus(network)) : null;
+// Read only where it is shown; an unreadable or slow status shows nothing.
+const salesPause = leadsToBuying ? salesPauseNotice(await pageSalesStatus(network)) : null;
 const title = pageHeading ? pageTitle(pageHeading, network) : siteTitle(view);
 const description = descriptionExcerpt(pageDescription);
 const imageUrl = new URL(SOCIAL_IMAGE.path, network.siteUrl).href;

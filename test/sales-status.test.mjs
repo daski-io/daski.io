@@ -3,6 +3,7 @@ import test from 'node:test';
 import {
   createSalesStatusReader,
   effectiveSalesStatus,
+  pageSalesStatus,
   parseSalesStatus,
   pauseRetryAfterSeconds,
   salesPauseNotice,
@@ -17,6 +18,7 @@ const paused = { salesOpen: false, reason: 'Scheduled key switch', since: '2026-
 // A gateway that answers each read with the next response, and a clock the test moves.
 function gateway(...responses) {
   let now = start;
+  let monotonic = 0;
   const reads = [];
   const request = async (url) => {
     reads.push(url);
@@ -24,7 +26,12 @@ function gateway(...responses) {
     if (!next) throw new Error('unexpected status read');
     return next();
   };
-  return { reads, read: createSalesStatusReader(request, () => now), advance: (ms) => { now += ms; } };
+  const clock = { now: () => now, monotonic: () => monotonic };
+  return {
+    reads, read: createSalesStatusReader(request, clock),
+    advance: (ms) => { now += ms; monotonic += ms; },
+    stepWallClock: (ms) => { now += ms; },
+  };
 }
 const settle = () => new Promise((resolve) => setImmediate(resolve));
 
@@ -107,7 +114,57 @@ test('a status that cannot be read counts as open, is read again after five seco
   advance(15_000);
   assert.deepEqual(await read(target), { salesOpen: true });
   assert.equal(logged.mock.callCount(), 2);
-  assert.match(String(logged.mock.calls[1].arguments[0]), /treating sales as open/);
+  assert.match(String(logged.mock.calls[1].arguments[0]), /sales count as open once no status was read in the last 15 seconds/);
+});
+
+test('a failed background read keeps the last pause until it is 15 seconds old', async (t) => {
+  t.mock.method(console, 'error', () => {});
+  const { reads, read, advance } = gateway(
+    () => json(paused, { 'cache-control': 'max-age=5' }),
+    () => { throw new DOMException('The operation was aborted due to timeout', 'TimeoutError'); },
+    () => json({ error: 'unavailable' }, {}, 503),
+    () => { throw new TypeError('fetch failed'); },
+  );
+  assert.deepEqual(await read(target), paused);
+  advance(6_000);
+  assert.deepEqual(await read(target), paused);
+  await settle();
+  assert.equal(reads.length, 2);
+  advance(1_000);
+  assert.deepEqual(await read(target), paused, 'still paused after the failed refresh');
+  await settle();
+  assert.equal(reads.length, 3);
+  // Without a status read in the last 15 seconds, sales count as open.
+  advance(8_000);
+  assert.deepEqual(await read(target), { salesOpen: true });
+  assert.equal(reads.length, 4);
+});
+
+test('a wall clock step does not stretch how long a read is used', async () => {
+  const { reads, read, advance, stepWallClock } = gateway(() => json({ salesOpen: true }), () => json(paused));
+  assert.deepEqual(await read(target), { salesOpen: true });
+  stepWallClock(-60 * 60_000);
+  advance(15_000);
+  assert.equal((await read(target)).salesOpen, false);
+  assert.equal(reads.length, 2);
+});
+
+test('a page waits at most its limit for a read, then renders as open while the read fills the cache', async () => {
+  let finish;
+  const slow = new Promise((resolve) => { finish = resolve; });
+  // The system clock: the pause ends ten minutes from now.
+  const later = { ...paused, until: new Date(Date.now() + 10 * 60_000).toISOString() };
+  const reader = createSalesStatusReader(async () => {
+    await slow;
+    return json(later);
+  });
+  const started = performance.now();
+  assert.deepEqual(await pageSalesStatus(target, reader, 20), { salesOpen: true });
+  assert.ok(performance.now() - started < 1_000);
+  finish();
+  assert.deepEqual(await reader(target), later, 'the late read completes');
+  assert.deepEqual(await pageSalesStatus(target, reader, 20), later, 'and pages then use it at once');
+  assert.deepEqual(await pageSalesStatus({ gatewayUrl: null, gatewayInternalUrl: null }, reader, 20), { salesOpen: true });
 });
 
 test('a pause past its end counts as open without another read', async () => {
@@ -126,6 +183,9 @@ test('the status body is parsed strictly for salesOpen and leniently for the pau
   assert.deepEqual(parseSalesStatus({ salesOpen: false, reason: 'line\nbreak', until: 'soon' }),
     { salesOpen: false, reason: null, since: null, until: null });
   assert.equal(parseSalesStatus({ salesOpen: false, reason: 'x'.repeat(501) }).reason, null);
+  for (const hidden of ['abc\u202Edef', 'zero\u200Bwidth', 'line\u2028separator']) {
+    assert.equal(parseSalesStatus({ salesOpen: false, reason: hidden }).reason, null, JSON.stringify(hidden));
+  }
   for (const invalid of [null, [], 'paused', {}, { salesOpen: 'false' }, { salesOpen: 0 }]) {
     assert.throws(() => parseSalesStatus(invalid), /sales status/);
   }

@@ -45,9 +45,9 @@ export async function executeTool(name: string, args: Record<string, unknown>, m
     }
     const outcome = `/outcomes/${part(args.providerAgentId)}/${part(args.outcomeId)}`;
     // Quoting and buying stop while the gateway has paused sales; every other tool keeps working.
-    if (name === 'daski_buy_outcome' || name === 'daski_get_payment_challenge') await gateway.assertSalesOpen();
     if (name === 'daski_buy_outcome') {
       const payment = args.paymentPayload ?? meta?.['x402/payment'];
+      await gateway.assertSalesOpen(payment ? 'payment' : 'purchase');
       const response = await gateway.call(`${outcome}/purchase`, {
         request: args.request, ...(args.payerAddress ? { payerAddress: args.payerAddress } : {}),
         ...(payment ? { paymentPayload: payment } : {}),
@@ -59,6 +59,7 @@ export async function executeTool(name: string, args: Record<string, unknown>, m
         ? { 'x402/payment-response': JSON.parse(Buffer.from(paymentResponse, 'base64url').toString('utf8')) } : undefined);
     }
     if (name === 'daski_get_payment_challenge') {
+      await gateway.assertSalesOpen('quote');
       const { body } = await gateway.call(`${outcome}/quote`, {
         request: args.request, ...(args.payerAddress ? { payerAddress: args.payerAddress } : {}),
       });
