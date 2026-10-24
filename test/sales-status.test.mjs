@@ -117,7 +117,7 @@ test('a status that cannot be read counts as open, is read again after five seco
   assert.match(String(logged.mock.calls[1].arguments[0]), /sales count as open once no status was read in the last 15 seconds/);
 });
 
-test('a failed background read keeps the last pause until it is 15 seconds old', async (t) => {
+test('a failed background read keeps the last pause until it is 15 seconds old and waits five seconds to try again', async (t) => {
   t.mock.method(console, 'error', () => {});
   const { reads, read, advance } = gateway(
     () => json(paused, { 'cache-control': 'max-age=5' }),
@@ -130,12 +130,23 @@ test('a failed background read keeps the last pause until it is 15 seconds old',
   assert.deepEqual(await read(target), paused);
   await settle();
   assert.equal(reads.length, 2);
+  // Still paused after the failed read, and a burst of requests starts no further read for five seconds.
   advance(1_000);
-  assert.deepEqual(await read(target), paused, 'still paused after the failed refresh');
+  for (let request = 0; request < 50; request++) assert.deepEqual(await read(target), paused);
+  advance(3_999);
+  assert.deepEqual(await read(target), paused);
+  await settle();
+  assert.equal(reads.length, 2);
+  advance(1);
+  assert.deepEqual(await read(target), paused);
+  await settle();
+  assert.equal(reads.length, 3);
+  advance(1_000);
+  assert.deepEqual(await read(target), paused);
   await settle();
   assert.equal(reads.length, 3);
   // Without a status read in the last 15 seconds, sales count as open.
-  advance(8_000);
+  advance(3_000);
   assert.deepEqual(await read(target), { salesOpen: true });
   assert.equal(reads.length, 4);
 });

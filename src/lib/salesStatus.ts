@@ -136,8 +136,12 @@ export function createSalesStatusReader(request: typeof fetch = fetch, clock: Sa
         console.error(`gateway sales status unreadable at ${origin} (${error instanceof Error ? error.message : String(error)}); ` +
           'sales count as open once no status was read in the last 15 seconds');
       }
+      // The last read stays in use until it is 15 seconds old; the next attempt waits five seconds.
       const previous = readings.get(origin);
-      if (previous && !previous.unreadable && clock.monotonic() - previous.readAt < SALES_STATUS_MAX_AGE_MS) return previous;
+      const age = previous ? clock.monotonic() - previous.readAt : Infinity;
+      if (previous && !previous.unreadable && age < SALES_STATUS_MAX_AGE_MS) {
+        return { ...previous, freshFor: Math.min(SALES_STATUS_MAX_AGE_MS, age + UNREADABLE_FRESH_MS) };
+      }
       return { status: SALES_OPEN, readAt: clock.monotonic(), freshFor: UNREADABLE_FRESH_MS, unreadable: true };
     }
   }
