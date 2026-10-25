@@ -58,8 +58,8 @@ failed request. An uncertain paid submission must be reconciled.
 
 The gateway can pause new sales for a few minutes while orders already paid
 continue, and reports it at `/public/v1/status`. While it reports
-`salesOpen: false`, the home, service, provider, agents and promotion pages show
-a banner with the pause's end in UTC, and `daski_get_payment_challenge` and
+`salesOpen: false`, every page shows a one-line banner under the header with
+the pause's end in UTC, and `daski_get_payment_challenge` and
 `daski_buy_outcome` return `SALES_PAUSED` with the reason, `until` and
 `retryAfterSeconds` without calling the gateway. The gateway's own
 `SALES_PAUSED` refusal keeps its message, phase and next action (a payment it

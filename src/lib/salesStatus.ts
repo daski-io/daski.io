@@ -2,9 +2,9 @@
 //
 // The gateway can pause every new transaction for a few minutes, for a key
 // switch or during an attack, while orders already paid keep running. It
-// publishes that state at /public/v1/status. Pages that lead to buying show a
-// banner while sales are paused, and the MCP refuses to quote or buy before
-// calling the gateway, which refuses on its own too.
+// publishes that state at /public/v1/status. Every page shows a banner under
+// the header while sales are paused, and the MCP refuses to quote or buy
+// before calling the gateway, which refuses on its own too.
 //
 // A status read is used for at most 15 seconds. Within the gateway's max-age
 // it is fresh; after that it is still served while one background read
@@ -186,22 +186,22 @@ export async function pageSalesStatus(target: SalesStatusTarget, read: SalesStat
 }
 
 export interface SalesPauseNotice {
-  headline: string;
-  detail: string;
-  reason: string | null;
+  /** One line: when new quotes and purchases resume, and that paid orders continue. */
+  message: string;
 }
 
 /**
  * The banner's text while sales are paused, or null while they are open. The
  * end is shown in UTC, rounded up to the minute, so a buyer never retries
- * early.
+ * early. The banner stays one line, so the gateway's reason is left to the
+ * MCP's SALES_PAUSED answer.
  */
 export function salesPauseNotice(status: SalesStatus): SalesPauseNotice | null {
   if (status.salesOpen) return null;
   const end = status.until === null ? null : utcDateTime(Math.ceil(Date.parse(status.until) / 60_000) * 60_000);
   return {
-    headline: end ? `Sales are paused until ${end}.` : 'Sales are paused.',
-    detail: `New quotes and purchases ${end ? 'resume then' : 'resume shortly'}. Orders already paid continue normally.`,
-    reason: status.reason,
+    message: end
+      ? `Sales are paused until ${end}. New quotes and purchases resume then. Orders already paid continue normally.`
+      : 'Sales are paused. New quotes and purchases resume shortly. Orders already paid continue normally.',
   };
 }

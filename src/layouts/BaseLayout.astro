@@ -1,7 +1,6 @@
 ---
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
-import { SalesPauseBanner } from '../components/SalesPauseBanner';
 import { siteName, siteTitle } from '../lib/chains';
 import { networkConfig, networkView } from '../lib/network';
 import { pageSalesStatus, salesPauseNotice } from '../lib/salesStatus';
@@ -13,8 +12,6 @@ export interface Props {
   description?: string;
   canonicalUrl?: string;
   noindex?: boolean;
-  /** A page that leads to buying: it shows the sales pause banner while the gateway has paused sales. */
-  leadsToBuying?: boolean;
 }
 
 // The instance's network is resolved once on the server; islands receive the
@@ -28,10 +25,10 @@ const {
   description: pageDescription = homeDescription(network),
   canonicalUrl = canonicalPageUrl(pathname, network.siteUrl),
   noindex = false,
-  leadsToBuying = false,
 } = Astro.props;
-// Read only where it is shown; an unreadable or slow status shows nothing.
-const salesPause = leadsToBuying ? salesPauseNotice(await pageSalesStatus(network)) : null;
+// Every page shows the sales pause banner under the header while the gateway
+// has paused sales; an unreadable or slow status shows nothing.
+const salesPause = salesPauseNotice(await pageSalesStatus(network));
 const title = pageHeading ? pageTitle(pageHeading, network) : siteTitle(view);
 const description = descriptionExcerpt(pageDescription);
 const imageUrl = new URL(SOCIAL_IMAGE.path, network.siteUrl).href;
@@ -89,8 +86,7 @@ const website = {
   </head>
   <body data-theme="dark">
     <div style="min-height: 100vh; background: var(--pro-bg);">
-      <Header client:load pathname={pathname} network={view} />
-      {salesPause && <SalesPauseBanner notice={salesPause} />}
+      <Header client:load pathname={pathname} network={view} salesPause={salesPause} />
       <slot />
       <Footer network={view} />
     </div>

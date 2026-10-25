@@ -175,6 +175,12 @@
   text-decoration: none;
 }
 
+/* While the sales pause strip shows, the sticky header is one 35px strip taller. */
+body:has(.dk-sales-pause) .dk-legal-prose :is(h2, h3) { scroll-margin-top: 131px; }
+@media (min-width: 901px) {
+  body:has(.dk-sales-pause) .dk-legal-toc { top: 131px; max-height: calc(100vh - 155px); }
+}
+
 @media (max-width: 900px) {
   .dk-legal-grid { grid-template-columns: 1fr; gap: 40px; }
   .dk-legal-toc {

@@ -213,17 +213,13 @@ test('an ended pause is open, and Retry-After counts whole seconds to the end', 
   assert.equal(pauseRetryAfterSeconds(null, start), 60);
 });
 
-test('the banner names the end in UTC, rounded up to the minute, and the reason', () => {
+test('the banner is one line naming the end in UTC, rounded up to the minute, without the reason', () => {
   assert.equal(salesPauseNotice({ salesOpen: true }), null);
   assert.deepEqual(salesPauseNotice(paused), {
-    headline: 'Sales are paused until Oct 24, 2026, 15:10 UTC.',
-    detail: 'New quotes and purchases resume then. Orders already paid continue normally.',
-    reason: 'Scheduled key switch',
+    message: 'Sales are paused until Oct 24, 2026, 15:10 UTC. New quotes and purchases resume then. Orders already paid continue normally.',
   });
-  assert.equal(salesPauseNotice({ ...paused, until: '2026-10-24T15:07:01Z' }).headline, 'Sales are paused until Oct 24, 2026, 15:08 UTC.');
-  assert.deepEqual(salesPauseNotice({ ...paused, reason: null, until: null }), {
-    headline: 'Sales are paused.',
-    detail: 'New quotes and purchases resume shortly. Orders already paid continue normally.',
-    reason: null,
+  assert.match(salesPauseNotice({ ...paused, until: '2026-10-24T15:07:01Z' }).message, /^Sales are paused until Oct 24, 2026, 15:08 UTC\. /);
+  assert.deepEqual(salesPauseNotice({ ...paused, until: null }), {
+    message: 'Sales are paused. New quotes and purchases resume shortly. Orders already paid continue normally.',
   });
 });

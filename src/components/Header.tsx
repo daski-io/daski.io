@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import { Logo } from './ui/Logo';
 import { Icon } from './ui/Icon';
 import { NetworkStrip, NetworkSwitch } from './NetworkControls';
+import { SalesPauseBanner } from './SalesPauseBanner';
 import type { NetworkView } from '../lib/chains';
+import type { SalesPauseNotice } from '../lib/salesStatus';
 
 interface NavItem {
   to: string;
@@ -20,9 +22,11 @@ const ITEMS: NavItem[] = [
 interface HeaderProps {
   pathname: string;
   network: NetworkView;
+  /** The sales pause banner while the gateway has paused sales, otherwise null. */
+  salesPause?: SalesPauseNotice | null;
 }
 
-export function Header({ pathname, network }: HeaderProps) {
+export function Header({ pathname, network, salesPause = null }: HeaderProps) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -245,6 +249,8 @@ export function Header({ pathname, network }: HeaderProps) {
         </div>
       )}
 
+      {/* Strips under the nav, stacked in one style: a sales pause first, then the network. */}
+      {salesPause && <SalesPauseBanner notice={salesPause} />}
       <NetworkStrip network={network} />
     </header>
   );

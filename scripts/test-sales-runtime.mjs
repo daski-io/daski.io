@@ -88,20 +88,29 @@ async function tool(name, args) {
 }
 // The words a reader sees: tags removed, whitespace collapsed.
 const visibleText = html => html.replace(/<script\b[\s\S]*?<\/script>/g, ' ').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+// A strip's markup without its colors and words, so two strips' structure and styles compare.
+const skeleton = markup => markup.replace(' class="dk-sales-pause"', '').replace(/#[0-9a-f]{6}|rgba\([^)]*\)/gi, 'COLOR').replace(/>[^<]+</g, '><');
 
 try {
   const paused = scenario === 'paused';
-  const banner = `Sales paused Sales are paused until ${untilText}. New quotes and purchases resume then. Orders already paid continue normally. Reason: Scheduled key switch`;
-  for (const path of ['/', `/service/${service.serviceId}`, `/provider/${service.providerAgentId}`, '/agents', '/promo/launch']) {
+  const banner = `Sales paused Sales are paused until ${untilText}. New quotes and purchases resume then. Orders already paid continue normally.`;
+  // Every page shows it once, from the shared layout: first under the nav, then the testnet strip, in the strip's style.
+  const pages = ['/', `/service/${service.serviceId}`, `/provider/${service.providerAgentId}`, '/agents', '/providers', '/activity',
+    '/promo/launch', '/proof', '/brand-assets', '/terms-of-use', '/privacy-policy', '/no-such-page'];
+  for (const path of pages) {
     const response = await fetch(siteUrl + path);
-    assert.equal(response.status, 200, path);
+    assert.equal(response.status, path === '/no-such-page' ? 404 : 200, path);
     const html = await response.text();
-    assert.equal(html.includes('class="dk-sales-pause"'), paused, `${path}: banner`);
-    if (paused) assert.ok(visibleText(html).includes(banner), `${path} is missing: ${banner}`);
-  }
-  for (const path of ['/providers', '/proof', '/terms-of-use']) {
-    const html = await (await fetch(siteUrl + path)).text();
-    assert.ok(!html.includes('class="dk-sales-pause"'), `${path} does not lead to buying`);
+    assert.equal(html.split('class="dk-sales-pause"').length - 1, paused ? 1 : 0, `${path}: banners`);
+    if (!paused) continue;
+    assert.ok(visibleText(html).includes(banner), `${path} is missing: ${banner}`);
+    assert.ok(!html.includes('Scheduled key switch'), `${path}: the banner is one line, without the reason`);
+    const start = html.indexOf('<div role="status" class="dk-sales-pause"');
+    const strip = html.indexOf('<div role="status"', start + 1);
+    const end = html.indexOf('</header>', strip);
+    assert.ok(start !== -1 && strip !== -1 && visibleText(html.slice(strip, end)).includes('You are viewing the Testnet version of Daski'),
+      `${path}: the banner comes first, then the testnet strip`);
+    assert.equal(skeleton(html.slice(start, strip)), skeleton(html.slice(strip, end)), `${path}: the banner is styled like the testnet strip`);
   }
 
   const quote = await tool('daski_get_payment_challenge', { providerAgentId: '42', outcomeId: 'domain', request: { name: 'example.info' } });
@@ -130,7 +139,7 @@ try {
   // Pages share one cached status and the MCP keeps its own: two reads at most, plus one refresh on a slow run.
   const reads = calls.filter(path => path === '/public/v1/status').length;
   assert.ok(reads >= 2 && reads <= 4, `${reads} status reads`);
-  console.log(`Built website: sales ${scenario} — purchase page banners, MCP quote refusal or handoff, gateway SALES_PAUSED mapping and discovery passed.`);
+  console.log(`Built website: sales ${scenario} — banner on every page, MCP quote refusal or handoff, gateway SALES_PAUSED mapping and discovery passed.`);
 } finally {
   for (const server of [site, gateway, promotions]) { server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); }
 }
