@@ -4,7 +4,7 @@ status: canonical
 authority: current repository implementation and approved maintainer workflow
 owner: repository maintainers
 effective-date: 2026-10-16
-last-verified: 2026-10-16 (documentation placement; no live release verification)
+last-verified: 2026-10-30 (native skill disclosures; other guidance retains its dates; no live release verification)
 supersedes: repository-wide agent files as the home of general repository guidance
 superseded-by: none
 sensitivity: public-safe
@@ -191,6 +191,11 @@ Open Graph tags, and X card tags on the server. Static page copy is in
 as the page. Titles use the Daski brand without a domain suffix, and sandbox
 pages identify themselves as Daski Testnet. The home page also publishes
 `WebSite` structured data for the site name.
+
+Service skill descriptions and provider documentation links are included in the
+initial HTML inside native `details` / `summary` sections. Each section starts
+collapsed and can be expanded independently with a mouse or keyboard, including
+when JavaScript is disabled.
 
 The shared social preview is `public/assets/social/daski-card.png` (1200 × 630),
 using the published Daski wordmark, brand colors, and Inter typography. Its

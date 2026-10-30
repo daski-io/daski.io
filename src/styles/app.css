@@ -315,6 +315,41 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   text-transform: uppercase;
 }
 
+/* Native disclosures keep skill descriptions in the initial HTML and work
+   before hydration, including when JavaScript is disabled. */
+.dk-skill-disclosure > summary {
+  cursor: pointer;
+  list-style: none;
+}
+.dk-skill-disclosure > summary::-webkit-details-marker { display: none; }
+.dk-skill-disclosure > summary:focus-visible {
+  outline: 2px solid var(--mint-400);
+  outline-offset: -2px;
+}
+.dk-skill-toggle {
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 6px;
+  border: 1px solid var(--pro-border-hi);
+  color: var(--pro-text-dim);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  justify-self: end;
+}
+.dk-skill-less,
+.dk-skill-disclosure[open] .dk-skill-more { display: none; }
+.dk-skill-disclosure[open] .dk-skill-less { display: inline; }
+.dk-skill-disclosure[open] .dk-skill-toggle {
+  border-color: var(--mint-700);
+  color: var(--mint-400);
+}
+.dk-skill-disclosure[open] .dk-skill-chevron { transform: rotate(180deg); }
+
 .dk-skills-row {
   display: grid;
   grid-template-columns: 1.2fr 2fr 1fr;
