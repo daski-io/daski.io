@@ -39,7 +39,7 @@ test('renders legal revision metadata once through the shared layout', async () 
     assert.equal(body.match(/^## /gm)?.length, legalPage.sectionCount);
     assert.match(page, new RegExp(`canonicalUrl="${legalPage.canonicalUrl}"`));
     assert.equal(page.match(/version="1\.2"/g)?.length, 1);
-    assert.equal(page.match(/effectiveDate="Upon publication"/g)?.length, 1);
+    assert.equal(page.match(/effectiveDate="October 22, 2026"/g)?.length, 1);
   }
 });
 
