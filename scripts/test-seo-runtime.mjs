@@ -32,6 +32,19 @@ const missingId = `0x${'00'.repeat(32)}`;
 const unavailableId = `0x${'11'.repeat(32)}`;
 // Ensure quote escaping and paragraph normalization are exercised in real HTML.
 service.description = 'Research & analysis for "samples".\n' + 'Detailed findings and documented methods. '.repeat(8);
+const secondSkill = structuredClone(service.skills[0]);
+secondSkill.skillId = 'review-results';
+secondSkill.skillContractHash = `0x${'ac'.repeat(32)}`;
+secondSkill.listing.listingId = 'listing-lab-review';
+secondSkill.listing.listingKey = `0x${'bd'.repeat(32)}`;
+secondSkill.presentation = {
+  name: 'Review results',
+  description: 'Review <findings> & "quoted" evidence.\nKeep this second description readable without JavaScript.',
+  examples: [],
+  tags: ['laboratory'],
+  documentationUrl: 'https://provider.example/docs/review-results',
+};
+service.skills.push(secondSkill);
 const gateway = createServer((req, res) => {
   res.setHeader('content-type', 'application/json');
   if (req.url === '/.well-known/daski-chain.json') { res.end(JSON.stringify(rail)); return; }
@@ -198,6 +211,20 @@ try {
     const detail = await page(`/service/${service.serviceId}`);
     assert.equal(detail.title, `${service.name} · Daski${testnet ? ' Testnet' : ''}`);
     assert.match(detail.description, /^Research & analysis for "samples"\./);
+    // Fetch reads the server response without JavaScript. Every skill's full
+    // description and documentation link must be HTML content, not just
+    // serialized island props, inside an independently collapsed disclosure.
+    const disclosures = [...detail.html.matchAll(/<details\b[^>]*>[\s\S]*?<\/details>/g)].map(([html]) => html);
+    assert.equal(disclosures.length, service.skills.length);
+    for (const [index, skill] of service.skills.entries()) {
+      const disclosure = disclosures[index];
+      assert.doesNotMatch(disclosure.match(/^<details\b[^>]*>/)[0], /\bopen(?:[\s=>])/);
+      assert.match(disclosure, /<summary\b/);
+      const content = disclosure.split('</summary>')[1];
+      assert.ok(visibleText(content).includes(skill.presentation.description.replace(/\s+/g, ' ')), skill.skillId);
+      const links = [...content.matchAll(/<a\b[^>]*>/g)].map(([tag]) => attributes(tag));
+      assert.ok(links.some(link => link.href === skill.presentation.documentationUrl), skill.skillId);
+    }
     const provider = await page(`/provider/${service.providerAgentId}`);
     assert.match(provider.title, /services and reputation/);
     await page(`/service/${missingId}`, 404);
