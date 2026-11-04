@@ -15,6 +15,9 @@ export function renderGuide(file: GuideFile, templates: GuideTemplates, config: 
     GATEWAY_URL: config.gatewayUrl,
     CHAIN_ID: String(config.chainId),
     CHAIN_NAME: config.chainName,
+    CIRCLE_CHAIN: config.chainId === 84532 ? 'BASE-SEPOLIA' : 'BASE',
+    CIRCLE_NETWORK: config.chainId === 84532 ? 'testnet' : 'mainnet',
+    CIRCLE_NETWORK_FLAG: config.chainId === 84532 ? ' --testnet' : '',
   };
   const content = templates[file].replace(/\{\{([A-Z_]+)\}\}/g, (_, key: string) => {
     if (!(key in values)) throw new Error(`Unknown guide placeholder: ${key}`);
