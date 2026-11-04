@@ -4,6 +4,12 @@
 
 Complete intake using `daski_get_outcome_requirements` and the user's supplied facts, then save the request as JSON.
 
+When an outcome asks for an email address, explain this to the user before submitting it for a quote or purchase:
+
+> Provide an email address you monitor. Daski, the provider, and relevant service partners may use it for order updates, required actions, support, and renewal notices.
+
+Follow the outcome's field description for specific messages and deadlines, such as domain verification. Keep optional contact email fields optional. This notice covers service-related communication; it does not request marketing consent.
+
 ```bash
 daski buy --provider <id> --outcome <id> --request <file.json> --json
 ```

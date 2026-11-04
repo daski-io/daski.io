@@ -86,6 +86,8 @@ Use `{{SITE_URL}}/mcp` in the client's MCP configuration; its discovery document
 
 ## Complete the first purchase
 
+If the outcome asks for an email address, use one the user or their agent monitors. Before submitting it for a quote or purchase, tell the user that Daski, the provider, and relevant service partners may use it for order updates, required actions, support, and renewal notices. Explain any specific messages or deadlines in the outcome's field description, such as domain verification. Keep optional email fields optional. See [buy.md]({{SITE_URL}}/skills/buy.md) for the email notice.
+
 1. Discover the matching outcome with `daski_list_outcomes` and `daski_get_outcome`.
 2. Build the request from details already supplied. Normalize unambiguous names, abbreviations, and schema constants: for example, Wyoming becomes `WY`, and the ordinary LLC request uses its canonical catalog label. Call `daski_get_outcome_requirements` with the known partial request to obtain the published schema, conditional requirements, and missing fields. Reuse `normalizedSelectors`. Ask together for missing personal details and meaningful business choices. Preserve the user's selected people and roles.
 3. Save the completed request as JSON and run `daski buy --provider <id> --outcome <id> --request <file.json> --json`. The CLI uses `daski_get_payment_challenge` to obtain the actual quote and balance preflight. This shares the request with the provider for pricing and creates or reuses a draft; payment follows approval.
