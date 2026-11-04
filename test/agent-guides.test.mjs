@@ -97,22 +97,21 @@ test('mainnet instructions use only the configured mainnet endpoints', () => {
   assert.notEqual(setup.sha256, renderGuide('setup.md', templates, config).sha256);
 });
 
-test('Circle recovery commands bind every step to the guide network and keep normal setup read-only until authorized', () => {
+test('Circle setup preserves the selected network and stops the v2-required legacy refusal', () => {
   for (const [network, chain, flag] of [['testnet', 'BASE-SEPOLIA', ' --testnet'], ['mainnet', 'BASE', '']]) {
     const instance = resolveNetworkConfig({ DASKI_NETWORK: network, GATEWAY_URL: 'https://gateway.example' });
     const setup = renderGuide('setup.md', templates, instance).content;
-    const login = setup.split('\n').filter(line => line.startsWith('CIRCLE_EXPERIMENTAL_AUTH_V2=0 circle wallet login'));
-    assert.equal(login.length, 2);
-    assert.ok(login[0].includes(`--type agent${flag} --init --output json`));
-    assert.ok(login[1].includes(`--type agent${flag} --request <fresh-request-id> --otp <fresh-code> --output json`));
-    if (network === 'mainnet') for (const command of login) assert.doesNotMatch(command, /--testnet/);
+    assert.ok(setup.includes(`circle wallet create${flag} --output json`));
     assert.ok(setup.includes(`circle wallet list --chain ${chain} --type agent --output json`));
+    assert.doesNotMatch(setup, /CIRCLE_EXPERIMENTAL_AUTH_V2=0|--request <fresh-request-id>/);
+    assert.match(setup, /Account must use the v2 authentication path/);
+    assert.match(setup, /Do not retry legacy login/);
+    assert.match(setup, /ordinary setup must stop here/);
     assert.match(setup, /Before requesting a login code/);
     assert.match(setup, /including expired ones/);
     assert.match(setup, /An empty list alone does not prove a failure/);
-    assert.match(setup, /at most one/);
     assert.match(setup, /Login success alone is insufficient/);
-    assert.match(setup, /acceptance by Circle's live service is not guaranteed/);
+    assert.match(setup, /Offline fake API tests do not prove live service acceptance/);
   }
 });
 

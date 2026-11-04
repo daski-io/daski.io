@@ -34,7 +34,7 @@ If `payerAccounts.types` lacks `contract`, that gateway accepts plain wallets on
 3. After login, run `circle wallet list --chain {{CIRCLE_CHAIN}} --type agent --output json`. A `VALID` token only describes authentication expiry. It does not prove wallet initialization. An empty list alone does not prove a failure; under the user's wallet-setup authorization, run `circle wallet create{{CIRCLE_NETWORK_FLAG}} --output json` once. If it reports `User not initialized`, use the recovery below.
 4. Configure Daski: set `DASKI_KEY_BACKEND=circle-agent`, run `daski doctor --json --signer circle-agent`, and set the profile's `signer` to `circle-agent` in `configFile`. Doctor names anything else this gateway's network needs: authentication, deploying the wallet with a zero-value transfer to itself, funding.
 
-Never edit or patch the Daski or Circle CLI. Classify a failure before retrying; the bounded recovery below uses the installed Circle CLI's own login flow.
+Never edit or patch the Daski or Circle CLI. Classify a failure before retrying; the initialization failure below needs a repair before setup can continue.
 
 The supported Circle CLI versions are published as `signerClis.circle-agent` in `{{GATEWAY_URL}}/.well-known/mcp.json`; Circle's skill installs and updates the CLI. Purchase signing and direct review execution are separate capabilities. Read `confirmation.directReview` in the same document: `circleEstimate` permits estimation, while `circleExecute` must be true before the buyer CLI can submit a Circle review on this network.
 
@@ -42,23 +42,18 @@ The supported Circle CLI versions are published as `signerClis.circle-agent` in 
 
 Use this only when the selected {{CIRCLE_NETWORK}} session is valid, its {{CIRCLE_CHAIN}} wallet list is empty, and wallet creation specifically reports `User not initialized`. Circle can finish authentication and skip initialization after an interrupted first login. Repeating normal login/create commands does not repair that state.
 
-Within the user's existing wallet-setup authorization, make **at most one** compatibility recovery attempt for the **same exact email and network**. Keep the current session; do not log out again, reset terms, create another identity, switch signers, or change global configuration. Circle CLI 1.2.0 and 1.2.2 contain a legacy login path that performs initialization after authentication. Its control flow is tested offline; acceptance by Circle's live service is not guaranteed.
+Circle CLI 1.2.0 and 1.2.2 have no public initialize/resume command. The earlier recommendation to try legacy login was withdrawn after Circle rejected a v2 account with HTTP 409 / `CONFLICT`: `Account must use the v2 authentication path.` This refusal occurs before a request ID, OTP completion or wallet initialization. It is not an email conflict or a bad OTP. Do not retry legacy login, downgrade authentication, request a code for that refused attempt, or assume an ordinary v2 login will repair it.
 
-Use a process-scoped environment variable for this attempt (the prefix below is POSIX shell syntax; on other hosts pass that variable only to the child process):
+Keep the existing session, **same exact email and network**, and Terms consent. Do not log out again, reset credentials, create another identity, switch signers, change global configuration or inspect secret storage. Report the CLI version, selected network, token status, empty wallet list and sanitized error. The account needs a Circle-supported v2 initialization repair or a separately reviewed maintainer repair; ordinary setup must stop here. Offline fake API tests do not prove live service acceptance.
 
-```bash
-CIRCLE_EXPERIMENTAL_AUTH_V2=0 circle wallet login "<same-email>" --type agent{{CIRCLE_NETWORK_FLAG}} --init --output json
-```
-
-Read the fresh request ID, obtain the new OTP from the user, and use it immediately:
+After a repair, verify the result:
 
 ```bash
-CIRCLE_EXPERIMENTAL_AUTH_V2=0 circle wallet login --type agent{{CIRCLE_NETWORK_FLAG}} --request <fresh-request-id> --otp <fresh-code> --output json
 circle wallet status --output json
 circle wallet list --chain {{CIRCLE_CHAIN}} --type agent --output json
 ```
 
-Do not retain or echo the OTP. Login success alone is insufficient: initialization may already create the wallets, so list them before attempting any further creation. Continue only once the selected network lists a wallet, then run `daski doctor --json --signer circle-agent` and resolve deployment/funding as usual. If legacy authentication is refused, initialization fails, or the list stays empty, stop and report the vendor's error and incomplete setup. Do not repeat this recovery, remove credentials, inspect secret storage, or pay from another account as a workaround.
+Login success alone is insufficient: initialization may already create the wallets, so list them before attempting any further creation. Continue only once the selected network lists a wallet, then run `daski doctor --json --signer circle-agent` with the original Daski profile and resolve deployment/funding as usual. If the list stays empty, preserve the session and stop; do not repeat an unverified repair or pay from another account as a workaround.
 
 ## Local key (durable machine only)
 
