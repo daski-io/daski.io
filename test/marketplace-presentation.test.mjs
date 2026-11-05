@@ -162,3 +162,10 @@ test('Activity never substitutes another skill for an unresolved historical purc
   purchase.outcomeId = 'unknown';
   assert.equal(activityView(metadata).purchases[0].skillName, 'Unknown skill');
 });
+
+test('shows the marketplace total spent rounded to two decimals', () => {
+  const presented = marketplacePresentation({
+    outcomes: [outcome('domain', reputation({ totalPaid: '12345678' }))],
+  });
+  assert.equal(presented.totalPaid, '12.35');
+});

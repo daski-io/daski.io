@@ -3,7 +3,7 @@ import type {
   StandardOutcome,
   StandardRailMetadata,
 } from './api.ts';
-import { atomicUsdc } from './displayFormat.ts';
+import { atomicUsdcCents } from './displayFormat.ts';
 
 export interface MarketplacePurchase extends PublicMarketplacePurchase {
   outcome: StandardOutcome;
@@ -52,7 +52,7 @@ export function marketplacePresentation(
     safeBlock: safeBlock?.toString() ?? null,
     purchases,
     serviceCount: services.length,
-    totalPaid: atomicUsdc(addDecimalStrings(
+    totalPaid: atomicUsdcCents(addDecimalStrings(
       services.map((outcome) => outcome.serviceReputation.totalPaid),
     )),
     transactionCount: addDecimalStrings(
