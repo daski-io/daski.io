@@ -111,7 +111,7 @@ export function ActivityPage({
             />
             <BigStat
               label="total spent by agents"
-              value={view ? `${view.totalPaid} USDC` : unpublished ? '0 USDC' : '–'}
+              value={view ? `${view.totalPaid} USDC` : unpublished ? '0.00 USDC' : '–'}
               hint="across all services"
               last
             />
@@ -187,7 +187,7 @@ export function ActivityPage({
             <BigStat label="block height" value={formatBlock(view?.safeBlock ?? null)} hint="safe" />
             <BigStat
               label="on-chain volume"
-              value={view ? `${view.totalPaid} USDC` : unpublished ? '0 USDC' : '–'}
+              value={view ? `${view.totalPaid} USDC` : unpublished ? '0.00 USDC' : '–'}
               hint="settled · all-time"
               last
             />

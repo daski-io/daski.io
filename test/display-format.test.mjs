@@ -8,7 +8,6 @@ test('formats USDC with thousands separators without losing precision', () => {
   assert.equal(atomicUsdc('9007199254740993000000'), '9,007,199,254,740,993');
 });
 
-
 test('formats USDC totals rounded to exactly two decimals', () => {
   assert.equal(atomicUsdcCents('0'), '0.00');
   assert.equal(atomicUsdcCents('4999'), '0.00');
