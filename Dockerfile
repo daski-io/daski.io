@@ -10,11 +10,12 @@
 # from shared CI runners hit its rate limit.
 ARG NODE_IMAGE=mirror.gcr.io/library/node:22-bookworm-slim@sha256:de170b39439eb0e5a3444ad7d60b015614a381e10fecae2e30ec9e735122f38d
 FROM ${NODE_IMAGE} AS base
-# Debian security updates for PCRE2 and Perl in the Node image, the versions the
+# Debian security updates for PCRE2, Perl and APT in the Node image, the versions the
 # gateway and provider images install. The develop image scan
 # (release-image.yml) fails on fixable MEDIUM+ findings.
 RUN apt-get update \
  && apt-get install -y --no-install-recommends libpcre2-8-0=10.42-1+deb12u2 perl-base=5.36.0-7+deb12u4 \
+    apt=2.6.2 libapt-pkg6.0=2.6.2 \
  && rm -rf /var/lib/apt/lists/*
 
 FROM base AS builder
