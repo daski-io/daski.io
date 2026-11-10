@@ -181,3 +181,61 @@ test('trims catalog rows to the fields a service card renders', () => {
   assert.equal(servicePath(card), servicePath(full));
   assert.ok(JSON.stringify(card).length < JSON.stringify(full).length / 2);
 });
+
+test('parses owner actions and free skills alongside the listings', () => {
+  const parsed = parseServiceIndex(copyServiceIndex()).services[0];
+
+  assert.deepEqual(parsed.ownerActions, [
+    {
+      actionId: 'get-sample-report',
+      name: 'Get Sample Report',
+      description: 'Read the latest report for a sample you own. Free; wallet-authorized.',
+      documentationUrl: 'https://provider.example/skills/get-sample-report.md',
+      assetType: 'lab-sample',
+      destructive: false,
+    },
+    {
+      actionId: 'discard-sample',
+      name: 'discard-sample',
+      description: null,
+      documentationUrl: null,
+      assetType: 'lab-sample',
+      destructive: true,
+    },
+  ]);
+  assert.deepEqual(parsed.freeSkills, [{
+    skillId: 'get-pricing',
+    name: 'Get Pricing',
+    description: 'Current analysis prices. Free; call the provider directly.',
+    documentationUrl: 'https://provider.example/skills/get-pricing.md',
+  }]);
+  // Owner actions and free skills never change the listing-derived price.
+  assert.equal(priceRange(parsed), '2.5 USDC');
+});
+
+test('reads a gateway without owner actions or free skills as having none', () => {
+  const older = copyServiceIndex();
+  delete older.services[0].ownerActions;
+  delete older.services[0].freeSkills;
+  const parsed = parseServiceIndex(older).services[0];
+  assert.deepEqual(parsed.ownerActions, []);
+  assert.deepEqual(parsed.freeSkills, []);
+});
+
+test('leaves out malformed owner actions and free skills without failing the service', () => {
+  const malformed = copyServiceIndex();
+  const [good] = malformed.services[0].ownerActions;
+  malformed.services[0].ownerActions = [
+    null,
+    { ...good, actionId: '' },
+    { ...good, paymentRequired: true },
+    { ...good, documentationUrl: 'http://provider.example/insecure' },
+    { ...good, destructive: 'no' },
+    good,
+  ];
+  malformed.services[0].freeSkills = [{ skillId: 'get-pricing', name: 'Get Pricing' }];
+  const parsed = parseServiceIndex(malformed).services[0];
+  assert.deepEqual(parsed.ownerActions.map((action) => action.actionId), ['get-sample-report']);
+  assert.deepEqual(parsed.freeSkills, []);
+  assert.equal(parsed.skills.length, 1);
+});

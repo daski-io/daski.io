@@ -215,15 +215,33 @@ try {
     // description and documentation link must be HTML content, not just
     // serialized island props, inside an independently collapsed disclosure.
     const disclosures = [...detail.html.matchAll(/<details\b[^>]*>[\s\S]*?<\/details>/g)].map(([html]) => html);
-    assert.equal(disclosures.length, service.skills.length);
-    for (const [index, skill] of service.skills.entries()) {
+    // Listings, then owner actions, then free skills, each its own table.
+    const rows = [
+      ...service.skills.map(skill => ({ id: skill.skillId, ...skill.presentation })),
+      ...service.ownerActions.map(action => ({ id: action.actionId, ...action })),
+      ...service.freeSkills.map(skill => ({ id: skill.skillId, ...skill })),
+    ];
+    assert.ok(service.ownerActions.length > 0 && service.freeSkills.length > 0);
+    assert.equal(disclosures.length, rows.length);
+    for (const [index, row] of rows.entries()) {
       const disclosure = disclosures[index];
       assert.doesNotMatch(disclosure.match(/^<details\b[^>]*>/)[0], /\bopen(?:[\s=>])/);
       assert.match(disclosure, /<summary\b/);
+      assert.ok(visibleText(disclosure.split('</summary>')[0]).includes(row.id), row.id);
       const content = disclosure.split('</summary>')[1];
-      assert.ok(visibleText(content).includes(skill.presentation.description.replace(/\s+/g, ' ')), skill.skillId);
+      if (row.description !== null) {
+        assert.ok(visibleText(content).includes(row.description.replace(/\s+/g, ' ')), row.id);
+      }
       const links = [...content.matchAll(/<a\b[^>]*>/g)].map(([tag]) => attributes(tag));
-      assert.ok(links.some(link => link.href === skill.presentation.documentationUrl), skill.skillId);
+      if (row.documentationUrl !== null) {
+        assert.ok(links.some(link => link.href === row.documentationUrl), row.id);
+      } else {
+        assert.equal(links.length, 0, row.id);
+      }
+    }
+    const pageText = visibleText(detail.html);
+    for (const kicker of ['skills offered', 'owner actions', 'free skills']) {
+      assert.ok(pageText.toLowerCase().includes(kicker), kicker);
     }
     const provider = await page(`/provider/${service.providerAgentId}`);
     assert.match(provider.title, /services and reputation/);
