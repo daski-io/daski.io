@@ -106,6 +106,26 @@ export interface PublicSkill {
   splitterAddress: string | null;
 }
 
+// Something an asset's owner can do with what it bought: an action of the
+// provider's signed asset-action catalog, not a listing. Free; the buyer's
+// wallet authorizes it through the gateway.
+export interface PublicOwnerAction {
+  actionId: string;
+  name: string;
+  description: string | null;
+  documentationUrl: string | null;
+  assetType: string;
+  destructive: boolean;
+}
+
+// A free skill the provider serves on its own A2A endpoint.
+export interface PublicFreeSkill {
+  skillId: string;
+  name: string;
+  description: string;
+  documentationUrl: string | null;
+}
+
 export interface PublicService {
   gatewayRegistrationId: string;
   providerAgentId: string;
@@ -131,6 +151,8 @@ export interface PublicService {
     variable: boolean;
   };
   skills: PublicSkill[];
+  ownerActions: PublicOwnerAction[];
+  freeSkills: PublicFreeSkill[];
   freshness: {
     lastValidatedAt: string | null;
     presentationStaleAfterSeconds: number;
@@ -373,6 +395,50 @@ function parsePublicSkill(value: unknown): PublicSkill {
   };
 }
 
+// Display enrichments a gateway release added: absent from older gateways,
+// and a malformed entry is left out instead of failing the whole service.
+function optionalEntries<T>(value: unknown, parse: (item: unknown) => T): T[] {
+  if (!Array.isArray(value)) return [];
+  const parsed: T[] = [];
+  for (const item of value.slice(0, 128)) {
+    try {
+      parsed.push(parse(item));
+    } catch {
+      // Left out.
+    }
+  }
+  return parsed;
+}
+
+function nullableHttpsUrl(value: unknown, label: string): string | null {
+  return value === null || value === undefined ? null : httpsUrl(value, label);
+}
+
+function parseOwnerAction(value: unknown): PublicOwnerAction {
+  const item = record(value, 'owner action');
+  if (item.paymentRequired !== false) throw new Error('gateway owner action is not free');
+  return {
+    actionId: text(item.actionId, 'owner action ID', 96),
+    name: text(item.name, 'owner action name', 160),
+    description: item.description === null || item.description === undefined
+      ? null
+      : multilineText(item.description, 'owner action description'),
+    documentationUrl: nullableHttpsUrl(item.documentationUrl, 'owner action documentation URL'),
+    assetType: text(item.assetType, 'owner action asset type', 128),
+    destructive: booleanValue(item.destructive, 'owner action destructive'),
+  };
+}
+
+function parseFreeSkill(value: unknown): PublicFreeSkill {
+  const item = record(value, 'free skill');
+  return {
+    skillId: text(item.skillId, 'free skill ID', 96),
+    name: text(item.name, 'free skill name', 160),
+    description: multilineText(item.description, 'free skill description'),
+    documentationUrl: nullableHttpsUrl(item.documentationUrl, 'free skill documentation URL'),
+  };
+}
+
 function parseReputationStats(value: unknown, label: string): ReputationStats {
   const item = record(value, label);
   // A failed order the provider later recovered counts as completed.
@@ -453,6 +519,8 @@ function parsePublicService(value: unknown): PublicService {
       variable: paid.some((skill) => skill.variable),
     },
     skills,
+    ownerActions: optionalEntries(item.ownerActions, parseOwnerAction),
+    freeSkills: optionalEntries(item.freeSkills, parseFreeSkill),
     freshness: {
       lastValidatedAt: nullableTimestamp(
         freshness.lastValidatedAt,
