@@ -27,3 +27,12 @@ export function formatDuration(seconds: number): string {
   if (seconds < 86400) return `${Math.ceil(seconds / 3600)}h`;
   return `${Math.ceil(seconds / 86400)}d`;
 }
+
+// A service's lifecycle as people read it. The card keeps the protocol's
+// identifier ("one-shot" is in the signed service contract); only its label
+// changes here. Any other identifier is shown as it is.
+const LIFECYCLE_LABELS: Readonly<Record<string, string>> = { 'one-shot': 'one-time' };
+
+export function lifecycleLabel(value: string): string {
+  return LIFECYCLE_LABELS[value] ?? value;
+}

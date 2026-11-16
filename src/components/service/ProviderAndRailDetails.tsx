@@ -1,5 +1,6 @@
 import { providerPath, type ServiceDetail } from '../../lib/api';
 import { explorerAddress } from '../../lib/chains';
+import { lifecycleLabel } from '../../lib/displayFormat';
 import { Addr } from '../ui/Addr';
 import { Icon } from '../ui/Icon';
 import { Section } from '../ui/Section';
@@ -35,7 +36,7 @@ export function ProviderAndRailDetails({ service, explorerUrl }: {
         <div className="dk-stat-grid dk-collapse-4-to-2" style={{ marginTop: 18, gridTemplateColumns: 'repeat(4, 1fr)' }}>
           <ProviderStat label="Provider agent" value={`#${service.providerAgentId}`} />
           <ProviderStat label="Service version" value={service.serviceVersion} />
-          <ProviderStat label="Lifecycle" value={service.serviceLifecycle} />
+          <ProviderStat label="Lifecycle" value={lifecycleLabel(service.serviceLifecycle)} />
           <ProviderStat
             label="Card validated"
             value={service.freshness.lastValidatedAt
