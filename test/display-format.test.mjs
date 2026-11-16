@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { atomicUsdc, atomicUsdcCents } from '../src/lib/displayFormat.ts';
+import { atomicUsdc, atomicUsdcCents, lifecycleLabel } from '../src/lib/displayFormat.ts';
 
 test('formats USDC with thousands separators without losing precision', () => {
   assert.equal(atomicUsdc('1000000000'), '1,000');
@@ -17,4 +17,9 @@ test('formats USDC totals rounded to exactly two decimals', () => {
   assert.equal(atomicUsdcCents('1234564999'), '1,234.56');
   assert.equal(atomicUsdcCents('999995000'), '1,000.00');
   assert.equal(atomicUsdcCents('9007199254740993000000'), '9,007,199,254,740,993.00');
+});
+
+test('names a one-shot service one-time and leaves other lifecycles as they are', () => {
+  assert.equal(lifecycleLabel('one-shot'), 'one-time');
+  assert.equal(lifecycleLabel('asset-lifecycle'), 'asset-lifecycle');
 });
