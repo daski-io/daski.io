@@ -14,6 +14,7 @@ import {
   type ProviderPurchase,
   type ProviderServicePresentation,
 } from '../lib/providerPresentation';
+import { providerOwnsLegalPages } from '../lib/legalLinks';
 import { relativeTime } from '../lib/marketplacePresentation';
 import { Addr } from '../components/ui/Addr';
 import { Icon } from '../components/ui/Icon';
@@ -73,9 +74,13 @@ export function ProviderProfilePage({
           <Dot />
           <ExternalLink href={provider.agentCardUrl}>Provider Card</ExternalLink>
           <Dot />
-          <ExternalLink href={provider.legal.providerTermsUrl}>Terms of Use</ExternalLink>
+          <ExternalLink href={provider.legal.providerTermsUrl}>
+            {providerOwnsLegalPages(provider.legal).terms ? 'Terms of Use' : 'Daski Terms of Use'}
+          </ExternalLink>
           <Dot />
-          <ExternalLink href={provider.legal.providerPrivacyUrl}>Privacy Policy</ExternalLink>
+          <ExternalLink href={provider.legal.providerPrivacyUrl}>
+            {providerOwnsLegalPages(provider.legal).privacy ? 'Privacy Policy' : 'Daski Privacy Policy'}
+          </ExternalLink>
           <Dot />
           <Addr link={explorerAddress(explorerUrl, provider.providerAddress)} style={{ fontSize: 12 }}>
             {provider.providerAddress}
