@@ -87,3 +87,27 @@ test('keeps previously unseen provider categories discoverable', () => {
     ],
   );
 });
+
+test('service types carry the controlled labels, one family each, and every family has its fallback', async () => {
+  const { SERVICE_TYPES, SERVICE_CATEGORY_FAMILIES, serviceTypeLabel, isFallbackServiceType } =
+    await import('../src/config/service-taxonomy.ts');
+  assert.equal(serviceTypeLabel('public-relations'), 'Public relations');
+  assert.equal(serviceTypeLabel('entity-formation'), 'Entity formation');
+  assert.equal(SERVICE_TYPES['press-release'], undefined);
+  // An id the list does not hold reads as words.
+  assert.equal(serviceTypeLabel('custom-widget-build'), 'Custom Widget Build');
+  const families = new Set(SERVICE_CATEGORY_FAMILIES.map((family) => family.slug));
+  for (const [id, type] of Object.entries(SERVICE_TYPES)) {
+    assert.match(id, /^[a-z0-9]+(?:-[a-z0-9]+)*$/, id);
+    assert.ok(families.has(type.family), `${id} names a known family`);
+  }
+  for (const family of families) {
+    const fallback = family === 'other' ? 'other' : `${family}-other`;
+    assert.equal(SERVICE_TYPES[fallback]?.family, family, fallback);
+    assert.equal(isFallbackServiceType(fallback), true);
+  }
+  for (const live of ['entity-formation', 'domain-management', 'server-hosting', 'agent-mailbox', 'ai-inference']) {
+    assert.equal(isFallbackServiceType(live), false, live);
+    assert.ok(SERVICE_TYPES[live], live);
+  }
+});

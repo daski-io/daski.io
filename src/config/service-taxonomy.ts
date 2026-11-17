@@ -122,6 +122,179 @@ export function categoryFamilyConfig(
   };
 }
 
+/**
+ * The controlled service types of each category family, by id, with the
+ * label the marketplace shows. A family's own fallback, `<family>-other`
+ * (`other` for the family `other`), is listed too; it is not shown as a
+ * chip, since it says nothing the category does not.
+ */
+export const SERVICE_TYPES: Readonly<Record<string, { family: string; label: string }>> = {
+  // business-formation
+  'entity-formation': { family: 'business-formation', label: 'Entity formation' },
+  'registered-agent': { family: 'business-formation', label: 'Registered agent' },
+  'ein-tax-id': { family: 'business-formation', label: 'Tax ID registration' },
+  'annual-report-filing': { family: 'business-formation', label: 'Annual report filing' },
+  'company-amendment': { family: 'business-formation', label: 'Company amendment' },
+  'foreign-qualification': { family: 'business-formation', label: 'Foreign qualification' },
+  'business-license': { family: 'business-formation', label: 'Business license' },
+  'company-dissolution': { family: 'business-formation', label: 'Company dissolution' },
+  'virtual-office': { family: 'business-formation', label: 'Virtual office' },
+  'business-formation-other': { family: 'business-formation', label: 'Other' },
+  // legal-ip
+  'contract-drafting': { family: 'legal-ip', label: 'Contract drafting' },
+  'contract-review': { family: 'legal-ip', label: 'Contract review' },
+  'trademark-search': { family: 'legal-ip', label: 'Trademark search' },
+  'trademark-filing': { family: 'legal-ip', label: 'Trademark filing' },
+  'patent-search': { family: 'legal-ip', label: 'Patent search' },
+  'patent-filing': { family: 'legal-ip', label: 'Patent filing' },
+  'copyright-registration': { family: 'legal-ip', label: 'Copyright registration' },
+  'legal-document-preparation': { family: 'legal-ip', label: 'Legal document preparation' },
+  'legal-research': { family: 'legal-ip', label: 'Legal research' },
+  'notarization': { family: 'legal-ip', label: 'Notarization' },
+  'legal-ip-other': { family: 'legal-ip', label: 'Other' },
+  // compliance
+  'kyc-verification': { family: 'compliance', label: 'Identity verification' },
+  'kyb-verification': { family: 'compliance', label: 'Business verification' },
+  'sanctions-screening': { family: 'compliance', label: 'Sanctions screening' },
+  'background-check': { family: 'compliance', label: 'Background check' },
+  'regulatory-filing': { family: 'compliance', label: 'Regulatory filing' },
+  'privacy-compliance': { family: 'compliance', label: 'Privacy compliance' },
+  'security-audit': { family: 'compliance', label: 'Security audit' },
+  'accessibility-audit': { family: 'compliance', label: 'Accessibility audit' },
+  'compliance-other': { family: 'compliance', label: 'Other' },
+  // finance
+  'bookkeeping': { family: 'finance', label: 'Bookkeeping' },
+  'tax-preparation': { family: 'finance', label: 'Tax preparation' },
+  'sales-tax-filing': { family: 'finance', label: 'Sales tax filing' },
+  'payroll': { family: 'finance', label: 'Payroll' },
+  'invoicing-collections': { family: 'finance', label: 'Invoicing and collections' },
+  'financial-statements': { family: 'finance', label: 'Financial statements' },
+  'financial-modeling': { family: 'finance', label: 'Financial modeling' },
+  'audit-assurance': { family: 'finance', label: 'Audit and assurance' },
+  'insurance-quote': { family: 'finance', label: 'Insurance quote' },
+  'finance-other': { family: 'finance', label: 'Other' },
+  // domains-web
+  'domain-management': { family: 'domains-web', label: 'Domain management' },
+  'server-hosting': { family: 'domains-web', label: 'Server hosting' },
+  'web-hosting': { family: 'domains-web', label: 'Web hosting' },
+  'ssl-certificate': { family: 'domains-web', label: 'SSL certificate' },
+  'website-build': { family: 'domains-web', label: 'Website build' },
+  'website-maintenance': { family: 'domains-web', label: 'Website maintenance' },
+  'cdn-setup': { family: 'domains-web', label: 'CDN setup' },
+  'domains-web-other': { family: 'domains-web', label: 'Other' },
+  // communications
+  'agent-mailbox': { family: 'communications', label: 'Agent mailbox' },
+  'email-hosting': { family: 'communications', label: 'Email hosting' },
+  'phone-number': { family: 'communications', label: 'Phone number' },
+  'sms-messaging': { family: 'communications', label: 'SMS messaging' },
+  'transactional-email': { family: 'communications', label: 'Transactional email' },
+  'physical-mail': { family: 'communications', label: 'Physical mail' },
+  'fax': { family: 'communications', label: 'Fax' },
+  'translation': { family: 'communications', label: 'Translation' },
+  'transcription': { family: 'communications', label: 'Transcription' },
+  'communications-other': { family: 'communications', label: 'Other' },
+  // compute-ai
+  'ai-inference': { family: 'compute-ai', label: 'AI inference' },
+  'gpu-compute': { family: 'compute-ai', label: 'GPU compute' },
+  'model-fine-tuning': { family: 'compute-ai', label: 'Model fine-tuning' },
+  'ai-agent-build': { family: 'compute-ai', label: 'AI agent build' },
+  'data-labeling': { family: 'compute-ai', label: 'Data labeling' },
+  'ai-evaluation': { family: 'compute-ai', label: 'AI evaluation' },
+  'workflow-automation': { family: 'compute-ai', label: 'Workflow automation' },
+  'compute-ai-other': { family: 'compute-ai', label: 'Other' },
+  // data
+  'web-research': { family: 'data', label: 'Web research' },
+  'data-scraping': { family: 'data', label: 'Data scraping' },
+  'lead-list': { family: 'data', label: 'Lead list' },
+  'data-enrichment': { family: 'data', label: 'Data enrichment' },
+  'data-cleaning': { family: 'data', label: 'Data cleaning' },
+  'data-analysis': { family: 'data', label: 'Data analysis' },
+  'dataset': { family: 'data', label: 'Dataset' },
+  'market-research': { family: 'data', label: 'Market research' },
+  'data-other': { family: 'data', label: 'Other' },
+  // software-dev
+  'feature-development': { family: 'software-dev', label: 'Feature development' },
+  'bug-fix': { family: 'software-dev', label: 'Bug fix' },
+  'code-review': { family: 'software-dev', label: 'Code review' },
+  'api-integration': { family: 'software-dev', label: 'API integration' },
+  'mobile-app': { family: 'software-dev', label: 'Mobile app' },
+  'smart-contract': { family: 'software-dev', label: 'Smart contract' },
+  'smart-contract-audit': { family: 'software-dev', label: 'Smart contract audit' },
+  'qa-testing': { family: 'software-dev', label: 'QA testing' },
+  'devops': { family: 'software-dev', label: 'DevOps' },
+  'software-dev-other': { family: 'software-dev', label: 'Other' },
+  // design-creative
+  'logo-design': { family: 'design-creative', label: 'Logo design' },
+  'brand-identity': { family: 'design-creative', label: 'Brand identity' },
+  'graphic-design': { family: 'design-creative', label: 'Graphic design' },
+  'ui-ux-design': { family: 'design-creative', label: 'UI/UX design' },
+  'illustration': { family: 'design-creative', label: 'Illustration' },
+  'photography': { family: 'design-creative', label: 'Photography' },
+  'video-production': { family: 'design-creative', label: 'Video production' },
+  'animation': { family: 'design-creative', label: 'Animation' },
+  'copywriting': { family: 'design-creative', label: 'Copywriting' },
+  'content-writing': { family: 'design-creative', label: 'Content writing' },
+  'voice-over': { family: 'design-creative', label: 'Voice-over' },
+  'design-creative-other': { family: 'design-creative', label: 'Other' },
+  // marketing-growth
+  'seo': { family: 'marketing-growth', label: 'SEO' },
+  'paid-ads': { family: 'marketing-growth', label: 'Paid ads' },
+  'social-media-management': { family: 'marketing-growth', label: 'Social media management' },
+  'email-marketing': { family: 'marketing-growth', label: 'Email marketing' },
+  'public-relations': { family: 'marketing-growth', label: 'Public relations' },
+  'media-outreach': { family: 'marketing-growth', label: 'Media outreach' },
+  'influencer-marketing': { family: 'marketing-growth', label: 'Influencer marketing' },
+  'content-marketing': { family: 'marketing-growth', label: 'Content marketing' },
+  'app-store-optimization': { family: 'marketing-growth', label: 'App store optimization' },
+  'reviews-reputation': { family: 'marketing-growth', label: 'Reviews and reputation' },
+  'marketing-growth-other': { family: 'marketing-growth', label: 'Other' },
+  // sales-support
+  'lead-generation': { family: 'sales-support', label: 'Lead generation' },
+  'appointment-setting': { family: 'sales-support', label: 'Appointment setting' },
+  'outbound-outreach': { family: 'sales-support', label: 'Outbound outreach' },
+  'crm-setup': { family: 'sales-support', label: 'CRM setup' },
+  'customer-support': { family: 'sales-support', label: 'Customer support' },
+  'call-answering': { family: 'sales-support', label: 'Call answering' },
+  'sales-support-other': { family: 'sales-support', label: 'Other' },
+  // human-talent
+  'recruiting': { family: 'human-talent', label: 'Recruiting' },
+  'virtual-assistant': { family: 'human-talent', label: 'Virtual assistant' },
+  'expert-consultation': { family: 'human-talent', label: 'Expert consultation' },
+  'tutoring-training': { family: 'human-talent', label: 'Tutoring and training' },
+  'freelance-staffing': { family: 'human-talent', label: 'Freelance staffing' },
+  'human-talent-other': { family: 'human-talent', label: 'Other' },
+  // operations-admin
+  'data-entry': { family: 'operations-admin', label: 'Data entry' },
+  'document-processing': { family: 'operations-admin', label: 'Document processing' },
+  'scheduling': { family: 'operations-admin', label: 'Scheduling' },
+  'procurement': { family: 'operations-admin', label: 'Procurement' },
+  'vendor-management': { family: 'operations-admin', label: 'Vendor management' },
+  'research-assistance': { family: 'operations-admin', label: 'Research assistance' },
+  'operations-admin-other': { family: 'operations-admin', label: 'Other' },
+  // logistics-physical
+  'shipping': { family: 'logistics-physical', label: 'Shipping' },
+  'courier-delivery': { family: 'logistics-physical', label: 'Courier delivery' },
+  'warehousing-fulfillment': { family: 'logistics-physical', label: 'Warehousing and fulfillment' },
+  'printing': { family: 'logistics-physical', label: 'Printing' },
+  'field-service': { family: 'logistics-physical', label: 'Field service' },
+  'inspection': { family: 'logistics-physical', label: 'Inspection' },
+  'errands': { family: 'logistics-physical', label: 'Errands' },
+  'logistics-physical-other': { family: 'logistics-physical', label: 'Other' },
+  // other
+  'question-answering': { family: 'other', label: 'Question answering' },
+  'other': { family: 'other', label: 'Other' },
+};
+
+/** Whether a service type is its family's fallback: `<family>-other`, or `other`. */
+export function isFallbackServiceType(serviceType: string): boolean {
+  return serviceType === 'other' || serviceType.endsWith('-other');
+}
+
+/** The label of a service type: the controlled list's, or a readable form of an id it does not list. */
+export function serviceTypeLabel(serviceType: string): string {
+  return SERVICE_TYPES[serviceType]?.label ?? labelFromSlug(serviceType);
+}
+
 export function populatedCategoryFamilies(
   services: readonly { categoryFamily: string }[],
 ): (CategoryFamilyConfig & { count: number })[] {
