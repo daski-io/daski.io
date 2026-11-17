@@ -1,6 +1,8 @@
 import type { CSSProperties } from 'react';
 import {
   categoryFamilyConfig,
+  isFallbackServiceType,
+  serviceTypeLabel,
   type CategoryFamily,
 } from '../config/service-taxonomy';
 
@@ -26,9 +28,11 @@ export function ServiceTaxonomyChips({
       >
         {family.label}
       </span>
-      <span className="dk-taxonomy-chip" title="Service type">
-        {serviceType}
-      </span>
+      {isFallbackServiceType(categoryFamily, serviceType) ? null : (
+        <span className="dk-taxonomy-chip" title="Service type">
+          {serviceTypeLabel(serviceType)}
+        </span>
+      )}
     </div>
   );
 }
