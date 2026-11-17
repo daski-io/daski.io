@@ -293,9 +293,9 @@ export const SERVICE_TYPES: Readonly<Record<string, { family: string; label: str
   'other': { family: 'other', label: 'Other' },
 };
 
-/** Whether a service type is its family's fallback: `<family>-other`, or `other`. */
-export function isFallbackServiceType(serviceType: string): boolean {
-  return serviceType === 'other' || serviceType.endsWith('-other');
+/** Whether the type is the category's own fallback ("other"), which adds nothing to the category shown beside it. */
+export function isFallbackServiceType(categoryFamily: string, serviceType: string): boolean {
+  return serviceType === (categoryFamily === 'other' ? 'other' : `${categoryFamily}-other`);
 }
 
 /** The label of a service type: the controlled list's, or a readable form of an id it does not list. */

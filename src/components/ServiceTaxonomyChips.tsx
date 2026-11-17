@@ -28,7 +28,7 @@ export function ServiceTaxonomyChips({
       >
         {family.label}
       </span>
-      {isFallbackServiceType(serviceType) ? null : (
+      {isFallbackServiceType(categoryFamily, serviceType) ? null : (
         <span className="dk-taxonomy-chip" title="Service type">
           {serviceTypeLabel(serviceType)}
         </span>

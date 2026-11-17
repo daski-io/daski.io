@@ -107,10 +107,14 @@ test('service types carry the controlled labels, one family each, and every fami
   for (const family of families) {
     const fallback = family === 'other' ? 'other' : `${family}-other`;
     assert.equal(SERVICE_TYPES[fallback]?.family, family, fallback);
-    assert.equal(isFallbackServiceType(fallback), true);
+    assert.equal(isFallbackServiceType(family, fallback), true);
   }
   for (const live of ['entity-formation', 'domain-management', 'server-hosting', 'agent-mailbox', 'ai-inference']) {
-    assert.equal(isFallbackServiceType(live), false, live);
+    assert.equal(isFallbackServiceType(SERVICE_TYPES[live].family, live), false, live);
     assert.ok(SERVICE_TYPES[live], live);
   }
+  // Only the category's own fallback is hidden: another category's, or an unlisted "-other", still shows.
+  assert.equal(isFallbackServiceType('marketing-growth', 'legal-ip-other'), false);
+  assert.equal(isFallbackServiceType('compute-ai', 'other'), false);
+  assert.equal(isFallbackServiceType('marketing-growth', 'press-other'), false);
 });
