@@ -1,6 +1,7 @@
 import { providerPath, type ServiceDetail } from '../../lib/api';
 import { explorerAddress } from '../../lib/chains';
 import { lifecycleLabel } from '../../lib/displayFormat';
+import { providerOwnsLegalPages } from '../../lib/legalLinks';
 import { Addr } from '../ui/Addr';
 import { Icon } from '../ui/Icon';
 import { Section } from '../ui/Section';
@@ -10,6 +11,8 @@ export function ProviderAndRailDetails({ service, explorerUrl }: {
   service: ServiceDetail;
   explorerUrl: string;
 }) {
+  // A provider without pages of its own names Daski's: they are shown once, as Daski's.
+  const owns = providerOwnsLegalPages(service.legal);
   return (
     <Section pad="0 32px 0">
       <SectionHead kicker="provided by" title={null} />
@@ -25,8 +28,8 @@ export function ProviderAndRailDetails({ service, explorerUrl }: {
               </Addr>
             </div>
             <div style={{ ...linkRowStyle, marginTop: 14 }}>
-              <ExternalLink href={service.legal.providerTermsUrl}>Provider Terms</ExternalLink>
-              <ExternalLink href={service.legal.providerPrivacyUrl}>Provider Privacy</ExternalLink>
+              {owns.terms ? <ExternalLink href={service.legal.providerTermsUrl}>Provider Terms</ExternalLink> : null}
+              {owns.privacy ? <ExternalLink href={service.legal.providerPrivacyUrl}>Provider Privacy</ExternalLink> : null}
               <ExternalLink href={service.legal.marketplaceTermsUrl}>Daski Terms</ExternalLink>
               <ExternalLink href={service.legal.marketplacePrivacyUrl}>Daski Privacy</ExternalLink>
             </div>
