@@ -94,6 +94,9 @@ test('service types carry the controlled labels, one family each, and every fami
   assert.equal(serviceTypeLabel('public-relations'), 'Public relations');
   assert.equal(serviceTypeLabel('entity-formation'), 'Entity formation');
   assert.equal(SERVICE_TYPES['press-release'], undefined);
+  assert.equal(SERVICE_TYPES['insurance-quote'], undefined);
+  assert.equal(serviceTypeLabel('business-insurance'), SERVICE_TYPES['business-insurance'].label);
+  assert.equal(Object.keys(SERVICE_TYPES).length, 146);
   // An id the list does not hold reads as words.
   assert.equal(serviceTypeLabel('custom-widget-build'), 'Custom Widget Build');
   const families = new Set(SERVICE_CATEGORY_FAMILIES.map((family) => family.slug));

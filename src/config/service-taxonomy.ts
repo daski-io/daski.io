@@ -171,7 +171,7 @@ export const SERVICE_TYPES: Readonly<Record<string, { family: string; label: str
   'financial-statements': { family: 'finance', label: 'Financial statements' },
   'financial-modeling': { family: 'finance', label: 'Financial modeling' },
   'audit-assurance': { family: 'finance', label: 'Audit and assurance' },
-  'insurance-quote': { family: 'finance', label: 'Insurance quote' },
+  'business-insurance': { family: 'finance', label: 'Business insurance' },
   'finance-other': { family: 'finance', label: 'Other' },
   // domains-web
   'domain-management': { family: 'domains-web', label: 'Domain management' },
@@ -235,6 +235,7 @@ export const SERVICE_TYPES: Readonly<Record<string, { family: string; label: str
   'copywriting': { family: 'design-creative', label: 'Copywriting' },
   'content-writing': { family: 'design-creative', label: 'Content writing' },
   'voice-over': { family: 'design-creative', label: 'Voice-over' },
+  'user-research': { family: 'design-creative', label: 'User research' },
   'design-creative-other': { family: 'design-creative', label: 'Other' },
   // marketing-growth
   'seo': { family: 'marketing-growth', label: 'SEO' },
@@ -247,6 +248,7 @@ export const SERVICE_TYPES: Readonly<Record<string, { family: string; label: str
   'content-marketing': { family: 'marketing-growth', label: 'Content marketing' },
   'app-store-optimization': { family: 'marketing-growth', label: 'App store optimization' },
   'reviews-reputation': { family: 'marketing-growth', label: 'Reviews and reputation' },
+  'swag': { family: 'marketing-growth', label: 'Swag' },
   'marketing-growth-other': { family: 'marketing-growth', label: 'Other' },
   // sales-support
   'lead-generation': { family: 'sales-support', label: 'Lead generation' },
@@ -267,6 +269,9 @@ export const SERVICE_TYPES: Readonly<Record<string, { family: string; label: str
   'data-entry': { family: 'operations-admin', label: 'Data entry' },
   'document-processing': { family: 'operations-admin', label: 'Document processing' },
   'scheduling': { family: 'operations-admin', label: 'Scheduling' },
+  'travel-booking': { family: 'operations-admin', label: 'Travel booking' },
+  'event-planning': { family: 'operations-admin', label: 'Event planning' },
+  'workspace-rental': { family: 'operations-admin', label: 'Workspace rental' },
   'procurement': { family: 'operations-admin', label: 'Procurement' },
   'vendor-management': { family: 'operations-admin', label: 'Vendor management' },
   'research-assistance': { family: 'operations-admin', label: 'Research assistance' },
@@ -279,6 +284,9 @@ export const SERVICE_TYPES: Readonly<Record<string, { family: string; label: str
   'field-service': { family: 'logistics-physical', label: 'Field service' },
   'inspection': { family: 'logistics-physical', label: 'Inspection' },
   'errands': { family: 'logistics-physical', label: 'Errands' },
+  'manufacturing': { family: 'logistics-physical', label: 'Manufacturing' },
+  'prototyping': { family: 'logistics-physical', label: 'Prototyping' },
+  'equipment-rental': { family: 'logistics-physical', label: 'Equipment rental' },
   'logistics-physical-other': { family: 'logistics-physical', label: 'Other' },
   // other
   'question-answering': { family: 'other', label: 'Question answering' },
