@@ -21,7 +21,7 @@ export function ProviderAndRailDetails({ service, explorerUrl }: {
           <div style={{ flex: 1, minWidth: 240, maxWidth: 840 }}>
             <h3 style={providerTitleStyle}>{service.legal.providerLegalName}</h3>
             <div style={linkRowStyle}>
-              {service.providerWebsiteUrl ? <ExternalLink href={service.providerWebsiteUrl}>Website</ExternalLink> : null}
+              {service.providerWebsiteUrl ? <ExternalLink href={service.providerWebsiteUrl} provided>Website</ExternalLink> : null}
               <ExternalLink href={service.agentCardUrl}>Service card</ExternalLink>
               <InternalLink href={providerPath(service)}>Provider details</InternalLink>
               <Addr link={explorerAddress(explorerUrl, service.providerAddress)} style={{ fontSize: 12 }}>
@@ -62,8 +62,9 @@ function ProviderStat({ label, value }: { label: string; value: string }) {
   );
 }
 
-function ExternalLink({ href, children }: { href: string; children: string }) {
-  return <a href={href} target="_blank" rel="noreferrer" className="dk-link-mint"><Icon name="external" size={13} />{children}</a>;
+function ExternalLink({ href, children, provided = false }: { href: string; children: string; provided?: boolean }) {
+  // A link the provider sets is not vouched for by Daski: nofollow.
+  return <a href={href} target="_blank" rel={provided ? 'noreferrer nofollow' : 'noreferrer'} className="dk-link-mint"><Icon name="external" size={13} />{children}</a>;
 }
 
 function InternalLink({ href, children }: { href: string; children: string }) {

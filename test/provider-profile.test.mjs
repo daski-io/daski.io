@@ -53,15 +53,15 @@ test('groups catalog services into a provider detail and canonical route', () =>
   );
 });
 
-test('takes the provider website from the catalog, never the API origin, and shows none when there is none (D64)', async () => {
+test('takes the provider website from the catalog, never the API origin, and shows none when there is none', async () => {
   const withWebsite = (value) => {
     const index = structuredClone(serviceFixture);
     index.services[0].providerWebsiteUrl = value;
     return parseServiceIndex(index).services[0];
   };
   assert.equal(catalogService().providerWebsiteUrl, null);
-  assert.equal(withWebsite('https://bluetgroup.com/').providerWebsiteUrl, 'https://bluetgroup.com/');
-  for (const bad of ['http://example.com/', 'https://user:pass@example.com/', 'not a url', 42]) {
+  assert.equal(withWebsite('https://provider-site.example/').providerWebsiteUrl, 'https://provider-site.example/');
+  for (const bad of ['http://example.com/', 'https://user:pass@example.com/', 'https://example.com/#about', '', null, 'not a url', 42]) {
     assert.equal(withWebsite(bad).providerWebsiteUrl, null, String(bad));
   }
   const first = catalogService();
@@ -77,7 +77,8 @@ test('takes the provider website from the catalog, never the API origin, and sho
   ]);
   assert.doesNotMatch(view, /providerA2AUrl\}>Website/);
   assert.match(view, /provider\.providerWebsiteUrl \? \(/);
-  assert.match(serviceDetails, /service\.providerWebsiteUrl \? <ExternalLink href=\{service\.providerWebsiteUrl\}>Website<\/ExternalLink> : null/);
+  assert.match(serviceDetails, /service\.providerWebsiteUrl \? <ExternalLink href=\{service\.providerWebsiteUrl\} provided>Website<\/ExternalLink> : null/);
+  assert.match(view, /rel=\{provided \? 'noreferrer nofollow' : 'noreferrer'\}/);
 });
 
 test('joins provider services and purchases to standard-rail outcomes', () => {

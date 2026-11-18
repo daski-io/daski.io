@@ -143,7 +143,8 @@ export interface PublicService {
   /**
    * The provider's own website, from its ERC-8004 registration file's
    * `external_url` as the gateway reads it; null when it names none. The
-   * provider's A2A origin is its API, never shown as its website.
+   * pages link to this field alone for a website, never to the provider's
+   * A2A origin (its API).
    */
   providerWebsiteUrl: string | null;
   providerName: string;

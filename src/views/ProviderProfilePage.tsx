@@ -72,7 +72,7 @@ export function ProviderProfilePage({
         <div style={linkRowStyle}>
           {provider.providerWebsiteUrl ? (
             <>
-              <ExternalLink href={provider.providerWebsiteUrl}>Website</ExternalLink>
+              <ExternalLink href={provider.providerWebsiteUrl} provided>Website</ExternalLink>
               <Dot />
             </>
           ) : null}
@@ -146,9 +146,10 @@ function Dot() {
   return <span style={{ color: 'var(--pro-border-hi)' }}>·</span>;
 }
 
-function ExternalLink({ href, children }: { href: string; children: string }) {
+function ExternalLink({ href, children, provided = false }: { href: string; children: string; provided?: boolean }) {
+  // A link the provider sets is not vouched for by Daski: nofollow.
   return (
-    <a href={href} target="_blank" rel="noreferrer" className="dk-link-mint">
+    <a href={href} target="_blank" rel={provided ? 'noreferrer nofollow' : 'noreferrer'} className="dk-link-mint">
       {children} <Icon name="external" size={11} />
     </a>
   );
