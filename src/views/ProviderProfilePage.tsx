@@ -70,8 +70,12 @@ export function ProviderProfilePage({
         </p>
 
         <div style={linkRowStyle}>
-          <ExternalLink href={provider.providerA2AUrl}>Website</ExternalLink>
-          <Dot />
+          {provider.providerWebsiteUrl ? (
+            <>
+              <ExternalLink href={provider.providerWebsiteUrl}>Website</ExternalLink>
+              <Dot />
+            </>
+          ) : null}
           <ExternalLink href={provider.agentCardUrl}>Provider Card</ExternalLink>
           <Dot />
           <ExternalLink href={provider.legal.providerTermsUrl}>

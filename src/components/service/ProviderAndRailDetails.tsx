@@ -21,6 +21,7 @@ export function ProviderAndRailDetails({ service, explorerUrl }: {
           <div style={{ flex: 1, minWidth: 240, maxWidth: 840 }}>
             <h3 style={providerTitleStyle}>{service.legal.providerLegalName}</h3>
             <div style={linkRowStyle}>
+              {service.providerWebsiteUrl ? <ExternalLink href={service.providerWebsiteUrl}>Website</ExternalLink> : null}
               <ExternalLink href={service.agentCardUrl}>Service card</ExternalLink>
               <InternalLink href={providerPath(service)}>Provider details</InternalLink>
               <Addr link={explorerAddress(explorerUrl, service.providerAddress)} style={{ fontSize: 12 }}>

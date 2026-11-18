@@ -53,6 +53,33 @@ test('groups catalog services into a provider detail and canonical route', () =>
   );
 });
 
+test('takes the provider website from the catalog, never the API origin, and shows none when there is none (D64)', async () => {
+  const withWebsite = (value) => {
+    const index = structuredClone(serviceFixture);
+    index.services[0].providerWebsiteUrl = value;
+    return parseServiceIndex(index).services[0];
+  };
+  assert.equal(catalogService().providerWebsiteUrl, null);
+  assert.equal(withWebsite('https://bluetgroup.com/').providerWebsiteUrl, 'https://bluetgroup.com/');
+  for (const bad of ['http://example.com/', 'https://user:pass@example.com/', 'not a url', 42]) {
+    assert.equal(withWebsite(bad).providerWebsiteUrl, null, String(bad));
+  }
+  const first = catalogService();
+  const second = withWebsite('https://example-research.example/');
+  second.gatewayRegistrationId = 'second-registration';
+  second.serviceId = `0x${'cd'.repeat(32)}`;
+  assert.equal(providerDetailFromServices([first, second], '41').providerWebsiteUrl, 'https://example-research.example/');
+  assert.equal(providerDetailFromServices([first], '41').providerWebsiteUrl, null);
+
+  const [view, serviceDetails] = await Promise.all([
+    read('src/views/ProviderProfilePage.tsx'),
+    read('src/components/service/ProviderAndRailDetails.tsx'),
+  ]);
+  assert.doesNotMatch(view, /providerA2AUrl\}>Website/);
+  assert.match(view, /provider\.providerWebsiteUrl \? \(/);
+  assert.match(serviceDetails, /service\.providerWebsiteUrl \? <ExternalLink href=\{service\.providerWebsiteUrl\}>Website<\/ExternalLink> : null/);
+});
+
 test('joins provider services and purchases to standard-rail outcomes', () => {
   const service = catalogService();
   const provider = providerDetailFromServices([service], service.providerAgentId);

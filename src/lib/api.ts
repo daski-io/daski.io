@@ -140,6 +140,12 @@ export interface PublicService {
   serviceLifecycle: string;
   turnaroundEstimate: string;
   providerA2AUrl: string;
+  /**
+   * The provider's own website, from its ERC-8004 registration file's
+   * `external_url` as the gateway reads it; null when it names none. The
+   * provider's A2A origin is its API, never shown as its website.
+   */
+  providerWebsiteUrl: string | null;
   providerName: string;
   serviceSlug: string;
   serviceVersion: string;
@@ -217,6 +223,8 @@ export interface ProviderDetail {
   providerName: string;
   providerAddress: string;
   providerA2AUrl: string;
+  /** The provider's website, from the first of its services that names one. */
+  providerWebsiteUrl: string | null;
   agentCardUrl: string;
   legal: PublicServiceLegal;
   services: PublicService[];
@@ -321,6 +329,19 @@ function httpsUrl(value: unknown, label: string): string {
     parsed.hash
   ) throw new Error(`gateway ${label} is invalid`);
   return parsed.toString();
+}
+
+/**
+ * An optional website: an https address without credentials or fragment, or
+ * null. A malformed one is shown as none rather than hiding the service.
+ */
+function optionalWebsite(value: unknown): string | null {
+  if (value === undefined || value === null) return null;
+  try {
+    return httpsUrl(value, 'provider website');
+  } catch {
+    return null;
+  }
 }
 
 function nullableTimestamp(value: unknown, label: string): string | null {
@@ -503,6 +524,7 @@ function parsePublicService(value: unknown): PublicService {
       512,
     ),
     providerA2AUrl: httpsUrl(rail.origin, 'provider origin'),
+    providerWebsiteUrl: optionalWebsite(item.providerWebsiteUrl),
     providerName: legal.providerLegalName,
     serviceSlug: text(service.slug, 'service slug', 64),
     serviceVersion: text(service.version, 'service version', 32),
@@ -723,6 +745,7 @@ export function providerDetailFromServices(
     providerName: first.providerName,
     providerAddress: first.providerAddress,
     providerA2AUrl: first.providerA2AUrl,
+    providerWebsiteUrl: owned.find((service) => service.providerWebsiteUrl !== null)?.providerWebsiteUrl ?? null,
     agentCardUrl: first.agentCardUrl,
     legal: first.legal,
     services: owned,
