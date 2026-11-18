@@ -59,13 +59,15 @@ test('takes the provider website from the catalog, never the API origin, and sho
     index.services[0].providerWebsiteUrl = value;
     return parseServiceIndex(index).services[0];
   };
-  assert.equal(catalogService().providerWebsiteUrl, null);
+  // The gateway's golden vector carries the provider's website.
+  assert.equal(catalogService().providerWebsiteUrl, 'https://example-research.example/');
   assert.equal(withWebsite('https://provider-site.example/').providerWebsiteUrl, 'https://provider-site.example/');
   for (const bad of ['http://example.com/', 'https://user:pass@example.com/', 'https://example.com/#about', '', null, 'not a url', 42]) {
     assert.equal(withWebsite(bad).providerWebsiteUrl, null, String(bad));
   }
-  const first = catalogService();
-  const second = withWebsite('https://example-research.example/');
+  // A provider's detail takes the website any of its services carries.
+  const first = withWebsite(null);
+  const second = catalogService();
   second.gatewayRegistrationId = 'second-registration';
   second.serviceId = `0x${'cd'.repeat(32)}`;
   assert.equal(providerDetailFromServices([first, second], '41').providerWebsiteUrl, 'https://example-research.example/');
