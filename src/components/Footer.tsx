@@ -143,6 +143,7 @@ export function Footer({ network }: { network: NetworkView }) {
         <span className="dk-footer-legal-links">
           <a href="/terms-of-use">Terms of Use</a>
           <a href="/privacy-policy">Privacy Policy</a>
+          <a href="/hosted-provider-terms">Hosted Provider Terms</a>
         </span>
       </div>
     </footer>

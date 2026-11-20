@@ -41,6 +41,11 @@ export const PAGE_METADATA = {
     description: 'Learn how Daski processes personal data across its marketplace, APIs, and agent interfaces, including data sharing, retention, and your rights.',
     canonicalUrl: 'https://daski.io/privacy-policy',
   },
+  '/hosted-provider-terms': {
+    title: 'Hosted provider terms',
+    description: 'Read the terms for providers whose services Daski hosts: the hosted key, listings, orders, returns after a decline, data, and the invited beta.',
+    canonicalUrl: 'https://daski.io/hosted-provider-terms',
+  },
 } as const;
 
 export function homeDescription(network: Pick<NetworkConfig, 'id' | 'gatewayUrl'>): string {

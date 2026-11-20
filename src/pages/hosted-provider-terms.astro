@@ -1,0 +1,23 @@
+---
+import HostedProviderTermsContent, { getHeadings } from '../content/legal/hosted-provider-terms.md';
+import LegalLayout from '../layouts/LegalLayout.astro';
+import { PAGE_METADATA } from '../lib/seo';
+
+const headings = getHeadings();
+---
+<LegalLayout
+  title="Daski Hosted Provider Terms"
+  metadataTitle={PAGE_METADATA['/hosted-provider-terms'].title}
+  description={PAGE_METADATA['/hosted-provider-terms'].description}
+  canonicalUrl="https://daski.io/hosted-provider-terms"
+  kicker="hosted provider terms"
+  version="1.0"
+  effectiveDate="Upon publication"
+  roleLabel="Hosting operator"
+  roleValue={'Daski, a Wyoming corporation ("Daski," "we," "us," or "our")'}
+  headings={headings}
+  nextLabel="Privacy Policy"
+  nextHref="/privacy-policy"
+>
+  <HostedProviderTermsContent />
+</LegalLayout>
