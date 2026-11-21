@@ -13,7 +13,7 @@ const LEGAL_PAGES = [
     canonicalUrl: 'https://daski.io/terms-of-use',
     sectionCount: 23,
     version: '1.3',
-    effectiveDate: 'Upon publication',
+    effectiveDate: 'November 21, 2026',
   },
   {
     name: 'Privacy Policy',
@@ -22,7 +22,7 @@ const LEGAL_PAGES = [
     canonicalUrl: 'https://daski.io/privacy-policy',
     sectionCount: 17,
     version: '1.3',
-    effectiveDate: 'Upon publication',
+    effectiveDate: 'November 21, 2026',
   },
   {
     name: 'Hosted Provider Terms',
@@ -31,7 +31,7 @@ const LEGAL_PAGES = [
     canonicalUrl: 'https://daski.io/hosted-provider-terms',
     sectionCount: 16,
     version: '1.0',
-    effectiveDate: 'Upon publication',
+    effectiveDate: 'November 21, 2026',
   },
 ];
 
