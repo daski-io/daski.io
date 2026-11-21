@@ -11,7 +11,9 @@ const LEGAL_PAGES = [
     body: 'src/content/legal/terms-of-use.md',
     page: 'src/pages/terms-of-use.astro',
     canonicalUrl: 'https://daski.io/terms-of-use',
-    sectionCount: 22,
+    sectionCount: 23,
+    version: '1.3',
+    effectiveDate: 'Upon publication',
   },
   {
     name: 'Privacy Policy',
@@ -19,6 +21,17 @@ const LEGAL_PAGES = [
     page: 'src/pages/privacy-policy.astro',
     canonicalUrl: 'https://daski.io/privacy-policy',
     sectionCount: 17,
+    version: '1.3',
+    effectiveDate: 'Upon publication',
+  },
+  {
+    name: 'Hosted Provider Terms',
+    body: 'src/content/legal/hosted-provider-terms.md',
+    page: 'src/pages/hosted-provider-terms.astro',
+    canonicalUrl: 'https://daski.io/hosted-provider-terms',
+    sectionCount: 16,
+    version: '1.0',
+    effectiveDate: 'Upon publication',
   },
 ];
 
@@ -38,15 +51,41 @@ test('renders legal revision metadata once through the shared layout', async () 
     assert.doesNotMatch(body, /^\*\*(Version|Effective date|Marketplace operator|Controller):\*\*/m);
     assert.equal(body.match(/^## /gm)?.length, legalPage.sectionCount);
     assert.match(page, new RegExp(`canonicalUrl="${legalPage.canonicalUrl}"`));
-    assert.equal(page.match(/version="1\.2"/g)?.length, 1);
-    assert.equal(page.match(/effectiveDate="October 22, 2026"/g)?.length, 1);
+    assert.equal(page.match(new RegExp(`version="${legalPage.version.replace('.', '\\.')}"`, 'g'))?.length, 1);
+    assert.equal(page.match(/effectiveDate="[^"]+"/g)?.length, 1);
+    assert.ok(page.includes(`effectiveDate="${legalPage.effectiveDate}"`));
   }
 });
 
-test('links both canonical legal routes from the global footer', async () => {
+test('links every canonical legal route from the global footer', async () => {
   const footer = await read('src/components/Footer.tsx');
   assert.match(footer, /<a href="\/terms-of-use">Terms of Use<\/a>/);
   assert.match(footer, /<a href="\/privacy-policy">Privacy Policy<\/a>/);
+  assert.match(footer, /<a href="\/hosted-provider-terms">Hosted Provider Terms<\/a>/);
+});
+
+test('discloses hosted provider signing, delivery, returns, default terms and data', async () => {
+  const [terms, privacy, hosted] = await Promise.all([
+    read('src/content/legal/terms-of-use.md'),
+    read('src/content/legal/privacy-policy.md'),
+    read('src/content/legal/hosted-provider-terms.md'),
+  ]);
+  assert.match(terms, /are the Hosted Provider's statements, not Daski's/);
+  assert.match(terms, /Daski does not review or verify the work or the delivery/);
+  assert.match(terms, /Daski's commission is not refunded/);
+  assert.match(terms, /### Default terms for Hosted Provider Services/);
+  assert.match(terms, /governed by the Hosted Provider Terms\./);
+  assert.match(hosted, /You appoint Daski to use the Hosted Key for you and in your name, and only to:/);
+  assert.match(hosted, /The Hosted Key cannot move your funds, change where you are paid, or transfer your identity\./);
+  assert.match(hosted, /within 7 days/);
+  assert.match(hosted, /Each buyer of your services may enforce the return obligation directly against you\./);
+  assert.match(privacy, /### Hosted Provider console assistant/);
+  assert.match(privacy, /It does not describe artificial intelligence, inference, or other services that Providers offer to buyers/);
+  assert.match(privacy, /Hosted Provider console assistant conversations are kept for twelve months from each message and then deleted/);
+  assert.match(privacy, /the order record of a Hosted Provider order/);
+  assert.match(hosted, /within 7 days after the failure is recorded/);
+  assert.match(terms, /within 7 days after the failure is recorded/);
+  assert.match(privacy, /deleted 90 days after the order ends/);
 });
 
 test('discloses direct-transfer and post-payment identity review consequences', async () => {

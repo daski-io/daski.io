@@ -40,6 +40,7 @@ test('sitemap uses catalog IDs, deduplicates providers, and lists canonical cont
   assert.ok(urls.includes('https://daski.io/'));
   assert.ok(urls.includes('https://daski.io/terms-of-use'));
   assert.ok(urls.includes('https://daski.io/privacy-policy'));
+  assert.ok(urls.includes('https://daski.io/hosted-provider-terms'));
   assert.ok(urls.includes('https://daski.io/agentic-procurement-protocol-whitepaper.pdf'));
   for (const service of services) {
     assert.ok(urls.includes(`https://daski.io/service/${service.serviceId}`));
@@ -48,7 +49,7 @@ test('sitemap uses catalog IDs, deduplicates providers, and lists canonical cont
   assert.doesNotMatch(xml, /lastmod|priority|changefreq|\/404|\/mcp|health\/ready/);
   const sandbox = sitemapXml(resolveNetworkConfig({}), services);
   assert.doesNotMatch(sandbox, /<loc>https:\/\/daski.io\//);
-  assert.doesNotMatch(sandbox, /privacy-policy|terms-of-use/);
+  assert.doesNotMatch(sandbox, /privacy-policy|terms-of-use|hosted-provider-terms/);
   const hidden = sitemapXml(resolveNetworkConfig({ SITE_ROBOTS: 'noindex' }), services);
   assert.doesNotMatch(hidden, /<loc>/);
 });

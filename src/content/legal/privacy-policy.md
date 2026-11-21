@@ -1,4 +1,4 @@
-This Privacy Policy explains how Daski processes personal data through daski.io, Daski APIs, machine and AI Agent interfaces, outcome discovery, transaction routing, payment coordination, support, and related marketplace technology (collectively, the "Daski Platform").
+This Privacy Policy explains how Daski processes personal data through daski.io, Daski APIs, machine and AI Agent interfaces, outcome discovery, transaction routing, payment coordination, the Hosted Provider console and hosting, support, and related marketplace technology (collectively, the "Daski Platform").
 
 An **Operator** is the person or legal entity using the Daski Platform, directly or through an AI agent or other automated system (an **Agent**). A **Provider** is an independent third party offering a service through the Daski Platform. The Daski Terms govern eligibility and authority to use the Platform.
 
@@ -26,9 +26,25 @@ Daski does not ordinarily require a buyer's name, personal profile, postal addre
 
 The Daski gateway receives, validates, and forwards instructions, structured fields, task status, delivery references, or Provider responses needed to route a requested service. It stores the minimum order and evidence records needed for recovery, security, support, and disputes.
 
-Daski is not intended to be a general repository for Provider service content. A Provider may separately retain service content under its own privacy notice. If a Provider legitimately requires sensitive personal data, use only the reviewed intake method declared for that outcome rather than an ordinary prompt.
+Except for the hosting described below for Hosted Providers, Daski is not intended to be a general repository for Provider service content. A Provider may separately retain service content under its own privacy notice. If a Provider legitimately requires sensitive personal data, use only the reviewed intake method declared for that outcome rather than an ordinary prompt.
 
 Do not place private keys, seed phrases, passwords, full payment-card data, Social Security numbers, government identification images, or similarly sensitive data in ordinary Agent prompts, support messages, public blockchain fields, or marketplace metadata. Authorized software may transmit necessary service data through the designated secure intake interface without placing it in model prompts or unrelated logs. Applicable identity, signature, and consent requirements apply to these workflows.
+
+### Hosted Providers
+
+A Hosted Provider is a Provider whose services Daski hosts through the Hosted Provider console at `providers.daski.io` under the Daski Hosted Provider Terms. For a Hosted Provider, Daski processes the wallet address it signs in with, its profile (name and legal name, website, and terms and privacy links), the email addresses it confirms for orders, its services and their versions, and its order, outcome, and payout records.
+
+Daski's hosting also receives the information an Operator or its Agent supplies when ordering a Hosted Provider's service, including the contact email the order form asks for, and relays the order, questions, answers, delivery notes, and files between the Operator and the Hosted Provider, including by email from a per-order Daski address. Daski processes that content to host the service and operate the marketplace. The Hosted Provider receives it to perform the service and is responsible for its own use of it.
+
+A Hosted Provider may link its own privacy notice. If it has not, the marketplace shows this Policy in its place, and the Daski Hosted Provider Terms require the Hosted Provider to use the order information only to perform, support, and keep records of the order and to meet its legal obligations, to keep it secure, not to sell it or use it for advertising or unrelated marketing, and to delete it when no longer needed. Questions about a Hosted Provider's handling may be sent to that Provider through the order or to Daski, which will forward them.
+
+### Hosted Provider console assistant
+
+The Hosted Provider console includes an assistant that helps a Hosted Provider set up its profile and services by chat. This subsection covers only that assistant. It does not describe artificial intelligence, inference, or other services that Providers offer to buyers through the marketplace; those are governed by each Provider's own notices (Section 15).
+
+When a Hosted Provider uses the assistant, Daski records each message the Provider types, each reply and intermediate step the assistant's model produces, and the results of the actions the assistant takes in the console for that Provider, such as saving a profile or service or checking the Provider's wallet balances. These records can include the Provider's name, contact and business details, descriptions of its services, prices, wallet address, and anything else the Provider chooses to write. Daski uses them to operate the assistant, to keep the conversation available to the Provider, and to learn which parts of onboarding work and which do not so that Daski can improve the console and the assistant. The records are stored encrypted, separately from Daski's operational logs, and are accessible only to authorized Daski personnel. Providers should not write private keys, recovery phrases, passwords, or payment-card data in the chat; the assistant is instructed never to ask for them.
+
+The assistant's replies are generated by a third-party AI model provider, currently OpenAI, which processes each conversation on Daski's behalf to produce the reply, under its terms for business API customers. Daski's requests use the setting that asks the model provider not to store the conversation. Providers can list services without the assistant, using the console's Services and Profile pages.
 
 ### Public blockchain data
 
@@ -55,6 +71,7 @@ We use personal data to:
 
 - operate, authenticate, secure, maintain, and improve the Daski Platform;
 - discover and rank Provider services and route requests, quotes, status, and delivery information;
+- host Hosted Providers' services, relay their order communications and files, and operate the Hosted Provider console and its assistant;
 - coordinate, settle, reconcile, and troubleshoot payments;
 - issue and protect payer-bound confidential receipts and retain recovery evidence;
 - index and display public transaction activity and transaction-linked reputation;
@@ -71,7 +88,7 @@ Daski does not use payment authorization to build a separate legal-document acce
 
 ## 5. Automated processing
 
-Daski uses automated systems for semantic service matching, structured-input validation, task routing, payment verification, rate limiting, security, and abuse prevention. Search terms and service requests may be processed to match an Operator with available Provider services. Operators should not place unnecessary personal data in search queries.
+Daski uses automated systems for semantic service matching, structured-input validation, task routing, payment verification, rate limiting, security, and abuse prevention. Search terms and service requests may be processed to match an Operator with available Provider services. Operators should not place unnecessary personal data in search queries. The Hosted Provider console assistant uses an AI model to help a Hosted Provider prepare its listings; it is designed to save or publish only what the Provider confirms.
 
 Daski does not use this marketplace-layer processing to make decisions about an individual that produce legal or similarly significant effects based solely on automated profiling. A Provider may use separate automated or AI-assisted review in performing its service, as described in that Provider's privacy notice.
 
@@ -81,7 +98,7 @@ We may disclose personal data to:
 
 - **Providers**, as needed to quote, perform, deliver, support, or resolve a requested service;
 - **Providers and their compliance vendors**, when a signed listing permits post-payment identity, business, eligibility, sanctions, or similar review under the Provider's privacy notice;
-- **infrastructure and technology vendors**, such as hosting, monitoring, communications, semantic-search, security, fraud-prevention, and analytics vendors;
+- **infrastructure and technology vendors**, such as hosting, monitoring, communications and email-delivery, semantic-search, AI model (for the Hosted Provider console assistant), security, fraud-prevention, and analytics vendors;
 - **payment and blockchain participants**, including wallet infrastructure, facilitators, smart contracts, Base RPC providers, and public networks;
 - **administrative and professional service providers**, such as accounting, audit, security, and operational vendors;
 - **government authorities or other parties**, when reasonably necessary to comply with law, valid process, investigations, or protection of rights and safety; and
@@ -106,7 +123,11 @@ In applying those criteria:
 - structured instructions, delivery references, and persistent-asset records are retained only for the transaction, delivery, support, security, and legal-hold periods that apply;
 - quote, operational, diagnostic, security, and abuse-prevention records are kept only while reasonably useful for reliability, investigation, and protection of the Platform;
 - settled transaction, payment, reconciliation, accounting, tax, sanctions, and compliance records may be retained for the periods required by applicable law and reasonably necessary for audits, disputes, and enforcement;
-- Provider relationship and support records are kept for the relationship or request and a reasonable period afterward for continuity, disputes, and compliance; and
+- Provider relationship and support records are kept for the relationship or request and a reasonable period afterward for continuity, disputes, and compliance;
+- Hosted Provider console assistant conversations are kept for twelve months from each message and then deleted in Daski's routine deletion process;
+- the order record of a Hosted Provider order, meaning the buyer's request (including its contact email, stored encrypted), the order's questions, answers, and messages, and the delivery note, is kept as the order's history for the Hosted Provider and the buyer and for support, disputes, accounting, and legal obligations, and is deleted or de-identified when no longer needed for those purposes;
+- copies of the order mail Daski relays for a Hosted Provider are kept for 90 days after they are sent or received, and longer only while needed for a support or security matter and for 90 days after it is resolved, or under a legal hold;
+- files a Hosted Provider sends its buyer, as attachments or images in its reply mail or with its delivery note, are stored encrypted, offered to the buyer as download links that work for seven days, and deleted 90 days after the order ends; and
 - backup copies are overwritten or deleted through Daski's ordinary backup cycle after the source data is deleted.
 
 Daski periodically reviews retained data and deletes or de-identifies it when it is no longer needed, subject to legal holds and documented exceptions. Properly de-identified information that no longer identifies a person may be retained indefinitely. Public blockchain records follow the operation of the applicable network and may be permanent.
@@ -159,7 +180,7 @@ Daski and its vendors may process data in the United States and other countries 
 
 ## 15. Provider services and notices
 
-Provider privacy practices are governed by the Provider notices linked with each service, not this Policy. Daski does not legal-review, verify, summarize, archive, or monitor those notices and does not guarantee their accuracy, completeness, legality, or availability. The Operator may review the applicable Provider notice itself or authorize its Agent to evaluate it under the Operator's policies before disclosing personal data. The Agent must resolve any material conflict with those policies or uncertainty about disclosure authority before sending the affected data.
+Provider privacy practices are governed by the Provider notices linked with each service, not this Policy. For a Hosted Provider that has not linked its own notice, the marketplace shows this Policy, and Section 2 describes the commitments that Hosted Provider has made. Daski does not legal-review, verify, summarize, archive, or monitor those notices and does not guarantee their accuracy, completeness, legality, or availability. The Operator may review the applicable Provider notice itself or authorize its Agent to evaluate it under the Operator's policies before disclosing personal data. The Agent must resolve any material conflict with those policies or uncertainty about disclosure authority before sending the affected data.
 
 ## 16. Changes
 

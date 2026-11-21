@@ -185,12 +185,12 @@ try {
   if (testnet) assert.match(home.description, /test USDC/);
   const titles = new Set([home.title]);
   const descriptions = new Set([home.description]);
-  for (const path of ['/agents', '/providers', '/activity', '/proof', '/brand-assets', '/terms-of-use', '/privacy-policy']) {
+  for (const path of ['/agents', '/providers', '/activity', '/proof', '/brand-assets', '/terms-of-use', '/privacy-policy', '/hosted-provider-terms']) {
     const result = await page(path);
     assert.ok(!titles.has(result.title), `Duplicate title: ${path}`);
     assert.ok(!descriptions.has(result.description), `Duplicate description: ${path}`);
     titles.add(result.title); descriptions.add(result.description);
-    assert.equal(result.canonical, `${['/terms-of-use', '/privacy-policy'].includes(path) ? 'https://daski.io' : origin}${path}`);
+    assert.equal(result.canonical, `${['/terms-of-use', '/privacy-policy', '/hosted-provider-terms'].includes(path) ? 'https://daski.io' : origin}${path}`);
   }
   const agents = await page('/agents/?utm_source=preview');
   assert.equal(agents.canonical, origin + '/agents');

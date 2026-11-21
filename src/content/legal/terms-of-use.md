@@ -1,4 +1,4 @@
-These Terms of Use ("Terms") govern access to and use of daski.io, Daski APIs, machine and Agent interfaces, service discovery, transaction routing, payment coordination, and related marketplace technology (collectively, the "Daski Platform").
+These Terms of Use ("Terms") govern access to and use of daski.io, Daski APIs, machine and Agent interfaces, service discovery, transaction routing, payment coordination, the Hosted Provider console and hosting, and related marketplace technology (collectively, the "Daski Platform").
 
 The Daski Platform enables Agents to discover, purchase, and manage business services offered and performed by independent Providers.
 
@@ -10,6 +10,7 @@ In these Terms:
 - **Agent** means an AI agent, software agent, computer program, or other automated system acting for an Operator or, where legally eligible, as the Operator itself.
 - **Provider** means the independent third party that offers and performs a service listed on the Daski Platform.
 - **Provider Service** means a service supplied by a Provider through the Daski Platform.
+- **Hosted Provider** means a Provider whose services Daski hosts under the Daski Hosted Provider Terms at `https://daski.io/hosted-provider-terms`.
 - **you** and **your** mean the Operator.
 
 An AI-operated entity or an Agent may be the Operator if its legal personality and capacity to enter the transaction are recognized under applicable law. The Operator bears the rights and obligations arising from the transaction. An Agent acting for a separate Operator must have authority to bind that party.
@@ -66,12 +67,12 @@ Privacy policies describe data practices and are not accepted as contracts unles
 
 ## 5. Daski is a marketplace, not the service provider
 
-All Provider Services are offered, contracted for, and performed by independent Providers. Daski supplies marketplace discovery, communications, routing, coordination, payment-related technology, and related infrastructure. Daski does not itself provide the listed Provider Services.
+All Provider Services are offered, contracted for, and performed by independent Providers. Daski supplies marketplace discovery, communications, routing, coordination, payment-related technology, hosting for Hosted Providers, and related infrastructure. Daski does not itself provide the listed Provider Services.
 
 For every Provider Service:
 
 - the service contract is directly between the Operator and the Provider;
-- the Provider controls the service's scope, eligibility, inputs, performance, delivery, support, warranties, cancellations, refunds, renewals, and legal terms;
+- the Provider controls the service's scope, eligibility, inputs, performance, delivery, support, warranties, cancellations, refunds, renewals, and legal terms, subject, for a Hosted Provider, to Section 7;
 - Daski does not supervise, employ, control, endorse, certify, or guarantee the Provider;
 - Daski is not responsible for Provider statements, omissions, documents, performance, output, or legal compliance; and
 - disputes about the Provider Service must be addressed with the Provider.
@@ -80,7 +81,7 @@ Daski may transmit communications, but it has no duty to resolve a Provider disp
 
 ## 6. Provider legal documents
 
-Each Provider supplies its legal name, terms URL, and privacy URL. Those links are returned with the Provider Service and repeated in the final purchase response.
+Each Provider supplies its legal name, terms URL, and privacy URL. Those links are returned with the Provider Service and repeated in the final purchase response. A Hosted Provider that does not supply its own terms or privacy URL is shown with Daski's, with the effect described in Section 7.
 
 Each Provider Service is governed by the applicable Provider terms, privacy notices, and disclosed service or supplier requirements.
 
@@ -88,7 +89,29 @@ The Operator may review the applicable documents itself or authorize its Agent t
 
 Daski does not legal-review, approve, summarize, interpret, or guarantee Provider legal documents. Daski hashes the disclosed transaction terms into the signed listing epoch so a purchase can be tied to the version presented, but that technical commitment is not a legal review. The Provider is solely responsible for its documents, changes, availability, and records.
 
-## 7. Prices, payment, and settlement
+## 7. Hosted Providers
+
+A Hosted Provider is still an independent Provider. Section 5 applies to its services, and its contract with the Operator is its own. Daski hosts the technical side of its services under the Hosted Provider Terms. For a Hosted Provider Service:
+
+- **Messages signed by Daski's hosted key.** Quotes, order status, questions, and completion messages are signed by a key Daski operates for the Hosted Provider. They are made on the Hosted Provider's behalf, from its listing and its actions, and are the Hosted Provider's statements, not Daski's.
+- **Delivery.** The Hosted Provider decides whether it delivered and records the order as completed on chain with its own wallet. Daski does not review or verify the work or the delivery.
+- **Communications.** Orders, questions, answers, delivery notes, and files pass through Daski's hosting, including email from a per-order Daski address, as the Privacy Policy describes. Download links for files expire.
+- **Deadline.** An order stays open until the Hosted Provider marks it complete or declines it, for at most the deadline that applies to the listing version bought, counted from the hand-over of the paid order (30 days for listing versions published with a 30-day order window). If the deadline passes without a completion, Daski's hosted key records the order as failed.
+- **Return of the Provider's share.** If the outcome of a paid order is recorded on chain as failed, for example because the Hosted Provider declined it or its deadline passed without a completion, the Hosted Provider must return to the paying wallet the share of the payment it received, which is the price less Daski's commission (95% of the price at the current 5% commission), within 7 days after the failure is recorded, as and subject to the exceptions the Hosted Provider Terms provide. Daski's commission is not refunded. The return is a separate transfer the Hosted Provider makes outside the payment rail (Section 9). Daski does not make, fund, or guarantee it, but the Operator may enforce it directly against the Hosted Provider, and Daski may suspend a Hosted Provider that does not make it.
+- **Default service terms.** If the Hosted Provider has not linked its own terms, the service's terms link is these Terms, and the default terms below govern the service contract between the Operator and the Hosted Provider. A Hosted Provider that has not linked its own privacy notice is required by the Hosted Provider Terms to make the commitments the Privacy Policy describes for that case.
+
+### Default terms for Hosted Provider Services
+
+These default terms apply between the Operator and a Hosted Provider that has not linked its own terms. Daski is not a party to them.
+
+1. The Hosted Provider will perform the service described in the purchased listing version with reasonable skill and care and deliver it through the order by the order's deadline.
+2. The Operator will supply accurate and lawful information that it has the right to provide and will answer the Hosted Provider's questions through the order. Before delivering, the Hosted Provider may decline an order if the information is insufficient or it cannot lawfully or reasonably perform the service. The return described above then applies.
+3. Once an order is delivered and paid, the Operator may use the deliverables for its business purposes. The Hosted Provider keeps its pre-existing materials, tools, and know-how and grants the Operator a non-exclusive license to use any of them included in a deliverable as part of that deliverable. The Hosted Provider represents that it has the rights needed to grant these rights.
+4. To the extent permitted by law, the service carries no warranties beyond these default terms and the listing, and the Hosted Provider's total liability for an order is limited to the price paid for it, except for liability that cannot lawfully be limited.
+5. Each party will keep non-public information received for the order confidential and use it only for the order.
+6. Disputes about the service are between the Operator and the Hosted Provider. Section 20 applies to them as if they were the parties named there, except that a notice of dispute goes to the other party through the order or, once the order is closed, to `support@daski.io` for forwarding. Daski may pass messages between them but has no duty to resolve the dispute.
+
+## 8. Prices, payment, and settlement
 
 The final quote or payment challenge states the total amount the Operator must authorize. Daski may show an informational breakdown, but the total stated amount controls if a breakdown conflicts with it.
 
@@ -105,11 +128,11 @@ Sending USDC directly to a splitter, token contract, payee, or other disclosed a
 
 The Operator is responsible for taxes, duties, reporting, and withholding arising from its purchases, except taxes imposed on Daski's own net income.
 
-## 8. Final payments and transaction problems
+## 9. Final payments and transaction problems
 
 Standard-rail payments are final at launch. Daski does not advertise or operate a Platform refund, guarantee, protected purchase, or independently verified service outcome. Payment settlement does not itself establish service completion, and a public-blockchain payment is not reversible by Daski.
 
-Known service eligibility requirements must be disclosed before payment. A Provider may complete identity, business, sanctions, eligibility, or other compliance review after payment when the signed listing and Provider terms disclose that process, the information that may be required, and the consequences if the review cannot be completed. Failure or refusal to complete that review does not make an on-chain payment reversible. Any cancellation, credit, or refund a Provider separately offers is governed and performed outside the launch payment rail under the Provider's own terms.
+Known service eligibility requirements must be disclosed before payment. A Provider may complete identity, business, sanctions, eligibility, or other compliance review after payment when the signed listing and Provider terms disclose that process, the information that may be required, and the consequences if the review cannot be completed. Failure or refusal to complete that review does not make an on-chain payment reversible. Any cancellation, credit, or refund a Provider separately offers is governed and performed outside the launch payment rail under the Provider's own terms. Section 7 describes the return a Hosted Provider must make after a decline or a missed deadline.
 
 Daski may offer promotions, such as USDC cash back on qualifying orders, under separate promotion terms published with each promotion. Cash back is a separate payment funded by Daski. It is not a refund, does not reverse or change the original payment, and does not change any Provider's terms.
 
@@ -117,7 +140,7 @@ The Operator must report service-delivery disputes to the Provider and may conta
 
 For a stock-fixed outcome, retrying the identical signed payment authorization is a transport retry of the same purchase. Creating a new signature or authorization nonce creates a distinct final purchase, even when its request and price are identical. Distinct purchases are not merged or reversed by operator discretion.
 
-## 9. Marketplace activity, outcomes, and confidential receipts
+## 10. Marketplace activity, outcomes, and confidential receipts
 
 Daski issues a signed confidential receipt bound to the payer wallet, order, listing, amount, settlement evidence, release evidence, and Provider task. The receipt is a technical record of the marketplace workflow, not an endorsement, certification, warranty, or public reputation statement.
 
@@ -125,7 +148,7 @@ Daski may index and display transaction facts already recorded publicly, includi
 
 A Provider outcome is a statement by the Provider. A payer confirmation is a statement by the Operator on whose behalf it is submitted. Neither is a statement, endorsement, certification, warranty, or guarantee by Daski. The Operator must not use self-dealing, fabricated purchases, coordinated activity, or misleading claims to manipulate reputation, marketplace discovery, apparent demand, or promotion eligibility.
 
-## 10. Acceptable use
+## 11. Acceptable use
 
 Agents may access documented APIs, tools, public discovery information, and legal pages; retrieve and evaluate applicable terms; and complete supported workflows within published technical limits and their Operator's authority.
 
@@ -142,17 +165,17 @@ The Operator must ensure that it and its Agents do not use the Daski Platform to
 
 Daski may block a service, wallet, Agent, Provider, transaction, or location when reasonably necessary for security, legal compliance, platform integrity, or protection of others.
 
-## 11. Security and credentials
+## 12. Security and credentials
 
 The Operator must protect its Agent credentials, API keys, wallets, devices, and approval controls; apply reasonable limits; promptly revoke obsolete access; and notify Daski through its support channel of suspected compromise.
 
 No software, AI, Internet, smart-contract, or blockchain system is completely secure. The Operator accepts the risks of bugs, exploits, prompt injection, incorrect Agent behavior, compromised tools or data, forks, congestion, outages, and irreversible transactions.
 
-## 12. Privacy
+## 13. Privacy
 
-Daski's handling of personal data is described in the [Daski Privacy Policy](https://daski.io/privacy-policy). Providers handle service data under their own privacy notices. The Operator is responsible for determining whether it may provide personal data and for giving notices or obtaining permissions required from the individuals involved.
+Daski's handling of personal data is described in the [Daski Privacy Policy](https://daski.io/privacy-policy). Providers handle service data under their own privacy notices or, for a Hosted Provider without its own notice, under the commitments described in the Privacy Policy. The Operator is responsible for determining whether it may provide personal data and for giving notices or obtaining permissions required from the individuals involved.
 
-## 13. Open-source licensing, intellectual property, and feedback
+## 14. Open-source licensing, intellectual property, and feedback
 
 Daski source code and documentation published in a repository under the MIT License are governed by that license. Nothing in these Terms limits rights granted by the MIT License or another open-source license applicable to particular material, including the right to use, copy, modify, merge, publish, distribute, sublicense, or sell copies subject to that license. If these Terms conflict with an applicable open-source license for the licensed material, the open-source license controls for that material.
 
@@ -160,11 +183,11 @@ Open-source licensing does not grant a right to use Daski's names, logos, tradem
 
 Provider terms determine rights in service inputs and outputs. The Operator grants Daski the limited rights needed to validate, store for the declared retention period, transmit, secure, and troubleshoot its instructions and content. Daski may use voluntarily supplied ideas and suggestions that are not code, personal data, or confidential information without restriction or compensation, but will not identify the person providing them publicly without permission.
 
-## 14. Third-party systems
+## 15. Third-party systems
 
 The Daski Platform depends on Providers, Agent runtimes, models, wallets, blockchain networks, smart contracts, infrastructure vendors, and other third parties. Their terms apply independently. Daski is not responsible for systems it does not control. Open-source components remain subject to their applicable licenses.
 
-## 15. Suspension and termination
+## 16. Suspension and termination
 
 The Operator may stop using the Daski Platform, but stopping does not cancel completed purchases or accrued obligations.
 
@@ -172,7 +195,7 @@ Daski may restrict or terminate access for unlawful activity, sanctions risk, fr
 
 Payment, ownership, disclaimers, liability, indemnity, disputes, and provisions that by their nature should survive will survive termination.
 
-## 16. Disclaimers
+## 17. Disclaimers
 
 TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE DASKI PLATFORM IS PROVIDED "AS IS" AND "AS AVAILABLE." DASKI DISCLAIMS ALL EXPRESS, IMPLIED, AND STATUTORY WARRANTIES, INCLUDING MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, NON-INFRINGEMENT, ACCURACY, SECURITY, AVAILABILITY, AND RESULTS.
 
@@ -180,7 +203,7 @@ DASKI DOES NOT WARRANT A PROVIDER; A PROVIDER'S LEGAL DOCUMENTS; THE ACCURACY, L
 
 These disclaimers apply only to the extent permitted by law.
 
-## 17. Limitation of liability
+## 18. Limitation of liability
 
 TO THE MAXIMUM EXTENT PERMITTED BY LAW, DASKI AND ITS AFFILIATES, MANAGERS, MEMBERS, EMPLOYEES, CONTRACTORS, AND LICENSORS WILL NOT BE LIABLE FOR INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, PUNITIVE, OR CONSEQUENTIAL DAMAGES; LOST PROFITS, REVENUE, BUSINESS, DATA, GOODWILL, OR DIGITAL ASSETS; OR THE COST OF SUBSTITUTE SERVICES, EVEN IF ADVISED OF THE POSSIBILITY.
 
@@ -188,34 +211,34 @@ TO THE MAXIMUM EXTENT PERMITTED BY LAW, THEIR TOTAL AGGREGATE LIABILITY ARISING 
 
 The exclusions and cap do not apply to liability that cannot lawfully be excluded or limited.
 
-## 18. Indemnification
+## 19. Indemnification
 
 The Operator will defend, indemnify, and hold harmless Daski and its affiliates, managers, members, employees, contractors, and licensors from third-party claims, damages, penalties, losses, and reasonable costs arising from the Operator's or its Agent's use of the Daski Platform, breach of these Terms or Provider terms, violation of law or another person's rights, supplied data or instructions, or lack or misuse of authority.
 
 Daski will provide reasonable notice and may control the defense with counsel of its choice. The Operator may not settle a claim in a way that admits Daski's fault or imposes obligations on Daski without written consent.
 
-## 19. Governing law and disputes
+## 20. Governing law and disputes
 
 Wyoming law governs these Terms and related disputes without regard to conflict-of-law rules. The state courts located in Laramie County, Wyoming, and the United States District Court for the District of Wyoming have exclusive jurisdiction, and each party consents to jurisdiction and venue there.
 
-Before filing a claim, a party must send a written notice describing the dispute and requested relief through the contact route in Section 22 and allow 30 days for informal resolution, unless immediate injunctive relief is reasonably necessary. Nothing in these Terms excludes mandatory rights or remedies, requires a waiver of a nonwaivable limitation period, or overrides a jurisdiction or venue required by applicable law.
+Before filing a claim, a party must send a written notice describing the dispute and requested relief through the contact route in Section 23 and allow 30 days for informal resolution, unless immediate injunctive relief is reasonably necessary. Nothing in these Terms excludes mandatory rights or remedies, requires a waiver of a nonwaivable limitation period, or overrides a jurisdiction or venue required by applicable law.
 
-## 20. Changes to these Terms
+## 21. Changes to these Terms
 
 Daski may update these Terms prospectively by posting a revised version and effective date at the Terms URL. Daski will provide reasonable advance notice of material changes when practicable. Changes do not retroactively alter completed purchases. Later use after revised Terms take effect constitutes agreement for that later use.
 
 Daski may retain ordinary business copies of its own prior Terms but does not promise a transaction-specific archive or acceptance ledger.
 
-## 21. General
+## 22. General
 
 These Terms, the final quote or payment challenge, the terms of any promotion that applies, and Daski policies expressly incorporated into them are the entire agreement between Daski and the Operator concerning the Daski Platform. Provider terms separately govern each Provider Service.
 
 Daski may assign these Terms in connection with a merger, reorganization, sale of assets, or transfer to an affiliate. The Operator may not assign them without Daski's consent and may not transfer Agent credentials or payment authority outside their intended scope.
 
-Failure to enforce a provision is not a waiver. If a provision is unenforceable, it will be enforced to the maximum lawful extent and the remainder will remain effective. These Terms do not create a partnership, joint venture, employment, fiduciary, franchise, or service-provider relationship between Daski and the Operator or a Provider.
+Failure to enforce a provision is not a waiver. If a provision is unenforceable, it will be enforced to the maximum lawful extent and the remainder will remain effective. These Terms do not create a partnership, joint venture, employment, fiduciary, franchise, or service-provider relationship between Daski and the Operator or a Provider. Daski's hosting of a Hosted Provider's services is governed by the Hosted Provider Terms.
 
 Neither party is liable for delay caused by events beyond its reasonable control, except that this does not excuse payment obligations for completed transactions.
 
-## 22. Contact
+## 23. Contact
 
 All support, legal, privacy, and security communications may be sent to `support@daski.io`.

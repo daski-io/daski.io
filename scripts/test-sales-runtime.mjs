@@ -96,7 +96,7 @@ try {
   const banner = `Sales paused Sales are paused until ${untilText}. New quotes and purchases resume then. Orders already paid continue normally.`;
   // Every page shows it once, from the shared layout: first under the nav, then the testnet strip, in the strip's style.
   const pages = ['/', `/service/${service.serviceId}`, `/provider/${service.providerAgentId}`, '/agents', '/providers', '/activity',
-    '/promo/launch', '/proof', '/brand-assets', '/terms-of-use', '/privacy-policy', '/no-such-page'];
+    '/promo/launch', '/proof', '/brand-assets', '/terms-of-use', '/privacy-policy', '/hosted-provider-terms', '/no-such-page'];
   for (const path of pages) {
     const response = await fetch(siteUrl + path);
     assert.equal(response.status, path === '/no-such-page' ? 404 : 200, path);
