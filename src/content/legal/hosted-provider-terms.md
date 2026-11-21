@@ -1,6 +1,6 @@
 These Hosted Provider Terms ("Hosted Terms") govern Daski's Hosted Provider program, in which Daski hosts the technical side of a Provider's services on the Daski Platform through the Hosted Provider console at `providers.daski.io`, and for testing at `sandbox-providers.daski.io` (the "Console"). They are an agreement between Daski and the person or legal entity that uses the Console to offer services (the "Hosted Provider" or "you").
 
-**Using the Console means you accept these Hosted Terms. There is no separate acceptance step (Section 1).**
+**Signing in to or using the Console means you accept these Hosted Terms. There is no separate acceptance step (Section 1).**
 
 The [Daski Terms of Use](https://daski.io/terms-of-use) and the [Daski Privacy Policy](https://daski.io/privacy-policy) also apply. Terms defined in the Terms of Use have the same meaning here. If these Hosted Terms conflict with the Terms of Use about the Hosted Provider program, these Hosted Terms control.
 
