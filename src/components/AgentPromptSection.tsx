@@ -16,14 +16,15 @@ interface AgentPromptSectionProps {
 
 export function AgentPromptSection({ gatewayUrl, siteUrl, serviceName, pad, action }: AgentPromptSectionProps) {
   if (gatewayUrl === null) return null;
-  const prompt = agentPrompt(siteUrl, serviceName);
+  const service = serviceName?.replace(/\s+/g, ' ').trim();
+  const prompt = agentPrompt(siteUrl, service);
   return (
     <Section pad={pad}>
       <SectionHead
         kicker="Agent prompt"
         title="Hand it to your agent."
-        subtitle={serviceName
-          ? `Copy-paste this prompt to empower your agent to buy ${serviceName} on daski marketplace.`
+        subtitle={service
+          ? `Copy-paste this prompt to empower your agent to buy ${service} on daski marketplace.`
           : 'Copy-paste this prompt to empower your agent to buy services on daski marketplace.'}
         action={action}
       />

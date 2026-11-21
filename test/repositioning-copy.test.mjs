@@ -57,7 +57,7 @@ test('publishes the attachment-matched agent handoff copy on agents and home', a
   );
   // The prompt names the active network's website; test/network-presentation
   // asserts the exact text for each network.
-  assert.match(prompt, /agentPrompt\(siteUrl, serviceName\)/);
+  assert.match(prompt, /agentPrompt\(siteUrl, service\)/);
 
   assert.match(demo, /idea\.info/);
   assert.match(demo, /sign and send payment/);
@@ -83,6 +83,6 @@ test('every service page hands its own service to the agent prompt, above provid
   assert.match(page, /siteUrl=\{view\.siteUrls\[view\.id\]\}/);
   assert.match(
     prompt.replace(/\s+/g, ' '),
-    /Copy-paste this prompt to empower your agent to buy \$\{serviceName\} on daski marketplace\./,
+    /Copy-paste this prompt to empower your agent to buy \$\{service\} on daski marketplace\./,
   );
 });
