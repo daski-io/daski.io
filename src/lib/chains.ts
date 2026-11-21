@@ -67,8 +67,10 @@ export function explorerTx(explorerUrl: string, hash: string): string {
   return `${explorerUrl}/tx/${hash}`;
 }
 
-export function agentPrompt(siteUrl: string): string {
-  return `Fetch ${siteUrl}/skills/setup.md and use the returned setup instructions to buy [service offered on daski]`;
+/** The copy-paste prompt; a service page names its service, other pages leave a placeholder. */
+export function agentPrompt(siteUrl: string, serviceName?: string): string {
+  const service = serviceName?.replace(/\s+/g, ' ').trim() || '[service offered on daski]';
+  return `Fetch ${siteUrl}/skills/setup.md and use the returned setup instructions to buy ${service}`;
 }
 
 export function siteName(view: Pick<NetworkView, 'id' | 'label'>): string {

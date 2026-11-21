@@ -57,7 +57,7 @@ test('publishes the attachment-matched agent handoff copy on agents and home', a
   );
   // The prompt names the active network's website; test/network-presentation
   // asserts the exact text for each network.
-  assert.match(prompt, /agentPrompt\(siteUrl\)/);
+  assert.match(prompt, /agentPrompt\(siteUrl, serviceName\)/);
 
   assert.match(demo, /idea\.info/);
   assert.match(demo, /sign and send payment/);
@@ -65,4 +65,24 @@ test('publishes the attachment-matched agent handoff copy on agents and home', a
   assert.match(demo, /Domain registered and owned by wallet/);
   assert.match(flatStandards, /Daski is a coordination layer\. Discovery and payment quoting/);
   assert.doesNotMatch(standards, /not a middleman/);
+});
+
+test('every service page hands its own service to the agent prompt, above provided by', async () => {
+  const [view, page, prompt] = await Promise.all([
+    read('src/views/ServiceDetailPage.tsx'),
+    read('src/pages/service/[serviceId].astro'),
+    read('src/components/AgentPromptSection.tsx'),
+  ]);
+
+  const section = view.indexOf('<AgentPromptSection');
+  const provider = view.indexOf('<ProviderAndRailDetails');
+  assert.ok(section > view.indexOf('<ServiceHero'), 'agent prompt follows the hero');
+  assert.ok(section >= 0 && section < provider, 'agent prompt sits above provided by');
+  assert.match(view, /<AgentPromptSection[^>]*serviceName=\{service\.name\}/);
+  assert.match(page, /gatewayUrl=\{view\.gatewayUrl\}/);
+  assert.match(page, /siteUrl=\{view\.siteUrls\[view\.id\]\}/);
+  assert.match(
+    prompt.replace(/\s+/g, ' '),
+    /Copy-paste this prompt to empower your agent to buy \$\{serviceName\} on daski marketplace\./,
+  );
 });
