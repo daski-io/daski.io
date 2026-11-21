@@ -83,6 +83,11 @@ test('discloses hosted provider signing, delivery, returns, default terms and da
   assert.match(privacy, /It does not describe artificial intelligence, inference, or other services that Providers offer to buyers/);
   assert.match(privacy, /Hosted Provider console assistant conversations are kept for twelve months from each message and then deleted/);
   assert.match(privacy, /the order record of a Hosted Provider order/);
+  assert.match(privacy, /is kept indefinitely with the order/);
+  assert.match(privacy, /This subsection is Daski's notice that conversations with the assistant are recorded/);
+  assert.match(hosted, /\*\*You accept these Hosted Terms by using the Console: by signing in to it/);
+  assert.match(hosted, /There is no separate acceptance step\./);
+  assert.match(hosted, /is kept indefinitely as the order's history/);
   assert.match(hosted, /within 7 days after the failure is recorded/);
   assert.match(terms, /within 7 days after the failure is recorded/);
   assert.match(privacy, /deleted 90 days after the order ends/);
