@@ -28,7 +28,7 @@ As part of setup, you name a key that Daski operates and designates for the prog
 - record an order as failed on chain when you decline it or when its deadline passes without a completion you signed; and
 - carry out a change of the Hosted Key that you approve.
 
-The Hosted Key cannot move your funds, change where you are paid, or transfer your identity. The Console never asks you to grant it those powers, and you must not grant them. Daski holds the Hosted Key so that it can sign only what this Section allows; on Base mainnet it is held by a key-custody provider under a policy that enforces those limits.
+The Hosted Key cannot move your funds, change where you are paid, or transfer your identity. The Console never asks you to grant it those powers, and you must not grant them. Daski holds the Hosted Key so that it can sign only what this Section allows; on Base mainnet it is held by a key-custody provider under a policy that limits what it can sign.
 
 Messages and records signed with the Hosted Key under this Section are your statements to buyers and the marketplace. Daski is responsible to you for using the Hosted Key only as this Section allows.
 
@@ -42,7 +42,7 @@ You may end this appointment by naming as agent wallet a key that Daski has not 
 
 You decide what you sell: each service's name, description, price, delivery estimate, the information buyers must supply, and the email address that receives its orders. Each service you publish is listed on the marketplace as your service, under your name.
 
-You are solely responsible for your services and listings, including anything the Console assistant drafted, saved, or published for you. Review your services after using the assistant, and tell Daski promptly if it saved or published something you did not approve; Daski will help you correct it. They must be accurate and complete, describe what you can actually deliver, and comply with law. You must not list:
+You are solely responsible for your services and listings, including anything the Console assistant drafted, saved, or published for you. Review your services after using the assistant, and tell Daski promptly if it saved or published something you did not approve; Daski will help you correct it. Your services and listings must be accurate and complete, describe what you can actually deliver, and comply with law. You must not list:
 
 - unlawful, deceptive, or infringing services;
 - services you are not licensed or otherwise permitted to provide;
@@ -72,7 +72,7 @@ You may ask the buyer questions by replying to the order email or in the Console
 
 Daski does not judge whether you delivered. Mark an order complete only after you have delivered what the listing promised, by writing a delivery note in the Console and signing the on-chain record with your Owner Wallet. You may send files with your reply mail or delivery note within the Console's limits.
 
-An order stays open until you mark it complete or decline it, up to the deadline that applies to the listing version bought, counted from when the marketplace hands the paid order to the hosted service: 30 days for current listing versions, or the delivery time of an earlier version. The deadline runs even if an order email does not reach you. Daski sends reminders, but meeting the deadline is your responsibility. The Console stops accepting a completion shortly before the deadline so that the record can settle. If the deadline passes without a completion, the Hosted Key records the order as failed, and your marketplace record shows it.
+An order stays open until you mark it complete or decline it, up to the deadline that applies to the listing version bought, counted from when the marketplace hands the paid order to the hosted service: 30 days for listing versions published with a 30-day order window, or the delivery time of an earlier version. The deadline runs even if an order email does not reach you. Daski sends reminders, but meeting the deadline is your responsibility. The Console stops accepting a completion shortly before the deadline so that the record can settle. If the deadline passes without a completion, the Hosted Key records the order as failed, and your marketplace record shows it.
 
 The outcome recorded on chain is final and is the order's result.
 
