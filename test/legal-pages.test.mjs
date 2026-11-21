@@ -13,6 +13,7 @@ const LEGAL_PAGES = [
     canonicalUrl: 'https://daski.io/terms-of-use',
     sectionCount: 23,
     version: '1.3',
+    effectiveDate: 'Upon publication',
   },
   {
     name: 'Privacy Policy',
@@ -21,6 +22,7 @@ const LEGAL_PAGES = [
     canonicalUrl: 'https://daski.io/privacy-policy',
     sectionCount: 17,
     version: '1.3',
+    effectiveDate: 'Upon publication',
   },
   {
     name: 'Hosted Provider Terms',
@@ -29,6 +31,7 @@ const LEGAL_PAGES = [
     canonicalUrl: 'https://daski.io/hosted-provider-terms',
     sectionCount: 16,
     version: '1.0',
+    effectiveDate: 'Upon publication',
   },
 ];
 
@@ -50,10 +53,11 @@ test('renders legal revision metadata once through the shared layout', async () 
     assert.match(page, new RegExp(`canonicalUrl="${legalPage.canonicalUrl}"`));
     assert.equal(page.match(new RegExp(`version="${legalPage.version.replace('.', '\\.')}"`, 'g'))?.length, 1);
     assert.equal(page.match(/effectiveDate="[^"]+"/g)?.length, 1);
+    assert.ok(page.includes(`effectiveDate="${legalPage.effectiveDate}"`));
   }
 });
 
-test('links both canonical legal routes from the global footer', async () => {
+test('links every canonical legal route from the global footer', async () => {
   const footer = await read('src/components/Footer.tsx');
   assert.match(footer, /<a href="\/terms-of-use">Terms of Use<\/a>/);
   assert.match(footer, /<a href="\/privacy-policy">Privacy Policy<\/a>/);
@@ -77,7 +81,10 @@ test('discloses hosted provider signing, delivery, returns, default terms and da
   assert.match(hosted, /Each buyer of your services may enforce the return obligation directly against you\./);
   assert.match(privacy, /### Hosted Provider console assistant/);
   assert.match(privacy, /It does not describe artificial intelligence, inference, or other services that Providers offer to buyers/);
-  assert.match(privacy, /Hosted Provider console assistant conversations are kept for twelve months from each message and then deleted;/);
+  assert.match(privacy, /Hosted Provider console assistant conversations are kept for twelve months from each message and then deleted/);
+  assert.match(privacy, /the order record of a Hosted Provider order/);
+  assert.match(hosted, /within 7 days after the failure is recorded/);
+  assert.match(terms, /within 7 days after the failure is recorded/);
   assert.match(privacy, /deleted 90 days after the order ends/);
 });
 

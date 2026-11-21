@@ -94,11 +94,11 @@ Daski does not legal-review, approve, summarize, interpret, or guarantee Provide
 A Hosted Provider is still an independent Provider. Section 5 applies to its services, and its contract with the Operator is its own. Daski hosts the technical side of its services under the Hosted Provider Terms. For a Hosted Provider Service:
 
 - **Messages signed by Daski's hosted key.** Quotes, order status, questions, and completion messages are signed by a key Daski operates for the Hosted Provider. They are made on the Hosted Provider's behalf, from its listing and its actions, and are the Hosted Provider's statements, not Daski's.
-- **Delivery.** The Hosted Provider decides whether it delivered and records that on chain with its own wallet. Daski does not review or verify the work or the delivery.
+- **Delivery.** The Hosted Provider decides whether it delivered and records the order as completed on chain with its own wallet. Daski does not review or verify the work or the delivery.
 - **Communications.** Orders, questions, answers, delivery notes, and files pass through Daski's hosting, including email from a per-order Daski address, as the Privacy Policy describes. Download links for files expire.
-- **Deadline.** An order stays open until the Hosted Provider marks it delivered or declines it, for at most the deadline that applies to the listing version bought (30 days for listings published since November 19, 2026). If the deadline passes without a delivery, Daski's hosted key records the order as failed.
-- **Return of the Provider's share.** If a Hosted Provider declines a paid order, or the order fails because its deadline passed without a delivery, the Hosted Provider must return to the paying wallet the share of the payment it received, which is the price less Daski's commission (95% of the price at the current 5% commission), within 7 days, as the Hosted Provider Terms require. Daski's commission is not refunded. The return is a separate transfer the Hosted Provider makes outside the payment rail (Section 9). Daski does not make, fund, or guarantee it, but the Operator may enforce it directly against the Hosted Provider, and Daski may suspend a Hosted Provider that does not make it.
-- **Default service terms.** If the Hosted Provider has not linked its own terms, the service's terms link is these Terms, and the default terms below govern the service contract between the Operator and the Hosted Provider. A Hosted Provider that has not linked its own privacy notice has made the commitments the Privacy Policy describes for that case.
+- **Deadline.** An order stays open until the Hosted Provider marks it complete or declines it, for at most the deadline that applies to the listing version bought, counted from the hand-over of the paid order (30 days for current listing versions). If the deadline passes without a completion, Daski's hosted key records the order as failed.
+- **Return of the Provider's share.** If the outcome of a paid order is recorded on chain as failed, for example because the Hosted Provider declined it or its deadline passed without a completion, the Hosted Provider must return to the paying wallet the share of the payment it received, which is the price less Daski's commission (95% of the price at the current 5% commission), within 7 days after the failure is recorded, as the Hosted Provider Terms require. Daski's commission is not refunded. The return is a separate transfer the Hosted Provider makes outside the payment rail (Section 9). Daski does not make, fund, or guarantee it, but the Operator may enforce it directly against the Hosted Provider, and Daski may suspend a Hosted Provider that does not make it.
+- **Default service terms.** If the Hosted Provider has not linked its own terms, the service's terms link is these Terms, and the default terms below govern the service contract between the Operator and the Hosted Provider. A Hosted Provider that has not linked its own privacy notice is required by the Hosted Provider Terms to make the commitments the Privacy Policy describes for that case.
 
 ### Default terms for Hosted Provider Services
 
@@ -109,7 +109,7 @@ These default terms apply between the Operator and a Hosted Provider that has no
 3. Once an order is delivered and paid, the Operator may use the deliverables for its business purposes. The Hosted Provider keeps its pre-existing materials, tools, and know-how and grants the Operator a non-exclusive license to use any of them included in a deliverable as part of that deliverable. The Hosted Provider represents that it has the rights needed to grant these rights.
 4. To the extent permitted by law, the service carries no warranties beyond these default terms and the listing, and the Hosted Provider's total liability for an order is limited to the price paid for it, except for liability that cannot lawfully be limited.
 5. Each party will keep non-public information received for the order confidential and use it only for the order.
-6. Disputes about the service are between the Operator and the Hosted Provider. Section 20 applies to them as if they were the parties named there. Daski may pass messages between them but has no duty to resolve the dispute.
+6. Disputes about the service are between the Operator and the Hosted Provider. Section 20 applies to them as if they were the parties named there, except that a notice of dispute goes to the other party through the order or, once the order is closed, to `support@daski.io` for forwarding. Daski may pass messages between them but has no duty to resolve the dispute.
 
 ## 8. Prices, payment, and settlement
 
@@ -173,7 +173,7 @@ No software, AI, Internet, smart-contract, or blockchain system is completely se
 
 ## 13. Privacy
 
-Daski's handling of personal data is described in the [Daski Privacy Policy](https://daski.io/privacy-policy). Providers handle service data under their own privacy notices. The Operator is responsible for determining whether it may provide personal data and for giving notices or obtaining permissions required from the individuals involved.
+Daski's handling of personal data is described in the [Daski Privacy Policy](https://daski.io/privacy-policy). Providers handle service data under their own privacy notices or, for a Hosted Provider without its own notice, under the commitments described in the Privacy Policy. The Operator is responsible for determining whether it may provide personal data and for giving notices or obtaining permissions required from the individuals involved.
 
 ## 14. Open-source licensing, intellectual property, and feedback
 
