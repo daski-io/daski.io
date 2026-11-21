@@ -39,7 +39,13 @@ if (!service) {
   noindex={!service}
 >
   {service ? (
-    <ServiceDetailPage client:load service={service} explorerUrl={view.explorerUrl} />
+    <ServiceDetailPage
+      client:load
+      service={service}
+      explorerUrl={view.explorerUrl}
+      gatewayUrl={view.gatewayUrl}
+      siteUrl={view.siteUrls[view.id]}
+    />
   ) : (
     <div style="padding: 88px 32px 48px; max-width: 1280px; margin: 0 auto;">
       <h1 style="color: var(--pro-text); font-size: 32px;">{unavailable ? 'Service temporarily unavailable' : 'Service not found'}</h1>

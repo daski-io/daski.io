@@ -32,7 +32,8 @@ The website owns the MCP server at `/mcp`, the buyer guides under `/skills/`,
 `/llms-full.txt`, and the current and legacy skill discovery indexes under
 `/.well-known/`. Guides are bundled Markdown sources in `src/skills/`, rendered
 with this instance's public `GATEWAY_URL`, `SITE_URL`, and network. The copied
-agent prompt points at the website's `/skills/setup.md`.
+agent prompt points at the website's `/skills/setup.md`; each service page
+shows it above "provided by", naming that service.
 
 MCP server metadata includes Daski's display name, description, website URL,
 and light/dark PNG icons from the published brand assets. Both legacy

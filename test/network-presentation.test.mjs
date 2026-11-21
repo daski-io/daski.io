@@ -74,6 +74,21 @@ test('testnet: prompt, explorer links, strip, titles and llms.txt name the sandb
   assert.doesNotMatch(llms, /https:\/\/gateway\.daski\.io/);
 });
 
+test('a service page prompt names its service on the active network', () => {
+  assert.equal(
+    agentPrompt(VIEWS.mainnetLive.siteUrls.mainnet, 'Server Hosting'),
+    'Fetch https://daski.io/skills/setup.md and use the returned setup instructions to buy Server Hosting',
+  );
+  assert.equal(
+    agentPrompt(VIEWS.testnet.siteUrls.testnet, '  Server\n  Hosting '),
+    'Fetch https://sandbox.daski.io/skills/setup.md and use the returned setup instructions to buy Server Hosting',
+  );
+  assert.equal(
+    agentPrompt(VIEWS.testnet.siteUrls.testnet, '   '),
+    'Fetch https://sandbox.daski.io/skills/setup.md and use the returned setup instructions to buy [service offered on daski]',
+  );
+});
+
 test('mainnet live: prompt, explorer links, strip, titles and llms.txt name mainnet', () => {
   const view = VIEWS.mainnetLive;
 
