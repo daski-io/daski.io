@@ -173,9 +173,9 @@ page hero and adds one line to `/llms.txt`; any error hides both without
 affecting the rest of the page. The server renders neither from a cached copy
 older than five minutes: after a quiet spell the request waits up to 1.5
 seconds for a fresh read, and renders without them only if none arrives. The
-sitemap lists every activated promotion while the service is configured. The testnet sandbox renders its own
-environment's promotions with the testnet labeling, and no teaser or
-`/llms.txt` line.
+sitemap lists every activated promotion while the service is configured. The
+testnet sandbox renders its own environment's promotions with the testnet
+labeling, and no teaser or `/llms.txt` line.
 
 ## Build
 
