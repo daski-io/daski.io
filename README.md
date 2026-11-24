@@ -170,7 +170,9 @@ unknown ID returns 404; an unreachable service with no cached copy returns 503
 with `Retry-After`. While the service reports an open promotion (Active or
 Fully claimed, not paused), a mainnet instance shows a teaser under the home
 page hero and adds one line to `/llms.txt`; any error hides both without
-affecting the rest of the page. The sitemap lists every activated promotion
+affecting the rest of the page. Neither uses a cached copy older than five
+minutes: after a quiet spell the request waits up to 1.5 seconds for a fresh
+read, and renders without the teaser only if none arrives. The sitemap lists every activated promotion
 while the service is configured. The testnet sandbox renders its own
 environment's promotions with the testnet labeling, and no teaser or
 `/llms.txt` line.
