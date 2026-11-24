@@ -8,10 +8,12 @@
 //
 // Payloads are parsed strictly (src/lib/promotionView.ts) and cached like the
 // gateway's in src/lib/api.ts: pages render the last good payload at once and
-// one background refresh per path starts once it is 30 seconds old.
+// one background refresh per path starts once it is 30 seconds old
+// (src/lib/snapshotCache.ts).
 import type { Snapshot } from './api.ts';
 import { promotionsTarget, type NetworkConfig } from './network.ts';
 import { isAdvertisable } from './promotionPresentation.ts';
+import { createSnapshotCache } from './snapshotCache.ts';
 import {
   parsePromotionSummaries,
   parsePromotionView,
@@ -54,36 +56,17 @@ async function fetchJson(target: PromotionsTarget, path: string): Promise<unknow
 
 const isNotFound = (error: unknown) => error instanceof PromotionsHttpError && error.status === 404;
 
-const cache = new Map<string, Snapshot<unknown>>();
-const refreshing = new Map<string, Promise<Snapshot<unknown>>>();
+// A promotion the service stops knowing (404) is dropped instead of served stale.
+const snapshots = createSnapshotCache({
+  freshMs: CACHE_FRESH_MS,
+  dropOn: isNotFound,
+  onBackgroundError: (key, error) => console.error(`promotions refresh failed for ${key}`, error),
+});
 
-function refresh<T>(key: string, load: () => Promise<T>): Promise<Snapshot<T>> {
-  const pending = refreshing.get(key) as Promise<Snapshot<T>> | undefined;
-  if (pending) return pending;
-  const next = load()
-    .then((value) => {
-      const snapshot = { value, fetchedAt: Date.now() };
-      cache.set(key, snapshot);
-      return snapshot;
-    })
-    .finally(() => refreshing.delete(key));
-  refreshing.set(key, next);
-  return next;
-}
-
-// Only successful reads are cached, so unknown IDs never grow the cache. A
-// promotion the service stops knowing (404) is dropped instead of served stale.
-async function cachedSnapshot<T>(key: string, load: () => Promise<T>): Promise<Snapshot<T>> {
+// `maxAgeMs`: a cached copy at least this old is not served; the read waits for a new one.
+async function cachedSnapshot<T>(key: string, load: () => Promise<T>, maxAgeMs?: number): Promise<Snapshot<T>> {
   if (!import.meta.env?.SSR) return { value: await load(), fetchedAt: Date.now() };
-  const entry = cache.get(key) as Snapshot<T> | undefined;
-  if (!entry) return refresh(key, load);
-  if (Date.now() - entry.fetchedAt >= CACHE_FRESH_MS) {
-    refresh(key, load).catch((error) => {
-      if (isNotFound(error)) cache.delete(key);
-      else console.error(`promotions refresh failed for ${key}`, error);
-    });
-  }
-  return entry;
+  return snapshots(key, load, maxAgeMs);
 }
 
 // Snapshots are keyed by origin so two configurations never share an entry.
@@ -107,8 +90,14 @@ export function getPromotionSnapshot(target: PromotionsTarget, id: string): Prom
   });
 }
 
-/** The promotion open to new orders, or null when there is none. */
-export function getCurrentPromotionSnapshot(target: PromotionsTarget): Promise<Snapshot<PromotionView | null>> {
+/**
+ * The promotion open to new orders, or null when there is none. A cached copy
+ * at least `maxAgeMs` old is not returned: the read waits for a new one.
+ */
+export function getCurrentPromotionSnapshot(
+  target: PromotionsTarget,
+  maxAgeMs?: number,
+): Promise<Snapshot<PromotionView | null>> {
   const path = '/v1/promotions/current';
   return cachedSnapshot(cacheKey(target, path), async () => {
     try {
@@ -117,18 +106,22 @@ export function getCurrentPromotionSnapshot(target: PromotionsTarget): Promise<S
       if (isNotFound(error)) return null;
       throw error;
     }
-  });
+  }, maxAgeMs);
 }
 
 /** How long the home page waits for the service before rendering without the teaser. */
 const ADVERTISE_WAIT_MS = 1_500;
-/** A copy older than this means the service has stopped answering, so nothing is advertised. */
+/**
+ * A copy this old is never advertised. The read waits (up to ADVERTISE_WAIT_MS)
+ * for a new one instead, so the first visit after a quiet spell still shows the
+ * teaser, and a service that has stopped answering advertises nothing.
+ */
 const ADVERTISE_MAX_AGE_MS = 5 * 60_000;
 
 /** The promise's value, or null once `ms` pass first. */
 async function within<T>(promise: Promise<T>, ms: number): Promise<T | null> {
   // A read that finishes after the deadline still fills the cache; its failure
-  // is then ignored here rather than left unhandled.
+  // is ignored here rather than left unhandled (callers report it).
   promise.catch(() => undefined);
   let timer: ReturnType<typeof setTimeout> | undefined;
   const deadline = new Promise<null>((resolve) => { timer = setTimeout(() => resolve(null), ms); });
@@ -152,11 +145,15 @@ export async function advertisedPromotion(
   const target = promotionsTarget(config);
   if (config.id !== 'mainnet' || !target) return null;
   try {
-    const snapshot = await within(getCurrentPromotionSnapshot(target), ADVERTISE_WAIT_MS);
-    if (!snapshot?.value || Date.now() - snapshot.fetchedAt > ADVERTISE_MAX_AGE_MS) return null;
+    const read = getCurrentPromotionSnapshot(target, ADVERTISE_MAX_AGE_MS);
+    // Reported here, so a read that fails after the deadline is logged too.
+    read.catch((error) => console.error('Failed to load the current promotion', error));
+    const snapshot = await within(read, ADVERTISE_WAIT_MS);
+    // The cache already refuses older copies; this keeps the limit if a caller forgets to pass it.
+    if (!snapshot?.value || Date.now() - snapshot.fetchedAt >= ADVERTISE_MAX_AGE_MS) return null;
     return isAdvertisable(snapshot.value) ? snapshot.value : null;
-  } catch (error) {
-    console.error('Failed to load the current promotion', error);
+  } catch {
+    // The failed read was reported above.
     return null;
   }
 }
