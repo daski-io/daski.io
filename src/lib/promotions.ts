@@ -121,7 +121,7 @@ const ADVERTISE_MAX_AGE_MS = 5 * 60_000;
 /** The promise's value, or null once `ms` pass first. */
 async function within<T>(promise: Promise<T>, ms: number): Promise<T | null> {
   // A read that finishes after the deadline still fills the cache; its failure
-  // is then ignored here rather than left unhandled.
+  // is ignored here rather than left unhandled (callers report it).
   promise.catch(() => undefined);
   let timer: ReturnType<typeof setTimeout> | undefined;
   const deadline = new Promise<null>((resolve) => { timer = setTimeout(() => resolve(null), ms); });
@@ -145,11 +145,15 @@ export async function advertisedPromotion(
   const target = promotionsTarget(config);
   if (config.id !== 'mainnet' || !target) return null;
   try {
-    const snapshot = await within(getCurrentPromotionSnapshot(target, ADVERTISE_MAX_AGE_MS), ADVERTISE_WAIT_MS);
-    if (!snapshot?.value) return null;
+    const read = getCurrentPromotionSnapshot(target, ADVERTISE_MAX_AGE_MS);
+    // Reported here, so a read that fails after the deadline is logged too.
+    read.catch((error) => console.error('Failed to load the current promotion', error));
+    const snapshot = await within(read, ADVERTISE_WAIT_MS);
+    // The cache already refuses older copies; this keeps the limit if a caller forgets to pass it.
+    if (!snapshot?.value || Date.now() - snapshot.fetchedAt >= ADVERTISE_MAX_AGE_MS) return null;
     return isAdvertisable(snapshot.value) ? snapshot.value : null;
-  } catch (error) {
-    console.error('Failed to load the current promotion', error);
+  } catch {
+    // The failed read was reported above.
     return null;
   }
 }
