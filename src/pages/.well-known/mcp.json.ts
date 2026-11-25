@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { networkConfig } from '../../lib/network.ts';
 import { GatewayClient } from '../../mcp/gateway.ts';
-import { mcpServerInfo, testnetManifest } from '../../mcp/metadata.ts';
+import { mcpServerInfo } from '../../mcp/metadata.ts';
 
 export const prerender = false;
 export const GET: APIRoute = async ({ request }) => {
@@ -15,7 +15,6 @@ export const GET: APIRoute = async ({ request }) => {
       transport: { type: 'streamable-http', url: `${config.siteUrl}/mcp` },
       skills: Object.fromEntries(['setup', 'buy', 'orders', 'wallets', 'recipe', 'installable'].map(topic =>
         [topic, `${config.siteUrl}/skills/${topic === 'installable' ? 'SKILL' : topic}.md`])),
-      ...(config.id === 'mainnet' ? { testnet: testnetManifest(config) } : {}),
     }, { headers: { 'cache-control': 'public, max-age=30', 'access-control-allow-origin': '*' } });
   } catch {
     return Response.json({ error: { code: 'GATEWAY_UNAVAILABLE', message: 'Gateway metadata is unavailable for this network.' } },
