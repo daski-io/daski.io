@@ -6,7 +6,6 @@ import test from 'node:test';
 import { createWebsiteMcp, MCP_CLIENT_REQUESTS_PER_MINUTE, MCP_REQUESTS_PER_MINUTE } from '../src/mcp/server.ts';
 import { resolveNetworkConfig } from '../src/lib/network.ts';
 import { GUIDE_FILES, renderGuide } from '../src/lib/agentGuides.ts';
-import { testnetManifest } from '../src/mcp/metadata.ts';
 
 const contract = JSON.parse(await readFile(new URL('./fixtures/gateway-wire/mcp-tool-surface.json', import.meta.url), 'utf8'));
 const templates = Object.fromEntries(await Promise.all(GUIDE_FILES.map(async file => [file,
@@ -489,23 +488,4 @@ test('a SALES_PAUSED refusal without the gateway layout falls back to safe pause
   const unpaid = (await tool('daski_buy_outcome', quoteArgs)).structuredContent;
   assert.equal(unpaid.paymentMayHaveSettled, false);
   assert.equal(unpaid.next_action, 'Once the pause ends (until, retryAfterSeconds), retry the same request.');
-});
-
-test('only the mainnet server routes an agent asked for the testnet', async t => {
-  const init = { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'testnet-route-test', version: '1.0.0' } };
-  const mainnet = resolveNetworkConfig({ DASKI_NETWORK: 'mainnet', SITE_URL: 'https://website.example', GATEWAY_URL: 'https://gateway.example' });
-  const { instructions } = await fixture(t, undefined, mainnet).rpc('initialize', init);
-  assert.ok(instructions.split('\n').includes(
-    "This server is for Base mainnet. If the user asked for Daski's testnet (Base Sepolia, chain ID 84532, test USDC only), use the testnet MCP server at https://sandbox.daski.io/mcp and its setup guide https://sandbox.daski.io/skills/setup.md instead."));
-  assert.doesNotMatch((await fixture(t).rpc('initialize', init)).instructions, /testnet|sandbox|Sepolia/i);
-
-  assert.deepEqual(testnetManifest(mainnet), {
-    description: 'Daski testnet (sandbox): a separate marketplace that settles in test USDC only. Use it when the user asks for the testnet.',
-    websiteUrl: 'https://sandbox.daski.io',
-    chainId: 84532,
-    chainName: 'Base Sepolia',
-    gatewayUrl: 'https://sandbox-gateway.daski.io',
-    transport: { type: 'streamable-http', url: 'https://sandbox.daski.io/mcp' },
-    skills: { setup: 'https://sandbox.daski.io/skills/setup.md', installable: 'https://sandbox.daski.io/skills/SKILL.md' },
-  });
 });

@@ -7,10 +7,6 @@ description: Discover and buy real-world service outcomes through Daski, and tra
 
 Load [setup.md]({{SITE_URL}}/skills/setup.md) and [buy.md]({{SITE_URL}}/skills/buy.md) in full through `daski_get_setup_guide` or a raw fetch before the first purchase. Setup covers the pinned CLI, the default Circle agent wallet and the other signers, and the purchase sequence.
 
-{{#MAINNET}}
-These guides are for {{CHAIN_NAME}} mainnet. If the user asked to use Daski's testnet (sandbox: {{TESTNET_CHAIN_NAME}}, chain ID {{TESTNET_CHAIN_ID}}, test USDC only), use its guides at {{TESTNET_SITE_URL}}/skills/SKILL.md and {{TESTNET_SITE_URL}}/skills/setup.md and its MCP server `{{TESTNET_SITE_URL}}/mcp` instead.
-
-{{/MAINNET}}
 Reuse the user's supplied facts and task authorization. Discover contextual intake with `daski_get_outcome_requirements`, collect the remaining information together, and obtain the actual quote. Use `daski buy` with the configured signer to approve, pay, and persist the order.
 
 Read additional guides when relevant:
