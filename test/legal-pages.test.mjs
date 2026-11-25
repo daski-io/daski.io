@@ -12,8 +12,8 @@ const LEGAL_PAGES = [
     page: 'src/pages/terms-of-use.astro',
     canonicalUrl: 'https://daski.io/terms-of-use',
     sectionCount: 23,
-    version: '1.3',
-    effectiveDate: 'November 21, 2026',
+    version: '1.4',
+    effectiveDate: 'Upon publication at daski.io/terms-of-use',
   },
   {
     name: 'Privacy Policy',
@@ -101,6 +101,14 @@ test('discloses direct-transfer and post-payment identity review consequences', 
   assert.match(terms, /outside the exact signed HTTP 402 purchase flow is not a Daski purchase/);
   assert.match(terms, /complete identity, business, sanctions, eligibility, or other compliance review after payment/);
   assert.match(privacy, /post-payment identity, business, eligibility, sanctions, or similar review/);
+});
+
+test('identifies the seller and preserves the tax duties assigned to each party', async () => {
+  const terms = await read('src/content/legal/terms-of-use.md');
+  assert.match(terms, /The Provider identified in the final quote or payment challenge is the seller/);
+  assert.match(terms, /transaction taxes that applicable law requires it to collect on its sales/);
+  assert.match(terms, /any use tax, import duties, reporting, or withholding that applicable law assigns to the Operator/);
+  assert.match(terms, /collection, reporting, or remittance duties that applicable law assigns directly to Daski/);
 });
 
 test('discloses promotion cash back as a Daski-funded payment, not a refund', async () => {
