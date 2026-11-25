@@ -45,6 +45,34 @@ export const CHAINS: Readonly<Record<NetworkId, ChainFacts>> = {
 
 export const DEFAULT_TESTNET_GATEWAY_URL = 'https://sandbox-gateway.daski.io';
 
+export interface TestnetRoute {
+  siteUrl: string;
+  setupUrl: string;
+  skillUrl: string;
+  mcpUrl: string;
+  gatewayUrl: string;
+  chainId: number;
+  chainName: string;
+}
+
+/**
+ * Where an agent asked to use the testnet goes from the mainnet site. The
+ * testnet's own setup guide stays the authority for its gateway and chain; the
+ * gateway named here is the testnet default, so agents can recognize it.
+ */
+export function testnetRoute(view: Pick<NetworkView, 'siteUrls'>): TestnetRoute {
+  const siteUrl = view.siteUrls.testnet;
+  return {
+    siteUrl,
+    setupUrl: `${siteUrl}/skills/setup.md`,
+    skillUrl: `${siteUrl}/skills/SKILL.md`,
+    mcpUrl: `${siteUrl}/mcp`,
+    gatewayUrl: DEFAULT_TESTNET_GATEWAY_URL,
+    chainId: CHAINS.testnet.chainId,
+    chainName: CHAINS.testnet.chainName,
+  };
+}
+
 /** The slice of the instance configuration that islands receive as props. */
 export interface NetworkView {
   id: NetworkId;
@@ -151,6 +179,23 @@ export function assertGatewayChain(reportedChainId: number, expectedChainId: num
   }
 }
 
+/** The mainnet llms.txt section that routes an agent asked to use the testnet. */
+function testnetLines(route: TestnetRoute): string[] {
+  return [
+    '## Testnet',
+    '',
+    `Daski's testnet (sandbox) is a separate marketplace on ${route.chainName} (chain`,
+    `ID ${route.chainId}) that settles in test USDC only, with no real money. If you`,
+    `were asked to use the testnet, start with ${route.setupUrl}`,
+    'instead of the guides below. Never use one network for the other.',
+    '',
+    `- Testnet site: ${route.siteUrl}`,
+    `- Testnet MCP server: \`${route.mcpUrl}\``,
+    `- Testnet gateway: \`${route.gatewayUrl}\``,
+    '',
+  ];
+}
+
 /**
  * The machine-readable summary served at /llms.txt for this instance. A
  * published network adds `promotionLine`, the open promotion, when there is one.
@@ -179,6 +224,7 @@ export function llmsText(
     `standard x402 V2 Exact-EVM rail with canonical USDC on ${view.chainName}.`,
     '',
     ...(promotionLine ? [promotionLine, ''] : []),
+    ...(view.id === 'mainnet' ? testnetLines(testnetRoute(view)) : []),
     '## Buyer interface',
     '',
     'Discovery is service-first: the public service catalog lists each registered',

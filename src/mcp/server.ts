@@ -2,6 +2,7 @@ import { AsyncLocalStorage } from 'node:async_hooks';
 import { McpServer, createMcpHandler } from '@modelcontextprotocol/server';
 import { mcpServerInfo } from './metadata.ts';
 import type { NetworkConfig } from '../lib/network.ts';
+import { testnetRoute } from '../lib/chains.ts';
 import { createSalesStatusReader } from '../lib/salesStatus.ts';
 import { executeTool, type ReadGuide } from './execute.ts';
 import { GatewayClient } from './gateway.ts';
@@ -30,6 +31,7 @@ export function createWebsiteMcp(config: NetworkConfig, readGuide: ReadGuide, re
       instructions: [
         `Load the full setup guide with daski_get_setup_guide or a raw fetch of ${config.siteUrl}/skills/setup.md.`,
         `This MCP server is the agent interface. Transactions and authorization execute at ${config.gatewayUrl}.`,
+        ...(config.id === 'mainnet' ? [testnetInstruction(config)] : []),
         'Run daski doctor and reuse a healthy signer. The Circle agent wallet is the default; local keys belong only on the user’s durable machine.',
         'Discover conditional intake with daski_get_outcome_requirements. Reuse supplied facts and collect missing information together.',
         'Use the gateway-pinned CLI’s daski buy flow for quotation, approval, payment, and tracking. Expert clients use daski_get_payment_challenge and the identical paid daski_buy_outcome request.',
@@ -99,4 +101,10 @@ export function createWebsiteMcp(config: NetworkConfig, readGuide: ReadGuide, re
       return response;
     },
   };
+}
+
+/** Mainnet only: where an agent asked to use the testnet goes instead. */
+function testnetInstruction(config: Pick<NetworkConfig, 'chainName' | 'siteUrls'>): string {
+  const testnet = testnetRoute(config);
+  return `This server is for ${config.chainName} mainnet. If the user asked for Daski's testnet (${testnet.chainName}, chain ID ${testnet.chainId}, test USDC only), use the testnet MCP server at ${testnet.mcpUrl} and its setup guide ${testnet.setupUrl} instead.`;
 }

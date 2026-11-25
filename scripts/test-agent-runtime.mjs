@@ -78,6 +78,8 @@ try {
   assert.deepEqual(manifest.gateway, { name: 'daski-gateway', version: 'gateway-fixture' });
   assert.deepEqual(manifest.buyerCli, { version: '0.4.3' });
   assert.deepEqual(manifest.confirmationSigning, { chainId: 84532 });
+  assert.equal(manifest.testnet, undefined, 'Only the mainnet manifest points to the testnet');
+  assert.doesNotMatch(initialized.instructions, /testnet|sandbox/i);
   assert.equal(manifest.discovery.openapi, `${gatewayUrl}/openapi.json`);
   assert.equal(manifest.discovery.x402, `${gatewayUrl}/.well-known/x402`);
   assert.equal((await fetch(`${siteUrl}/openapi.json`)).status, 404, 'Paid routes belong to the gateway origin');

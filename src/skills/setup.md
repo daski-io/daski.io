@@ -6,6 +6,10 @@ Daski lets agents discover and buy real-world services. Use the configured signe
 
 This guide is for {{CHAIN_NAME}} (chain ID {{CHAIN_ID}}). The public gateway is `{{GATEWAY_URL}}`; the website hosts these instructions and the MCP server at `{{SITE_URL}}/mcp`.
 
+{{#MAINNET}}
+**Asked to use the testnet?** This guide is for mainnet only. Daski's testnet (sandbox) is a separate marketplace on {{TESTNET_CHAIN_NAME}} (chain ID {{TESTNET_CHAIN_ID}}) that settles in test USDC only, with no real money. Its site is {{TESTNET_SITE_URL}}, its MCP server `{{TESTNET_SITE_URL}}/mcp` and its gateway `{{TESTNET_GATEWAY_URL}}`. When the user asked for the testnet, load {{TESTNET_SITE_URL}}/skills/setup.md in full and follow it instead of this guide; its catalog differs from mainnet's, so look for the service there. Never use one network for the other.
+
+{{/MAINNET}}
 Fetch `{{GATEWAY_URL}}/.well-known/mcp.json` for the supported CLI version, wallet capabilities, and MCP transport URL. Fetch `{{GATEWAY_URL}}/.well-known/daski-chain.json` and verify its `chainId` is {{CHAIN_ID}} before configuring a purchase. If either document is unavailable or the network differs, stop and report it; do not substitute another network.
 
 Select the matching existing CLI profile with `DASKI_PROFILE` or `--profile`. Doctor reports `configFile`; ensure that profile's `gatewayUrl` is `{{GATEWAY_URL}}` and its `chainId` is {{CHAIN_ID}}. Reuse its signer, wallet, and budgets. The generated mainnet profile is disabled until the user chooses that network; do not silently switch profiles or enable mainnet.
