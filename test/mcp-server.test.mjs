@@ -504,7 +504,7 @@ test('only the mainnet server routes an agent asked for the testnet', async t =>
     websiteUrl: 'https://sandbox.daski.io',
     chainId: 84532,
     chainName: 'Base Sepolia',
-    gateway: 'https://sandbox-gateway.daski.io',
+    gatewayUrl: 'https://sandbox-gateway.daski.io',
     transport: { type: 'streamable-http', url: 'https://sandbox.daski.io/mcp' },
     skills: { setup: 'https://sandbox.daski.io/skills/setup.md', installable: 'https://sandbox.daski.io/skills/SKILL.md' },
   });

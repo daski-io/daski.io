@@ -25,7 +25,7 @@ export function testnetManifest(config: Pick<NetworkConfig, 'siteUrls'>) {
     websiteUrl: testnet.siteUrl,
     chainId: testnet.chainId,
     chainName: testnet.chainName,
-    gateway: testnet.gatewayUrl,
+    gatewayUrl: testnet.gatewayUrl,
     transport: { type: 'streamable-http', url: testnet.mcpUrl },
     skills: { setup: testnet.setupUrl, installable: testnet.skillUrl },
   };

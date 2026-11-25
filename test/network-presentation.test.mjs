@@ -110,7 +110,7 @@ test('mainnet live: prompt, explorer links, strip, titles and llms.txt name main
   const [testnet] = llms.match(/^## Testnet\n[\s\S]*?\n(?=## )/m);
   assert.ok(llms.indexOf(testnet) < llms.indexOf('## Buyer interface'));
   assert.match(testnet, /separate marketplace on Base Sepolia \(chain\nID 84532\) that settles in test USDC only/);
-  assert.match(testnet, /start with https:\/\/sandbox\.daski\.io\/skills\/setup\.md\ninstead of the guides below/);
+  assert.match(testnet, /start with https:\/\/sandbox\.daski\.io\/skills\/setup\.md\ninstead of the guides below\. Use the testnet only when asked to, and never\nuse one network for the other\./);
   assert.match(testnet, /- Testnet MCP server: `https:\/\/sandbox\.daski\.io\/mcp`/);
   assert.match(testnet, /- Testnet gateway: `https:\/\/sandbox-gateway\.daski\.io`/);
   assert.doesNotMatch(llms.replace(testnet, ''), /sandbox|Sepolia|84532|testnet/i);

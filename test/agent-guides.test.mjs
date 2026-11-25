@@ -101,6 +101,8 @@ test('mainnet instructions use only the configured mainnet endpoints', () => {
   for (const file of ['setup.md', 'SKILL.md']) {
     assert.doesNotMatch(renderGuide(file, templates, mainnet).content.replace(TESTNET_ROUTE, ''), /sandbox|Sepolia|84532|testnet/i, file);
   }
+  // Every guide renders on mainnet, so a placeholder in a mainnet-only block cannot hide.
+  for (const file of GUIDE_FILES) assert.doesNotMatch(renderGuide(file, templates, mainnet).content, /\{\{|MAINNET/, file);
   assert.notEqual(setup.sha256, renderGuide('setup.md', templates, config).sha256);
 });
 
@@ -111,7 +113,7 @@ test('mainnet entry guides route an agent asked for the testnet, and keep the ne
   assert.match(route, /Base Sepolia \(chain ID 84532\) that settles in test USDC only/);
   assert.match(route, /Its site is https:\/\/sandbox\.daski\.io, its MCP server `https:\/\/sandbox\.daski\.io\/mcp` and its gateway `https:\/\/sandbox-gateway\.daski\.io`\./);
   assert.match(route, /load https:\/\/sandbox\.daski\.io\/skills\/setup\.md in full and follow it instead of this guide/);
-  assert.match(route, /Never use one network for the other\./);
+  assert.match(route, /Use the testnet only when the user asked for it, and never use one network for the other\./);
   // The route comes before the network check, which still stops on any other network.
   assert.ok(setup.indexOf(route) < setup.indexOf('If either document is unavailable or the network differs, stop and report it; do not substitute another network.'));
   assert.match(setup, /The generated mainnet profile is disabled until the user chooses that network; do not silently switch profiles or enable mainnet\./);
