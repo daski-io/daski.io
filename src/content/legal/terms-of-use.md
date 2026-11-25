@@ -67,7 +67,7 @@ Privacy policies describe data practices and are not accepted as contracts unles
 
 ## 5. Daski is a marketplace, not the service provider
 
-All Provider Services are offered, contracted for, and performed by independent Providers. Daski supplies marketplace discovery, communications, routing, coordination, payment-related technology, hosting for Hosted Providers, and related infrastructure. Daski does not itself provide the listed Provider Services.
+The Provider identified in the final quote or payment challenge is the seller of the goods or services it offers to the Operator. The Provider remains responsible for fulfillment when it uses a third party to supply or deliver the order. Daski supplies marketplace discovery, communications, routing, coordination, payment-related technology, hosting for Hosted Providers, and related infrastructure. Daski does not itself provide the listed Provider Services.
 
 For every Provider Service:
 
@@ -126,7 +126,9 @@ The payment is sent to the immutable outcome splitter identified in the final ch
 
 Sending USDC directly to a splitter, token contract, payee, or other disclosed address outside the exact signed HTTP 402 purchase flow is not a Daski purchase. It creates no marketplace order, Provider fulfillment obligation, confidential receipt, or reversal right, even if the transfer resembles a supported payment.
 
-The Operator is responsible for taxes, duties, reporting, and withholding arising from its purchases, except taxes imposed on Daski's own net income.
+The Provider is responsible for determining, collecting, reporting, and remitting the transaction taxes that applicable law requires it to collect on its sales. Any tax the Provider charges the Operator at checkout is included in the total submitted for payment. The Provider supplies any tax invoice or receipt it is required to issue.
+
+The Operator remains responsible for any use tax, import duties, reporting, or withholding that applicable law assigns to the Operator. Daski remains responsible for taxes imposed on Daski and for any collection, reporting, or remittance duties that applicable law assigns directly to Daski.
 
 ## 9. Final payments and transaction problems
 
