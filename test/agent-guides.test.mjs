@@ -87,14 +87,62 @@ test('setup uses live gateway version authority and preserves the purchase and w
   assert.match(await document('/skills/orders.md').text(), /show `fulfillmentState: "completed"` and return the artifact while `orderState` stays `PROVIDER_FAILED`\. Only a Daski operator can revive the order\./);
 });
 
+// The one paragraph in each mainnet entry guide that routes an agent asked to use the testnet.
+const TESTNET_ROUTE = /^(\*\*Asked to use the testnet\?\*\*|These guides are for Base mainnet\.) .*\n\n/m;
+
 test('mainnet instructions use only the configured mainnet endpoints', () => {
   const mainnet = resolveNetworkConfig({ DASKI_NETWORK: 'mainnet', GATEWAY_URL: 'https://gateway.daski.io' });
   const setup = renderGuide('setup.md', templates, mainnet);
   assert.match(setup.content, /Base \(chain ID 8453\)/);
   assert.match(setup.content, /https:\/\/gateway\.daski\.io/);
   assert.match(setup.content, /https:\/\/daski\.io\/skills\/buy\.md/);
-  assert.doesNotMatch(setup.content, /sandbox|Sepolia|84532/);
+  // Outside the testnet route, neither entry guide names the testnet.
+  assert.match(setup.content, TESTNET_ROUTE);
+  for (const file of ['setup.md', 'SKILL.md']) {
+    assert.doesNotMatch(renderGuide(file, templates, mainnet).content.replace(TESTNET_ROUTE, ''), /sandbox|Sepolia|84532|testnet/i, file);
+  }
+  // Every guide renders on mainnet, so a placeholder in a mainnet-only block cannot hide.
+  for (const file of GUIDE_FILES) assert.doesNotMatch(renderGuide(file, templates, mainnet).content, /\{\{|MAINNET/, file);
   assert.notEqual(setup.sha256, renderGuide('setup.md', templates, config).sha256);
+});
+
+test('mainnet entry guides route an agent asked for the testnet, and keep the network stop', async () => {
+  const mainnet = resolveNetworkConfig({ DASKI_NETWORK: 'mainnet', GATEWAY_URL: 'https://gateway.daski.io' });
+  const setup = renderGuide('setup.md', templates, mainnet).content;
+  const [route] = setup.match(TESTNET_ROUTE);
+  assert.match(route, /Base Sepolia \(chain ID 84532\) that settles in test USDC only/);
+  assert.match(route, /Its site is https:\/\/sandbox\.daski\.io, its MCP server `https:\/\/sandbox\.daski\.io\/mcp` and its gateway `https:\/\/sandbox-gateway\.daski\.io`\./);
+  assert.match(route, /load https:\/\/sandbox\.daski\.io\/skills\/setup\.md in full and follow it instead of this guide/);
+  assert.match(route, /Use the testnet only when the user asked for it, and never use one network for the other\./);
+  // The route comes before the network check, which still stops on any other network.
+  assert.ok(setup.indexOf(route) < setup.indexOf('If either document is unavailable or the network differs, stop and report it; do not substitute another network.'));
+  assert.match(setup, /The generated mainnet profile is disabled until the user chooses that network; do not silently switch profiles or enable mainnet\./);
+
+  const skill = renderGuide('SKILL.md', templates, mainnet).content;
+  const [skillRoute] = skill.match(TESTNET_ROUTE);
+  assert.match(skillRoute, /chain ID 84532, test USDC only/);
+  assert.ok(skillRoute.includes('https://sandbox.daski.io/skills/SKILL.md and https://sandbox.daski.io/skills/setup.md'));
+  assert.ok(skill.startsWith('---\nname: daski\n'));
+  assert.match(await agentDocument('/llms-full.txt', templates, mainnet).text(), TESTNET_ROUTE);
+
+  // An overridden testnet site moves the route with it.
+  const staged = resolveNetworkConfig({ DASKI_NETWORK: 'mainnet', GATEWAY_URL: 'https://gateway.daski.io', TESTNET_SITE_URL: 'https://testnet.example' });
+  assert.match(renderGuide('setup.md', templates, staged).content, /load https:\/\/testnet\.example\/skills\/setup\.md in full/);
+});
+
+test('the testnet guides carry no route to themselves and no section markers', () => {
+  const testnet = resolveNetworkConfig({ DASKI_NETWORK: 'testnet' });
+  for (const file of GUIDE_FILES) {
+    const { content } = renderGuide(file, templates, testnet);
+    assert.doesNotMatch(content, TESTNET_ROUTE, file);
+    assert.doesNotMatch(content, /MAINNET|Asked to use the testnet/, file);
+  }
+  // Removing a block leaves the paragraphs around it as they were.
+  for (const file of ['setup.md', 'SKILL.md']) {
+    assert.doesNotMatch(renderGuide(file, templates, testnet).content, /\n\n\n/, file);
+  }
+  const broken = { ...templates, 'SKILL.md': templates['SKILL.md'].replace('{{/MAINNET}}\n', '') };
+  assert.throws(() => renderGuide('SKILL.md', broken, testnet), /Unbalanced guide section in SKILL\.md/);
 });
 
 test('Circle setup preserves the selected network and stops the v2-required legacy refusal', () => {

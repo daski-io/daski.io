@@ -4,7 +4,7 @@ status: canonical
 authority: current repository implementation and approved maintainer workflow
 owner: repository maintainers
 effective-date: 2026-10-16
-last-verified: 2026-10-30 (native skill disclosures; other guidance retains its dates; no live release verification)
+last-verified: 2026-11-25 (testnet route from the mainnet agent interface); 2026-10-30 (native skill disclosures; other guidance retains its dates; no live release verification)
 supersedes: repository-wide agent files as the home of general repository guidance
 superseded-by: none
 sensitivity: public-safe
@@ -34,6 +34,14 @@ The website owns the MCP server at `/mcp`, the buyer guides under `/skills/`,
 with this instance's public `GATEWAY_URL`, `SITE_URL`, and network. The copied
 agent prompt points at the website's `/skills/setup.md`; each service page
 shows it above "provided by", naming that service.
+
+The mainnet site routes an agent asked to use the testnet to the testnet site:
+a `{{#MAINNET}}` … `{{/MAINNET}}` block in `setup.md` and `SKILL.md` (markers
+on their own lines), a Testnet section in `/llms.txt`, one line in the MCP
+server instructions and a `testnet` object in `/.well-known/mcp.json`. They
+name the testnet site, its setup guide, MCP server and default gateway, chain
+84532 and test USDC. The testnet site serves none of them, so its guides keep
+their bytes. Mainnet guidance still stops on any other network.
 
 MCP server metadata includes Daski's display name, description, website URL,
 and light/dark PNG icons from the published brand assets. Both legacy
