@@ -386,12 +386,12 @@ server.registerTool(
       {
         outputSchema: z.object({}).catchall(z.unknown()),
         description: "Run an admitted provider action against an asset the payer wallet controls. Some purchases deliver " +
-          "part of what they bought this way after the order is FULFILLED: an inference API key comes from get-inference-key. " +
+          "part of what they bought this way after the order is FULFILLED: an inference API key comes from deliver-inference-key. " +
           "For those, take providerAgentId, actionId, providerAssetId and input from a deliverable's useAsset in " +
           "daski_get_order_deliverables; to manage an asset otherwise, take providerAssetId from daski_list_assets. " +
           WALLET_CHALLENGE_GUIDANCE + " The provider's result is base64-encoded JSON in untrustedResult.content; " +
           "save a secret such as an API key to a file, never into chat. " +
-          `Example: {"payer": "${EXAMPLE_PAYER}", "providerAgentId": "42", "actionId": "get-inference-key", ` +
+          `Example: {"payer": "${EXAMPLE_PAYER}", "providerAgentId": "42", "actionId": "deliver-inference-key", ` +
           '"providerAssetId": "3f2b8c1e-5a4d-4e6f-9b7a-1c2d3e4f5a6b", "input": {"keyId": "inf_0123456789abcdef01234567"}}.',
         inputSchema: {
           payer: payerField(),

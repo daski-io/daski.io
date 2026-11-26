@@ -26,7 +26,7 @@ Show the quoted service, provider, request, price, network, payer, and terms. Af
 
 ## When the purchase is done
 
-Payment does not finish a purchase: it is done only when what it delivered is in hand. Track the order with [orders.md]({{SITE_URL}}/skills/orders.md) until it is `FULFILLED`, then get the order's deliverables. Some orders deliver everything in their artifact; others deliver the rest through the provider's owner actions, such as an inference API key from `get-inference-key`. With buyer CLI 0.5.16 or later, `daski order status` names this step in `next`, and one command gets everything, writing each item to a file only the user can read and printing a manifest with each file's path:
+Payment does not finish a purchase: it is done only when what it delivered is in hand. Track the order with [orders.md]({{SITE_URL}}/skills/orders.md) until it is `FULFILLED`, then get the order's deliverables. Some orders deliver everything in their artifact; others deliver the rest through the provider's owner actions, such as an inference API key from `deliver-inference-key`. The command runs whatever the order lists. With buyer CLI 0.5.16 or later, `daski order status` names this step in `next`, and one command gets everything, writing each item to a file only the user can read and printing a manifest with each file's path:
 
 ```bash
 daski order deliverables <handle> --json

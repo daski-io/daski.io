@@ -38,7 +38,7 @@ Inspect `operations` on authorized status reads. `fulfillment.phase: dns_pending
 
 ## Getting what you bought
 
-A purchase is done only when what it delivered is in hand, not when the order reads `FULFILLED`. One rule for every purchase: after `FULFILLED`, get the order's deliverables. The provider lists, per order, what the order delivered: its artifact, and for some orders one or more owner actions on the asset the order created, such as an inference API key from `get-inference-key` or an entity's formation documents from `download-entity-document`.
+A purchase is done only when what it delivered is in hand, not when the order reads `FULFILLED`. One rule for every purchase: after `FULFILLED`, get the order's deliverables. The provider lists, per order, what the order delivered: its artifact, and for some orders one or more owner actions on the asset the order created, such as an inference API key from `deliver-inference-key` or an entity's formation documents from `download-entity-document`.
 
 With buyer CLI 0.5.16 or later, `daski order status` says this in `next` for any fulfilled order, and one command gets everything:
 
@@ -46,7 +46,7 @@ With buyer CLI 0.5.16 or later, `daski order status` says this in `next` for any
 daski order deliverables <handle> --json
 ```
 
-It saves the artifact, runs each owner action the order lists, answering each wallet challenge with the configured signer, and writes each result to its own file only the user can read (mode 600) in `~/.daski/results/<handle>/`; `--output-dir <dir>` chooses another folder. A one-time download link, such as a document's, is fetched at once. It prints a manifest: `complete: true` or `false`, then each item's `label`, `file` and field names, never a secret. `complete: false` with `state: "delivering"` means the order is still being delivered: run the command again in a minute. A failed item names its `error` and `retrySafe`, whether running the command again may fetch it; running it again is always safe. An item with `emptyFields` came back without some values, such as a key past its delivery window; its `otherActions` names what the provider offers instead. The command works for an order in the CLI's local store: one it bought, or one `daski order import --json` restored.
+It saves the artifact, runs each owner action the order lists, answering each wallet challenge with the configured signer, and writes each result to its own file only the user can read (mode 600) in `~/.daski/results/<handle>/`; `--output-dir <dir>` chooses another folder. A one-time download link, such as a document's, is fetched at once. It prints a manifest: `complete: true` or `false`, then each item's `label`, `file` and field names, never a secret. `complete: false` with `state: "delivering"` means the order is still being delivered: run the command again in a minute. A failed item names its `error` and `retrySafe`, whether running the command again may fetch it; running it again is always safe. A failed item, or one with `emptyFields` (values the provider no longer delivers), lists `otherActions`: what the provider offers instead, such as a key rotation, which is destructive and needs the user's approval. A deliverable the CLI cannot read (`ignoredDeliverables`) leaves the order incomplete; upgrade to the CLI the gateway pins. The command works for an order in the CLI's local store: one it bought, or one `daski order import --json` restored.
 
 Through MCP, or with an older CLI:
 
@@ -59,7 +59,7 @@ Report the purchase as done once every deliverable is saved, and tell the user w
 
 ## Managing an asset
 
-To act on an asset the payer owns later, such as rotating a key, changing DNS or topping up, with buyer CLI 0.5.15 or later run `daski asset list --provider <id> --json`, then `daski asset action --provider <id> --asset <providerAssetId|identifier> --action <actionId> --input '<json>' --json`. It writes the result to a file only the user can read and prints the file's path, never the secret. Through MCP, use `daski_list_assets` and `daski_use_asset`, signing each wallet challenge as above. A destructive action is only staged: show the user its `effectSummary`, and run the confirming command it names only after the user approves, no earlier than `earliestExecutionAt`.
+To act on an asset the payer owns later, such as reading an inference account's balance, status and key prefix (`get-inference-key`), rotating a key, changing DNS or topping up, with buyer CLI 0.5.15 or later run `daski asset list --provider <id> --json`, then `daski asset action --provider <id> --asset <providerAssetId|identifier> --action <actionId> --input '<json>' --json`. It writes the result to a file only the user can read and prints the file's path, never the secret. Through MCP, use `daski_list_assets` and `daski_use_asset`, signing each wallet challenge as above. A destructive action is only staged: show the user its `effectSummary`, and run the confirming command it names only after the user approves, no earlier than `earliestExecutionAt`.
 
 ## Fulfillment deadline
 

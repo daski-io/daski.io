@@ -361,6 +361,18 @@ test('order deliverables isolate the artifact and give each owner action its das
   assert.deepEqual(odd.structuredContent.deliverables.map(item => item.kind), ['artifact', 'owner-action']);
   assert.equal(odd.structuredContent.ignoredDeliverables, 8);
   assert.doesNotMatch(JSON.stringify(odd.structuredContent), /ignore previous instructions/);
+  assert.match(odd.structuredContent.next, /listed 8 more deliverables this server cannot read \(ignoredDeliverables\), so the order may hold more/);
+
+  // An input the gateway would not list, a repeat, or every entry unreadable: never a claim that the artifact is all.
+  answer = { orderHandle: 'handle', orderState: 'FULFILLED', result: task, deliverables: [{ kind: 'artifact' }, keyItem, keyItem,
+    { ...keyItem, input: { keyId: { nested: true } } }, { ...keyItem, input: { keyId: 'key\u202e' } }] };
+  const strict = await tool('daski_get_order_deliverables', { orderHandle: 'handle', readCapability: 'c'.repeat(80) });
+  assert.equal(strict.structuredContent.deliverables.length, 2);
+  assert.equal(strict.structuredContent.ignoredDeliverables, 3);
+  answer = { orderHandle: 'handle', orderState: 'FULFILLED', result: task, deliverables: [{ kind: 'artifact' }, { ...keyItem, futureField: 1 }] };
+  const unread = await tool('daski_get_order_deliverables', { orderHandle: 'handle', readCapability: 'c'.repeat(80) });
+  assert.doesNotMatch(unread.structuredContent.next, /everything this order delivered/);
+  assert.match(unread.structuredContent.next, /listed 1 more deliverable this server cannot read/);
 });
 
 test('order deliverables for an order still being delivered return the gateway refusal unchanged', async t => {

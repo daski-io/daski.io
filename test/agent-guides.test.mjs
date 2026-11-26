@@ -196,7 +196,7 @@ test('llms.txt lists every indexed guide, so the three documents describe one se
 test('the guides end a purchase with what it delivered in hand and introduce @daski/pay as a command-line tool', async () => {
   const setup = await document('/skills/setup.md').text();
   assert.match(setup, /6\. The purchase is done only when what it delivered is in hand, not when the order reads `FULFILLED`\. One rule for every purchase: after `FULFILLED`, get the order's deliverables\./);
-  assert.match(setup, /an inference API key from the provider's `get-inference-key` action/);
+  assert.match(setup, /an inference API key from the provider's `deliver-inference-key` action/);
   assert.match(setup, /never put the secret in chat or a report/);
   assert.match(setup, /`@daski\/pay` is a command-line tool, not a library: it installs the `daski` command\./);
   const buy = await document('/skills/buy.md').text();
