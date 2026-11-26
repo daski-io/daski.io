@@ -4,7 +4,7 @@ status: canonical
 authority: current repository implementation and approved maintainer workflow
 owner: repository maintainers
 effective-date: 2026-10-16
-last-verified: 2026-11-25 (testnet route from the mainnet agent interface); 2026-10-30 (native skill disclosures; other guidance retains its dates; no live release verification)
+last-verified: 2026-11-26 (MCP argument forms, JSON-only clients, result-in-hand guide lines); 2026-11-25 (testnet route from the mainnet agent interface); 2026-10-30 (native skill disclosures; other guidance retains its dates; no live release verification)
 supersedes: repository-wide agent files as the home of general repository guidance
 superseded-by: none
 sensitivity: public-safe
@@ -91,7 +91,16 @@ routing retains the gateway's own ingress client address.
 
 The website owns no transaction state, payer keys, chain signer, or database.
 Its MCP tool names, schemas, and result envelopes retain the established buyer
-contract. `/.well-known/mcp.json` publishes the website
+contract (`test/fixtures/gateway-wire/mcp-tool-surface.json`, the gateway's
+retained copy). Within that contract the server accepts the harmless forms
+agents send before it validates a call: an agent id as a JSON number, a
+limit as a numeric string, an asset UUID in capitals or with spaces
+(`src/mcp/arguments.ts`). A value that is still invalid is refused with a
+message naming the expected form and an example; those messages and the tool
+descriptions are not part of the schemas. A 2025-era client that accepts
+JSON but not `text/event-stream` gets one `application/json` answer instead
+of 406; a client that accepts no JSON is told which `Accept` headers work.
+`/.well-known/mcp.json` publishes the website
 transport with capabilities and supported CLI versions from the gateway.
 The setup guide reads the live CLI pin rather than duplicating it in prose.
 Mainnet without a configured gateway returns 503 from guides and MCP instead

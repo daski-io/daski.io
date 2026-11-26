@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import test from 'node:test';
-import { createWebsiteMcp, MCP_CLIENT_REQUESTS_PER_MINUTE, MCP_REQUESTS_PER_MINUTE } from '../src/mcp/server.ts';
+import { acceptsJson, createWebsiteMcp, MCP_CLIENT_REQUESTS_PER_MINUTE, MCP_NOT_ACCEPTABLE, MCP_REQUESTS_PER_MINUTE } from '../src/mcp/server.ts';
+import { normalizeToolCall } from '../src/mcp/arguments.ts';
 import { resolveNetworkConfig } from '../src/lib/network.ts';
 import { GUIDE_FILES, renderGuide } from '../src/lib/agentGuides.ts';
 import { testnetManifest } from '../src/mcp/metadata.ts';
@@ -508,4 +509,98 @@ test('only the mainnet server routes an agent asked for the testnet', async t =>
     transport: { type: 'streamable-http', url: 'https://sandbox.daski.io/mcp' },
     skills: { setup: 'https://sandbox.daski.io/skills/setup.md', installable: 'https://sandbox.daski.io/skills/SKILL.md' },
   });
+});
+
+test('harmless argument forms agents send are accepted; signed and provider data pass unchanged', async t => {
+  const { tool, calls } = fixture(t);
+  // An agent id sent as a JSON number, as agents send it.
+  const requirements = await tool('daski_get_outcome_requirements', { providerAgentId: 42, outcomeId: ' domain ', request: { count: 7 } });
+  assert.notEqual(requirements.isError, true, JSON.stringify(requirements));
+  assert.equal(calls.at(-1).path, '/outcomes/42/domain/requirements');
+  assert.deepEqual(calls.at(-1).body, { request: { count: 7 } });
+  await tool('daski_list_outcomes', { providerAgentId: 42, limit: '5' });
+  assert.deepEqual(calls.at(-1).body, { providerAgentId: '42', limit: 5 });
+  await tool('daski_list_assets', { payer: ` ${payer} `, providerAgentId: 42, limit: '10' });
+  assert.deepEqual(calls.at(-1).body, { payer, providerAgentId: '42', limit: 10, cursor: null, authorization: null });
+  // A UUID's case carries no meaning; the gateway stores asset ids in lowercase. Input is provider data and keeps its bytes.
+  await tool('daski_use_asset', { payer, providerAgentId: 42, actionId: 'get-inference-key',
+    providerAssetId: ' 3F2B8C1E-5A4D-4E6F-9B7A-1C2D3E4F5A6B ', input: { keyId: ' inf_ABC ', providerAgentId: 7 } });
+  assert.deepEqual(calls.at(-1).body, { payer, providerAgentId: '42', actionId: 'get-inference-key',
+    providerAssetId: '3f2b8c1e-5a4d-4e6f-9b7a-1c2d3e4f5a6b', input: { keyId: ' inf_ABC ', providerAgentId: 7 }, authorization: null });
+
+  // Only top-level arguments of Daski tool calls change.
+  const signed = { jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'daski_list_assets',
+    arguments: { payer, providerAgentId: 42, authorization: { message: { providerAgentId: 7, issuedAt: '1' }, signature } } } };
+  assert.deepEqual(normalizeToolCall(signed).params.arguments.authorization, signed.params.arguments.authorization);
+  assert.equal(normalizeToolCall(signed).params.arguments.providerAgentId, '42');
+  assert.equal(signed.params.arguments.providerAgentId, 42, 'the parsed message is not mutated');
+  for (const message of [{ jsonrpc: '2.0', id: 1, method: 'tools/list' }, { ...signed, params: { ...signed.params, name: 'other_tool' } }, null, 'text']) {
+    assert.equal(normalizeToolCall(message), message);
+  }
+  // Values that are not harmless variants stay as sent, for validation to refuse.
+  for (const providerAgentId of [-1, 1.5, Number.MAX_SAFE_INTEGER + 2]) {
+    assert.equal(normalizeToolCall({ method: 'tools/call', params: { name: 'daski_get_outcome', arguments: { providerAgentId } } }).params.arguments.providerAgentId, providerAgentId);
+  }
+});
+
+test('an invalid argument is refused before the gateway with the expected form and an example', async t => {
+  const { tool, calls } = fixture(t);
+  const refusal = async (name, args) => {
+    const result = await tool(name, args);
+    assert.equal(result.isError, true, name);
+    return result.content[0].text;
+  };
+  // The payer is required on every call: the MCP server has no connected wallet.
+  assert.match(await refusal('daski_list_assets', {}),
+    /payer: required: the payer wallet address, 0x and 40 hex characters, for example "0x52908400098527886e0f7030069857d2e4169ee7"\. This server has no connected wallet: send the payer on every call/);
+  // An id from the order result is not an asset id.
+  assert.match(await refusal('daski_use_asset', { payer, providerAgentId: '42', actionId: 'get-inference-key', providerAssetId: 'inf_0123456789abcdef01234567', input: {} }),
+    /providerAssetId: expected the asset's providerAssetId from daski_list_assets, a UUID such as "3f2b8c1e-5a4d-4e6f-9b7a-1c2d3e4f5a6b"\. It is not the order handle or an id from the order result/);
+  assert.match(await refusal('daski_get_outcome_requirements', { providerAgentId: true, outcomeId: 'domain' }),
+    /providerAgentId: expected the provider's agent id as a decimal string, for example "42", from daski_list_outcomes/);
+  assert.match(await refusal('daski_get_outcome_requirements', { providerAgentId: '42' }),
+    /outcomeId: required: the outcome id from daski_list_outcomes, for example "create-inference-account"/);
+  assert.match(await refusal('daski_get_outcome', { providerAgentId: -1, outcomeId: 'domain' }), /providerAgentId: expected the provider's agent id/);
+  assert.match(await refusal('daski_list_outcomes', { limit: 500 }), /limit: expected a whole number from 1 to 100, for example 25/);
+  assert.match(await refusal('daski_use_asset', { payer, providerAgentId: '42', actionId: 'Get Key', providerAssetId: '3f2b8c1e-5a4d-4e6f-9b7a-1c2d3e4f5a6b', input: {} }),
+    /actionId: expected the asset action id: lowercase letters, digits and hyphens, for example "get-inference-key"/);
+  assert.match(await refusal('daski_resolve_agent', { wallet: 'me' }), /wallet: expected a wallet address, 0x and 40 hex characters/);
+  assert.equal(calls.length, 0);
+});
+
+test('a client that accepts only JSON gets one JSON answer instead of 406; one that accepts no JSON is told which headers work', async t => {
+  const { server, calls } = fixture(t);
+  const post = (accept, body) => server.fetch(new Request('https://website.example/mcp', { method: 'POST',
+    headers: { 'content-type': 'application/json', 'mcp-protocol-version': '2025-06-18', ...(accept === undefined ? {} : { accept }) },
+    body: JSON.stringify(body) }), '192.0.2.4');
+  const initialize = { jsonrpc: '2.0', id: 1, method: 'initialize',
+    params: { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'json-only', version: '1.0.0' } } };
+  for (const accept of ['application/json', undefined, '*/*', 'application/json;q=0.9, text/plain']) {
+    const response = await post(accept, initialize);
+    assert.equal(response.status, 200, String(accept));
+    assert.match(response.headers.get('content-type'), /^application\/json/, String(accept));
+    assert.equal(response.headers.get('access-control-allow-origin'), '*');
+    const value = await response.json();
+    assert.equal(value.id, 1);
+    assert.match(value.result.instructions, /A purchase is done only when its result is in hand\. Some results come from an asset action after the order is FULFILLED, such as an inference API key from daski_use_asset; save a secret to a file, never into chat\./);
+  }
+  const listed = await (await post('application/json', { jsonrpc: '2.0', id: 2, method: 'tools/list' })).json();
+  assert.deepEqual(listed.result.tools.map(tool => tool.name).sort(), contract.tools.map(tool => tool.name));
+  const called = await (await post('application/json', { jsonrpc: '2.0', id: 3, method: 'tools/call',
+    params: { name: 'daski_get_outcome_requirements', arguments: { providerAgentId: 42, outcomeId: 'domain' } } })).json();
+  assert.equal(called.id, 3);
+  assert.notEqual(called.result.isError, true, JSON.stringify(called));
+  assert.equal(calls.at(-1).path, '/outcomes/42/domain/requirements');
+  assert.equal((await post('application/json', { jsonrpc: '2.0', method: 'notifications/initialized' })).status, 202);
+
+  for (const accept of ['text/html', 'text/event-stream', 'application/json;q=0']) {
+    const refused = await post(accept, initialize);
+    assert.equal(refused.status, 406, accept);
+    assert.equal((await refused.json()).error.message, MCP_NOT_ACCEPTABLE);
+  }
+  assert.match(MCP_NOT_ACCEPTABLE, /"Accept: application\/json, text\/event-stream" for streamable HTTP, or "Accept: application\/json" for one JSON response/);
+  // A client that accepts both keeps its event stream.
+  assert.match((await post('application/json, text/event-stream', initialize)).headers.get('content-type'), /^text\/event-stream/);
+  assert.equal(acceptsJson('application/*'), true);
+  assert.equal(acceptsJson('text/plain, */*;q=0'), false);
 });
