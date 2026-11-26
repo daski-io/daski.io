@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import type { NetworkConfig } from './network.ts';
+import { testnetRoute } from './chains.ts';
 
 import { GUIDE_FILES, type GuideFile } from './guideFiles.ts';
 
@@ -7,9 +8,14 @@ export { GUIDE_FILES };
 export type { GuideFile };
 export type GuideTemplates = Record<GuideFile, string>;
 
+// A block between {{#MAINNET}} and {{/MAINNET}}, each marker on its own line,
+// is served only by the mainnet site, so the testnet guides keep their bytes.
+const MAINNET_BLOCK = /^\{\{#MAINNET\}\}\n([\s\S]*?)^\{\{\/MAINNET\}\}\n/gm;
+
 /** Render once per instance; the hash and size always describe the served bytes. */
 export function renderGuide(file: GuideFile, templates: GuideTemplates, config: NetworkConfig) {
   if (!config.gatewayUrl) throw new Error('No gateway is published for this network');
+  const testnet = testnetRoute(config);
   const values: Record<string, string> = {
     SITE_URL: config.siteUrl,
     GATEWAY_URL: config.gatewayUrl,
@@ -18,8 +24,14 @@ export function renderGuide(file: GuideFile, templates: GuideTemplates, config: 
     CIRCLE_CHAIN: config.chainId === 84532 ? 'BASE-SEPOLIA' : 'BASE',
     CIRCLE_NETWORK: config.chainId === 84532 ? 'testnet' : 'mainnet',
     CIRCLE_NETWORK_FLAG: config.chainId === 84532 ? ' --testnet' : '',
+    TESTNET_SITE_URL: testnet.siteUrl,
+    TESTNET_GATEWAY_URL: testnet.gatewayUrl,
+    TESTNET_CHAIN_ID: String(testnet.chainId),
+    TESTNET_CHAIN_NAME: testnet.chainName,
   };
-  const content = templates[file].replace(/\{\{([A-Z_]+)\}\}/g, (_, key: string) => {
+  const sections = templates[file].replace(MAINNET_BLOCK, (_, block: string) => config.id === 'mainnet' ? block : '');
+  if (/\{\{[#\/]/.test(sections)) throw new Error(`Unbalanced guide section in ${file}`);
+  const content = sections.replace(/\{\{([A-Z_]+)\}\}/g, (_, key: string) => {
     if (!(key in values)) throw new Error(`Unknown guide placeholder: ${key}`);
     return values[key]!;
   });
