@@ -192,3 +192,29 @@ test('llms.txt lists every indexed guide, so the three documents describe one se
     assert.ok(llms.includes(`${config.siteUrl}/skills/${file}`), `llms.txt omitted ${file}`);
   }
 });
+
+test('the guides end a purchase with its result in hand and introduce @daski/pay as a command-line tool', async () => {
+  const setup = await document('/skills/setup.md').text();
+  assert.match(setup, /6\. The purchase is done only when its result is in hand, not when the order reads `FULFILLED`\./);
+  assert.match(setup, /an inference API key, for example, comes from the provider's `get-inference-key` action/);
+  assert.match(setup, /never put the secret in chat or a report/);
+  assert.match(setup, /`@daski\/pay` is a command-line tool, not a library: it installs the `daski` command\./);
+  const buy = await document('/skills/buy.md').text();
+  assert.match(buy, /## When the purchase is done\n\nPayment does not finish a purchase: it is done only when its result is in hand\./);
+  assert.match(buy, /`daski` is the command-line tool that `@daski\/pay` installs\. Run it; do not import `@daski\/pay` from a script\./);
+  assert.match(await document('/skills/SKILL.md').text(), /The purchase is done only when its result is in hand/);
+  const llms = llmsText(config);
+  assert.match(llms, /A purchase is done only when its result is in hand\./);
+  assert.match(llms, /@daski\/pay, is a command-line tool, not a library/);
+
+  const orders = await document('/skills/orders.md').text();
+  const section = orders.slice(orders.indexOf('## Results behind an asset action'), orders.indexOf('## Fulfillment deadline'));
+  assert.match(section, /Call `daski_list_assets` with `payer`/);
+  assert.match(section, /Neither the order handle nor the `keyId` is an asset id\./);
+  assert.match(section, /repeat the identical call with `authorization: \{"message": <challenge\.message>, "signature": "<signature>"\}`/);
+  assert.match(section, /never put the secret in chat, a report or a log/);
+  // The buyer CLI the gateway pins has no command for asset actions yet, so the
+  // section names only the MCP tools. When a CLI release adds that command,
+  // name it here beside daski_use_asset and update this assertion.
+  assert.doesNotMatch(section, /`daski [a-z]/);
+});

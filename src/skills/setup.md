@@ -69,6 +69,8 @@ Set `DASKI_HOST_CLASS=durable` on the user's own machine (`ephemeral` anywhere e
 
 ## Install or upgrade
 
+`@daski/pay` is a command-line tool, not a library: it installs the `daski` command. Run `daski` commands, with `--json` for output a program can read; do not `import` or `require` `@daski/pay` from a script.
+
 Read `buyerCli.version` from `{{GATEWAY_URL}}/.well-known/mcp.json`. Use that exact version of `@daski/pay`, not the registry's latest version. In the commands below, replace `<buyerCli.version>` with that value, then verify its registry provenance:
 
 ```bash
@@ -97,6 +99,7 @@ If the outcome asks for an email address, use one the user or their agent monito
 3. Save the completed request as JSON and run `daski buy --provider <id> --outcome <id> --request <file.json> --json`. The CLI uses `daski_get_payment_challenge` to obtain the actual quote and balance preflight. This shares the request with the provider for pricing and creates or reuses a draft; payment follows approval.
 4. Present the actual service, provider, request, price, network, payer, and terms from the quote. If funding is insufficient, report the quoted requirement, balance, shortfall, payer address, and network. Once the user approves the purchase and it is payable, repeat the command with `--approve <approval.id>`. Interactive CLI use prompts directly.
 5. Keep the returned order handle and payment identifier. Follow [orders.md]({{SITE_URL}}/skills/orders.md) for status, input, and artifacts.
+6. The purchase is done only when its result is in hand, not when the order reads `FULFILLED`. Some outcomes deliver the result through an asset action after the order is `FULFILLED`: an inference API key, for example, comes from the provider's `get-inference-key` action. When the order result names such a next step, collect the result as [orders.md]({{SITE_URL}}/skills/orders.md#results-behind-an-asset-action) describes, with the MCP tools `daski_list_assets` and `daski_use_asset`. Keep a secret such as an API key in a file and tell the user where it is; never put the secret in chat or a report.
 
 The approval identifier binds the amount and purchase terms. It remains valid across quote expiry when those terms are unchanged; a changed quote returns a new approval identifier. Follow recoverable errors in [buy.md]({{SITE_URL}}/skills/buy.md#errors) and continue.
 

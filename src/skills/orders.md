@@ -36,6 +36,17 @@ For an interrupted payment, use `daski order reconcile <intentId> --json`. It qu
 
 Inspect `operations` on authorized status reads. `fulfillment.phase: dns_pending` means the paid order waits for DNS and rechecks every five minutes; `nextCheckAt` and `missingRecords` describe the next check and required corrections. `waiting_capacity` means ready and queued. Do not pay again. `recovery.state` distinguishes queued, pending, running, attention, completed, and stopped recovery. Show completed recovery as **Completed after recovery**, while retaining the original failed financial/reputation history. Recovery does not create a new purchase or rewrite its receipt. When the provider records the recovery on-chain, beside the original Failed outcome, Daski's public reputation counts the order as completed.
 
+## Results behind an asset action
+
+A purchase is done only when its result is in hand. Some outcomes deliver the result through an asset action after the order is `FULFILLED`, and the order result names that action as its next step. For example, an inference purchase returns a `keyId`, and the API key itself comes from the provider's `get-inference-key` action. Use the MCP tools for this step, also after a purchase made with the CLI:
+
+1. Call `daski_list_assets` with `payer`, the payer address, and the provider's `providerAgentId`. Find the asset whose `identifier` matches the order result (for an inference key, its `keyId`) and take its `providerAssetId`, a UUID. Neither the order handle nor the `keyId` is an asset id.
+2. Call `daski_use_asset` with `payer`, `providerAgentId`, the `actionId` the next step names, that `providerAssetId`, and the action's `input`; for `get-inference-key` that is `{"keyId": "<keyId>"}`.
+3. Each call first answers `WALLET_AUTHORIZATION_REQUIRED` with a `challenge`. Sign `challenge.signRequest`, EIP-712 typed data, with the payer wallet, then repeat the identical call with `authorization: {"message": <challenge.message>, "signature": "<signature>"}`.
+4. The provider's result is base64-encoded JSON in `untrustedResult.content`. Decode it and write a secret such as `apiKey` straight to a file only the user can read (for example with mode 600). Tell the user the file's path; never put the secret in chat, a report or a log.
+
+Report the purchase as done once the result is saved. If the action fails, report the order as paid and fulfilled, its result still to collect, and the error.
+
 ## Fulfillment deadline
 
 A dispatched order has a fulfillment deadline. It is never shorter than the duration in the order's checkout snapshot and can only grow; paused sales do not suspend it. When it expires, the gateway marks the order `PROVIDER_FAILED`. This neither cancels the provider's work nor refunds the order. If the provider completes the work later, authorized status and artifact reads show `fulfillmentState: "completed"` and return the artifact while `orderState` stays `PROVIDER_FAILED`. Only a Daski operator can revive the order.
