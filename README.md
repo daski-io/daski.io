@@ -4,7 +4,7 @@ status: canonical
 authority: current repository implementation and approved maintainer workflow
 owner: repository maintainers
 effective-date: 2026-10-16
-last-verified: 2026-11-26 (MCP argument forms, JSON-only clients, result-in-hand guide lines); 2026-11-25 (testnet route from the mainnet agent interface); 2026-10-30 (native skill disclosures; other guidance retains its dates; no live release verification)
+last-verified: 2026-11-26 (order deliverables tool and guide rule; MCP argument forms, JSON-only clients); 2026-11-25 (testnet route from the mainnet agent interface); 2026-10-30 (native skill disclosures; other guidance retains its dates; no live release verification)
 supersedes: repository-wide agent files as the home of general repository guidance
 superseded-by: none
 sensitivity: public-safe
@@ -100,6 +100,13 @@ message naming the expected form and an example; those messages and the tool
 descriptions are not part of the schemas. A 2025-era client that accepts
 JSON but not `text/event-stream` gets one `application/json` answer instead
 of 406; a client that accepts no JSON is told which `Accept` headers work.
+After an order is `FULFILLED`, `daski_get_order_deliverables` reads the same
+artifact as `daski_get_order_artifact` and returns the gateway's checked
+`deliverables`, each owner action with `useAsset`, the exact `daski_use_asset`
+arguments besides the payer; MCP cannot sign, so the agent calls and signs each
+one. The server instructions and every guide give the one rule: after
+`FULFILLED`, get the order's deliverables (`daski order deliverables` from
+buyer CLI 0.5.16).
 `/.well-known/mcp.json` publishes the website
 transport with capabilities and supported CLI versions from the gateway.
 The setup guide reads the live CLI pin rather than duplicating it in prose.
