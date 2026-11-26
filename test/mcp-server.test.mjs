@@ -528,6 +528,13 @@ test('harmless argument forms agents send are accepted; signed and provider data
   assert.deepEqual(calls.at(-1).body, { payer, providerAgentId: '42', actionId: 'get-inference-key',
     providerAssetId: '3f2b8c1e-5a4d-4e6f-9b7a-1c2d3e4f5a6b', input: { keyId: ' inf_ABC ', providerAgentId: 7 }, authorization: null });
 
+  // A challenge call sent with a number and its signed retry sent with a string bind the same values.
+  const asset = { payer, actionId: 'get-inference-key', providerAssetId: '3f2b8c1e-5a4d-4e6f-9b7a-1c2d3e4f5a6b', input: {} };
+  await tool('daski_use_asset', { ...asset, providerAgentId: 42 });
+  const challenged = calls.at(-1).body;
+  await tool('daski_use_asset', { ...asset, providerAgentId: '42' });
+  assert.deepEqual(calls.at(-1).body, challenged);
+
   // Only top-level arguments of Daski tool calls change.
   const signed = { jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'daski_list_assets',
     arguments: { payer, providerAgentId: 42, authorization: { message: { providerAgentId: 7, issuedAt: '1' }, signature } } } };
@@ -596,6 +603,7 @@ test('a client that accepts only JSON gets one JSON answer instead of 406; one t
   for (const accept of ['text/html', 'text/event-stream', 'application/json;q=0']) {
     const refused = await post(accept, initialize);
     assert.equal(refused.status, 406, accept);
+    assert.equal(refused.headers.get('access-control-allow-origin'), '*', 'a browser client can read the refusal');
     assert.equal((await refused.json()).error.message, MCP_NOT_ACCEPTABLE);
   }
   assert.match(MCP_NOT_ACCEPTABLE, /"Accept: application\/json, text\/event-stream" for streamable HTTP, or "Accept: application\/json" for one JSON response/);

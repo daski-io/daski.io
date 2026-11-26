@@ -144,12 +144,13 @@ export function createWebsiteMcp(config: NetworkConfig, readGuide: ReadGuide, re
         } catch { return fail(400, 'Invalid MCP JSON request.'); }
         finally { reader.releaseLock(); }
       }
-      const accept = incoming.headers.get('accept');
-      const jsonOnly = incoming.method === 'POST' && !acceptsStream(accept) && await isLegacyRequest(incoming, parsedBody);
-      if (jsonOnly && !acceptsJson(accept)) return fail(406, MCP_NOT_ACCEPTABLE);
       let response: Response;
       try {
-        response = await clients.run(clientAddress, () => jsonOnly ? answerWithJson(incoming, parsedBody) : handler.fetch(incoming, { parsedBody }));
+        const accept = incoming.headers.get('accept');
+        const jsonOnly = incoming.method === 'POST' && !acceptsStream(accept) && await isLegacyRequest(incoming, parsedBody);
+        // The refusal carries the CORS headers too, so a browser client can read which headers work.
+        response = jsonOnly && !acceptsJson(accept) ? fail(406, MCP_NOT_ACCEPTABLE)
+          : await clients.run(clientAddress, () => jsonOnly ? answerWithJson(incoming, parsedBody) : handler.fetch(incoming, { parsedBody }));
       } catch { response = fail(500, 'The MCP request could not be completed.'); }
       for (const [key, value] of headers) response.headers.set(key, value);
       return response;
