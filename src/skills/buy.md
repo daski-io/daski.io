@@ -22,6 +22,12 @@ For a domain managed by Daski, prepare DNS first through the existing payer-auth
 
 Show the quoted service, provider, request, price, network, payer, and terms. After the user's approval, repeat with `--approve <approval.id>`. The CLI validates the payment, signs with the configured wallet, submits it, and records the gateway's payment identifier and order handle. A refreshed quote can reuse approval while all material terms stay the same.
 
+`daski` is the command-line tool that `@daski/pay` installs. Run it; do not import `@daski/pay` from a script.
+
+## When the purchase is done
+
+Payment does not finish a purchase: it is done only when its result is in hand. Track the order with [orders.md]({{SITE_URL}}/skills/orders.md) until it completes, then collect the result. Some outcomes deliver the result through an asset action after the order is `FULFILLED`; an inference API key, for example, comes from the provider's `get-inference-key` action through `daski_use_asset`. See [results behind an asset action]({{SITE_URL}}/skills/orders.md#results-behind-an-asset-action). Keep a secret result such as an API key in a file, never in chat.
+
 ## Advanced challenge and submission
 
 For clients that manage their own MCP calls, save the `daski_get_payment_challenge` result and use:
