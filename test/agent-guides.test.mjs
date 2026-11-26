@@ -245,7 +245,9 @@ test(`the guides name buyer CLI ${DELIVERABLES_CLI}'s deliverables command, and 
   assert.match(section, /`complete: false` with `state: "delivering"` means the order is still being delivered: run the command again in a minute\./);
   assert.match(section, /names its `error` and `retrySafe`/);
   assert.match(section, /`daski order import --json` restored/);
-  assert.match(section, /If it fails, read the account with `get-inference-key` \(its result can also hold the key, so save it to a file\): `keyStatus: creating` means try again shortly; `status: retired` means there is no key to deliver; otherwise `rotate-inference-key` with the `keyPrefix` it shows issues a new key/);
+  assert.match(section, /If it fails, read the account with `get-inference-key` \(its result can also hold the key, so save it to a file\)\. `keyStatus: creating` or `status: provisioning` means the key is still being issued: try again shortly\. `status: retired` means there is no key to deliver\./);
+  assert.match(section, /`rotate-inference-key` with input `\{"keyId": "<keyId>", "currentKeyPrefix": "<the keyPrefix get-inference-key shows>"\}` issues a new key/);
+  assert.match(section, /Once it has run, get the new key with `daski order deliverables <handle> --json` again, or `deliver-inference-key`\./);
   // The MCP route stays beside it, for MCP clients and older CLIs.
   assert.match(section, /Through MCP, or with an older CLI:\n\n1\. Call `daski_get_order_deliverables`/);
   assert.ok(section.indexOf('daski order deliverables') < section.indexOf('daski_get_order_deliverables'));
