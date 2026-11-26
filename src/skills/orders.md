@@ -46,7 +46,9 @@ With buyer CLI 0.5.15 or later, `daski order status` names this step in `next`, 
 daski asset action --order <handle> --action <actionId> --json
 ```
 
-It finds the asset the order created, takes the input from the order result (for `get-inference-key`, `{"keyId": "<keyId>"}`), answers the wallet challenge with the configured signer, and writes the result to a file only the user can read (mode 600). It prints the file's path, never the secret; `--output <file>` chooses the file. `--order` works for an order in the CLI's local store: one it bought, or one `daski order import --json` restored. For any asset the payer owns, run `daski asset list --provider <id> --json`, then `daski asset action --provider <id> --asset <providerAssetId|identifier> --action <actionId> --input '<json>' --json`. An order still being delivered answers `DASKI_ORDER_NOT_FULFILLED` and runs nothing; read its status again and repeat once it is `FULFILLED`.
+It finds the asset the order created, takes the input from the order result (for `get-inference-key`, `{"keyId": "<keyId>"}`), answers the wallet challenge with the configured signer, and writes the result to a file only the user can read (mode 600). It prints the file's path, never the secret; `--output <file>` chooses the file. `--order` works for an order in the CLI's local store: one it bought, or one `daski order import --json` restored. An order still being delivered answers `DASKI_ORDER_NOT_FULFILLED` and runs nothing; read its status again and repeat once it is `FULFILLED`.
+
+For any asset the payer owns, run `daski asset list --provider <id> --json`, then `daski asset action --provider <id> --asset <providerAssetId|identifier> --action <actionId> --input '<json>' --json`. A destructive action is only staged: show the user its `effectSummary`, and run the confirming command it names only after the user approves, no earlier than `earliestExecutionAt`.
 
 Through MCP, or with an older CLI, use the MCP tools:
 
