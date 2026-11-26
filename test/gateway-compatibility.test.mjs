@@ -59,3 +59,16 @@ test("read-only resume does not submit a replacement payment",async()=>{
  assert.match(calls[0].url,/\/actions\/status$/);
  assert.deepEqual(calls[0].body,{request:{}});
 });
+test("the gateway's order-artifact-deliverables answer becomes the deliverables tool's: artifact first, useAsset per owner action",async()=>{
+ const answer=fixture("order-artifact-deliverables.json");
+ const {gateway,calls}=client(()=>Response.json(answer));
+ const result=await invoke("daski_get_order_deliverables",{orderHandle:answer.orderHandle,readCapability:"r".repeat(80)},gateway);
+ assert.notEqual(result.isError,true);
+ assert.match(calls[0].url,/\/actions\/artifact$/);
+ const body=result.structuredContent;
+ assert.equal(body.result,undefined);
+ assert.deepEqual(JSON.parse(Buffer.from(body.untrustedResult.content,"base64")),answer.result);
+ assert.equal(body.ignoredDeliverables,undefined,"every gateway item passes the website's checks");
+ assert.deepEqual(body.deliverables,answer.deliverables.map(item=>item.kind==="owner-action"?{...item,useAsset:{
+  providerAgentId:item.providerAgentId,actionId:item.actionId,providerAssetId:item.providerAssetId,input:item.input}}:item));
+});

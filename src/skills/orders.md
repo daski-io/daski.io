@@ -190,11 +190,12 @@ The CLI handles these signing sequences. Integrations can use the corresponding 
 |---|---|
 | Read access | daski_get_order_access |
 | Status / artifact | daski_get_order_status / daski_get_order_artifact |
+| What a fulfilled order delivered | daski_get_order_deliverables, then daski_use_asset per owner action |
 | Input / cancellation | daski_submit_order_input / daski_cancel_order |
 | Delivery review | daski_confirm_delivery |
 | Withdraw review | daski_revoke_delivery_confirmation |
 
-Read access returns `readCapability` and `expiresAt`; pass that token to status or artifact calls. HTTP uses `Authorization: DaskiReadCap <token>`. Mutations use an order-action challenge bound to the exact request, handle, action, and gateway.
+Read access returns `readCapability` and `expiresAt`; pass that token to status, artifact or deliverables calls. HTTP uses `Authorization: DaskiReadCap <token>`. Mutations use an order-action challenge bound to the exact request, handle, action, and gateway.
 
 Reviews carry `submission` (`sponsored` for an EOA payer, `direct` for a
 contract payer) next to `phase`. Every phase uses a fresh order-action

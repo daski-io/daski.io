@@ -280,7 +280,7 @@ test(`the guides name buyer CLI ${DELIVERABLES_CLI}'s deliverables command, and 
   assert.match(free, /binds nothing; the quote from `daski buy` is what a purchase costs/);
 
   assert.match(await document('/skills/SKILL.md').text(), new RegExp(`\`daski order deliverables <handle> --json\` \\(buyer CLI ${DELIVERABLES_CLI.replaceAll('.', '\\.')} or later\\)`));
-  assert.match(llmsText(config), new RegExp(`run daski order deliverables <handle> \\(buyer CLI\\n${DELIVERABLES_CLI.replaceAll('.', '\\.')} or later\\), or call daski_get_order_deliverables`));
+  assert.match(llmsText(config), new RegExp(`run daski order deliverables <handle> --json\\n\\(buyer CLI ${DELIVERABLES_CLI.replaceAll('.', '\\.')} or later\\), or call daski_get_order_deliverables`));
 
   // Any section of any guide that names one of the commands names its version too.
   for (const file of GUIDE_FILES) {
