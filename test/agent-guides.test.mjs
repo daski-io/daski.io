@@ -213,8 +213,60 @@ test('the guides end a purchase with its result in hand and introduce @daski/pay
   assert.match(section, /Neither the order handle nor the `keyId` is an asset id\./);
   assert.match(section, /repeat the identical call with `authorization: \{"message": <challenge\.message>, "signature": "<signature>"\}`/);
   assert.match(section, /never put the secret in chat, a report or a log/);
-  // The buyer CLI the gateway pins has no command for asset actions yet, so the
-  // section names only the MCP tools. When a CLI release adds that command,
-  // name it here beside daski_use_asset and update this assertion.
-  assert.doesNotMatch(section, /`daski [a-z]/);
+});
+
+// The first buyer CLI with `daski asset action` and `daski free-skill`. Agents
+// install the exact version the gateway publishes as `buyerCli.version`, which
+// the site does not know when it renders the guides, so every guide that names
+// one of these commands names this version with it: an agent whose pinned CLI
+// is older takes the MCP route beside it. The gateway pins 0.5.15 from
+// daski-io/gateway PR 108 on.
+const RESULT_COMMANDS_CLI = '0.5.15';
+const SINCE = new RegExp(`buyer CLI ${RESULT_COMMANDS_CLI.replaceAll('.', '\\.')} or later`);
+
+test(`the guides name the buyer CLI ${RESULT_COMMANDS_CLI} result and free-skill commands beside the MCP route`, async () => {
+  const orders = await document('/skills/orders.md').text();
+  const section = orders.slice(orders.indexOf('## Results behind an asset action'), orders.indexOf('## Fulfillment deadline'));
+  assert.match(section, SINCE);
+  assert.match(section, /`daski order status` names this step in `next`/);
+  assert.match(section, /daski asset action --order <handle> --action <actionId> --json/);
+  assert.match(section, /`daski asset list --provider <id> --json`, then `daski asset action --provider <id> --asset <providerAssetId\|identifier> --action <actionId> --input '<json>' --json`/);
+  assert.match(section, /`daski order import --json` restored/);
+  assert.match(section, /It prints the file's path, never the secret/);
+  // The MCP route stays beside it, for MCP clients and older CLIs.
+  assert.match(section, /Through MCP, or with an older CLI, use the MCP tools:\n\n1\. Call `daski_list_assets`/);
+  assert.ok(section.indexOf('daski asset action') < section.indexOf('daski_use_asset'));
+
+  const setup = await document('/skills/setup.md').text();
+  const done = setup.slice(setup.indexOf('6. The purchase is done'), setup.indexOf('The approval identifier binds'));
+  assert.match(done, SINCE);
+  assert.match(done, /`daski asset action --order <handle> --action <actionId> --json`/);
+  assert.match(done, /Through MCP, use `daski_list_assets` and `daski_use_asset`\./);
+  const discover = setup.slice(setup.indexOf('1. Discover the matching outcome'), setup.indexOf('2. Build the request'));
+  assert.match(discover, SINCE);
+  assert.match(discover, /`daski free-skill --provider <id> --skill <skillId> --input '<json>' --json`/);
+  assert.match(discover, /\]\(https:\/\/docs\.example\/skills\/buy\.md#free-skills\)/);
+
+  const buy = await document('/skills/buy.md').text();
+  const finish = buy.slice(buy.indexOf('## When the purchase is done'), buy.indexOf('## Free skills'));
+  assert.match(finish, SINCE);
+  assert.match(finish, /```bash\ndaski asset action --order <handle> --action <actionId> --json\n```/);
+  assert.match(finish, /Through MCP, the same step is `daski_use_asset`\./);
+  const free = buy.slice(buy.indexOf('## Free skills'), buy.indexOf('## Advanced challenge and submission'));
+  assert.match(free, SINCE);
+  assert.match(free, /`freeSkills`, each with its `skillId` and description, at `https:\/\/gateway\.example\/public\/v3\/services\?providerAgentId=<id>`/);
+  assert.match(free, /```bash\ndaski free-skill --provider <id> --skill <skillId> --input '<json>' --json\n```/);
+  assert.match(free, /Add `--service <slug>` when the provider offers that skill in more than one service\./);
+  assert.match(free, /no wallet, no quote and no order/);
+  assert.match(free, /binds nothing; the quote from `daski buy` is what a purchase costs/);
+
+  assert.match(llmsText(config), new RegExp(`daski asset action \\(buyer CLI ${RESULT_COMMANDS_CLI.replaceAll('.', '\\.')} or later\\) or call daski_use_asset`));
+
+  // Any section of any guide that names one of the commands names the version too.
+  for (const file of GUIDE_FILES) {
+    const content = await document(`/skills/${file}`).text();
+    for (const part of content.split(/^(?=#{1,3} )/m)) {
+      if (/daski (asset|free-skill)\b/.test(part)) assert.match(part, SINCE, `${file}: ${part.split('\n')[0]}`);
+    }
+  }
 });

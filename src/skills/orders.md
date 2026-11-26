@@ -38,14 +38,24 @@ Inspect `operations` on authorized status reads. `fulfillment.phase: dns_pending
 
 ## Results behind an asset action
 
-A purchase is done only when its result is in hand. Some outcomes deliver the result through an asset action after the order is `FULFILLED`, and the order result names that action as its next step. For example, an inference purchase returns a `keyId`, and the API key itself comes from the provider's `get-inference-key` action. Use the MCP tools for this step, also after a purchase made with the CLI:
+A purchase is done only when its result is in hand. Some outcomes deliver the result through an asset action after the order is `FULFILLED`, and the order result names that action as its next step. For example, an inference purchase returns a `keyId`, and the API key itself comes from the provider's `get-inference-key` action.
+
+With buyer CLI 0.5.15 or later, `daski order status` names this step in `next`, with the exact command:
+
+```bash
+daski asset action --order <handle> --action <actionId> --json
+```
+
+It finds the asset the order created, takes the input from the order result (for `get-inference-key`, `{"keyId": "<keyId>"}`), answers the wallet challenge with the configured signer, and writes the result to a file only the user can read (mode 600). It prints the file's path, never the secret; `--output <file>` chooses the file. `--order` works for an order in the CLI's local store: one it bought, or one `daski order import --json` restored. For any asset the payer owns, run `daski asset list --provider <id> --json`, then `daski asset action --provider <id> --asset <providerAssetId|identifier> --action <actionId> --input '<json>' --json`. An order still being delivered answers `DASKI_ORDER_NOT_FULFILLED` and runs nothing; read its status again and repeat once it is `FULFILLED`.
+
+Through MCP, or with an older CLI, use the MCP tools:
 
 1. Call `daski_list_assets` with `payer`, the payer address, and the provider's `providerAgentId`. Find the asset whose `identifier` matches the order result (for an inference key, its `keyId`) and take its `providerAssetId`, a UUID. Neither the order handle nor the `keyId` is an asset id.
 2. Call `daski_use_asset` with `payer`, `providerAgentId`, the `actionId` the next step names, that `providerAssetId`, and the action's `input`; for `get-inference-key` that is `{"keyId": "<keyId>"}`.
 3. Each call first answers `WALLET_AUTHORIZATION_REQUIRED` with a `challenge`. Sign `challenge.signRequest`, EIP-712 typed data, with the payer wallet, then repeat the identical call with `authorization: {"message": <challenge.message>, "signature": "<signature>"}`.
 4. The provider's result is base64-encoded JSON in `untrustedResult.content`. Decode it and write a secret such as `apiKey` straight to a file only the user can read (for example with mode 600). Tell the user the file's path; never put the secret in chat, a report or a log.
 
-Report the purchase as done once the result is saved. If the action fails, report the order as paid and fulfilled, its result still to collect, and the error.
+Report the purchase as done once the result is saved, and tell the user where it is. If the action fails, report the order as paid and fulfilled, its result still to collect, and the error.
 
 ## Fulfillment deadline
 
