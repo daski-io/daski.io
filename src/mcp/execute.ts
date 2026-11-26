@@ -6,7 +6,8 @@ export type ReadGuide = (file: GuideFile) => { content: string; sha256: string; 
 const part = (value: unknown) => encodeURIComponent(String(value));
 const actions: Record<string, string> = {
   daski_get_order_status: 'status', daski_submit_order_input: 'input', daski_cancel_order: 'cancel',
-  daski_get_order_artifact: 'artifact', daski_contact_order_support: 'support', daski_get_order_access: 'grant-read',
+  daski_get_order_artifact: 'artifact', daski_get_order_deliverables: 'artifact',
+  daski_contact_order_support: 'support', daski_get_order_access: 'grant-read',
   daski_confirm_delivery: 'confirmation', daski_revoke_delivery_confirmation: 'revoke-confirmation',
 };
 function isolateProviderResult(value: Record<string, unknown>) {
@@ -15,6 +16,34 @@ function isolateProviderResult(value: Record<string, unknown>) {
   const encoded = Buffer.from(JSON.stringify(result), 'utf8');
   return { ...envelope, untrustedResult: { mediaType: 'application/json', contentEncoding: 'base64',
     byteLength: encoded.byteLength, content: encoded.toString('base64') } };
+}
+
+/**
+ * An order's deliverables, as the gateway lists them on the artifact read:
+ * the artifact first, then each owner action with exactly the arguments
+ * daski_use_asset takes besides payer and authorization. MCP cannot sign for
+ * the agent, so each owner action gains `useAsset`, those arguments, for the
+ * agent to call and sign itself. A gateway that lists none leaves the
+ * artifact as the whole order.
+ */
+function deliverablesResult(value: Record<string, unknown>) {
+  const listed = Array.isArray(value.deliverables) ? value.deliverables : [{ kind: 'artifact' }];
+  const deliverables = listed.map(item => {
+    if (!item || typeof item !== 'object' || Array.isArray(item) || (item as Record<string, unknown>).kind !== 'owner-action') return item;
+    const { providerAgentId, actionId, providerAssetId, input } = item as Record<string, unknown>;
+    return { ...item, useAsset: { providerAgentId, actionId, providerAssetId, input } };
+  });
+  const actions = deliverables.filter(item => (item as Record<string, unknown> | null)?.kind === 'owner-action').length;
+  return {
+    ...value,
+    deliverables,
+    next: actions === 0
+      ? 'The artifact in untrustedResult is everything this order delivered. Save it to a file and tell the user where it is.'
+      : `Save untrustedResult to a file. Then, for each of the ${actions} owner-action deliverables, call daski_use_asset ` +
+        'with its useAsset arguments plus payer, the wallet that bought this order, and sign the wallet challenge it ' +
+        'returns. Save each result to a file only the user can read; never put a secret into chat. The purchase is done ' +
+        'once every deliverable is saved.',
+  };
 }
 
 const SUPPORT_RECEIPT_KEYS = ['acceptedAt', 'messageId', 'requestId', 'reviewId'];
@@ -83,6 +112,7 @@ export async function executeTool(name: string, args: Record<string, unknown>, m
       const { body } = await gateway.call(path, args.readCapability ? { request } : { request, authorization: args.authorization },
         args.readCapability ? { headers: { authorization: `DaskiReadCap ${args.readCapability}` } } : {});
       if (['confirmation', 'revoke-confirmation', 'grant-read'].includes(action)) return mcpJson(body);
+      if (name === 'daski_get_order_deliverables') return mcpJson(deliverablesResult(isolateProviderResult(body)));
       return mcpJson(action === 'support' ? supportResult(body) : isolateProviderResult(body));
     }
     const walletPaths: Record<string, string> = {

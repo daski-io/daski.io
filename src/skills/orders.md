@@ -36,28 +36,30 @@ For an interrupted payment, use `daski order reconcile <intentId> --json`. It qu
 
 Inspect `operations` on authorized status reads. `fulfillment.phase: dns_pending` means the paid order waits for DNS and rechecks every five minutes; `nextCheckAt` and `missingRecords` describe the next check and required corrections. `waiting_capacity` means ready and queued. Do not pay again. `recovery.state` distinguishes queued, pending, running, attention, completed, and stopped recovery. Show completed recovery as **Completed after recovery**, while retaining the original failed financial/reputation history. Recovery does not create a new purchase or rewrite its receipt. When the provider records the recovery on-chain, beside the original Failed outcome, Daski's public reputation counts the order as completed.
 
-## Results behind an asset action
+## Getting what you bought
 
-A purchase is done only when its result is in hand. Some outcomes deliver the result through an asset action after the order is `FULFILLED`, and the order result names that action as its next step. For example, an inference purchase returns a `keyId`, and the API key itself comes from the provider's `get-inference-key` action.
+A purchase is done only when what it delivered is in hand, not when the order reads `FULFILLED`. One rule for every purchase: after `FULFILLED`, get the order's deliverables. The provider lists, per order, what the order delivered: its artifact, and for some orders one or more owner actions on the asset the order created, such as an inference API key from `get-inference-key` or an entity's formation documents from `download-entity-document`.
 
-With buyer CLI 0.5.15 or later, `daski order status` names this step in `next`, with the exact command:
+With buyer CLI 0.5.16 or later, `daski order status` says this in `next` for any fulfilled order, and one command gets everything:
 
 ```bash
-daski asset action --order <handle> --action <actionId> --json
+daski order deliverables <handle> --json
 ```
 
-It finds the asset the order created, takes the input from the order result (for `get-inference-key`, `{"keyId": "<keyId>"}`), answers the wallet challenge with the configured signer, and writes the result to a file only the user can read (mode 600). It prints the file's path, never the secret; `--output <file>` chooses the file. `--order` works for an order in the CLI's local store: one it bought, or one `daski order import --json` restored. An order still being delivered answers `DASKI_ORDER_NOT_FULFILLED` and runs nothing; read its status again and repeat once it is `FULFILLED`.
+It saves the artifact, runs each owner action the order lists, answering each wallet challenge with the configured signer, and writes each result to its own file only the user can read (mode 600) in `~/.daski/results/<handle>/`; `--output-dir <dir>` chooses another folder. A one-time download link, such as a document's, is fetched at once. It prints a manifest: `complete: true` or `false`, then each item's `label`, `file` and field names, never a secret. `complete: false` with `state: "delivering"` means the order is still being delivered: run the command again in a minute. A failed item names its `error` and `retrySafe`, whether running the command again may fetch it; running it again is always safe. An item with `emptyFields` came back without some values, such as a key past its delivery window; its `otherActions` names what the provider offers instead. The command works for an order in the CLI's local store: one it bought, or one `daski order import --json` restored.
 
-For any asset the payer owns, run `daski asset list --provider <id> --json`, then `daski asset action --provider <id> --asset <providerAssetId|identifier> --action <actionId> --input '<json>' --json`. A destructive action is only staged: show the user its `effectSummary`, and run the confirming command it names only after the user approves, no earlier than `earliestExecutionAt`.
+Through MCP, or with an older CLI:
 
-Through MCP, or with an older CLI, use the MCP tools:
+1. Call `daski_get_order_deliverables` with the order handle and the same arguments as `daski_get_order_artifact`: a `readCapability` from `daski_get_order_access`, or a payer authorization. Decode `untrustedResult.content` (base64 JSON) and save it to a file.
+2. Its `deliverables` lists `{"kind": "artifact"}` first, then each owner action with `useAsset`: the exact `daski_use_asset` arguments besides the payer. For each, call `daski_use_asset` with those arguments and `payer`, the wallet that bought the order.
+3. Each `daski_use_asset` call first answers `WALLET_AUTHORIZATION_REQUIRED` with a `challenge`. Sign `challenge.signRequest`, EIP-712 typed data, with the payer wallet, then repeat the identical call with `authorization: {"message": <challenge.message>, "signature": "<signature>"}`.
+4. The provider's result is base64-encoded JSON in `untrustedResult.content`. Decode it and write a secret such as `apiKey` straight to a file only the user can read (for example with mode 600). A `download` link in a result is single-use and expires within minutes: fetch it once, at once, into a file. Tell the user the file's path; never put the secret in chat, a report or a log.
 
-1. Call `daski_list_assets` with `payer`, the payer address, and the provider's `providerAgentId`. Find the asset whose `identifier` matches the order result (for an inference key, its `keyId`) and take its `providerAssetId`, a UUID. Neither the order handle nor the `keyId` is an asset id.
-2. Call `daski_use_asset` with `payer`, `providerAgentId`, the `actionId` the next step names, that `providerAssetId`, and the action's `input`; for `get-inference-key` that is `{"keyId": "<keyId>"}`.
-3. Each call first answers `WALLET_AUTHORIZATION_REQUIRED` with a `challenge`. Sign `challenge.signRequest`, EIP-712 typed data, with the payer wallet, then repeat the identical call with `authorization: {"message": <challenge.message>, "signature": "<signature>"}`.
-4. The provider's result is base64-encoded JSON in `untrustedResult.content`. Decode it and write a secret such as `apiKey` straight to a file only the user can read (for example with mode 600). Tell the user the file's path; never put the secret in chat, a report or a log.
+Report the purchase as done once every deliverable is saved, and tell the user where they are. If one fails, report the order as paid and fulfilled, what is still to collect, and the error.
 
-Report the purchase as done once the result is saved, and tell the user where it is. If the action fails, report the order as paid and fulfilled, its result still to collect, and the error.
+## Managing an asset
+
+To act on an asset the payer owns later, such as rotating a key, changing DNS or topping up, with buyer CLI 0.5.15 or later run `daski asset list --provider <id> --json`, then `daski asset action --provider <id> --asset <providerAssetId|identifier> --action <actionId> --input '<json>' --json`. It writes the result to a file only the user can read and prints the file's path, never the secret. Through MCP, use `daski_list_assets` and `daski_use_asset`, signing each wallet challenge as above. A destructive action is only staged: show the user its `effectSummary`, and run the confirming command it names only after the user approves, no earlier than `earliestExecutionAt`.
 
 ## Fulfillment deadline
 

@@ -225,6 +225,7 @@ test('every lifecycle, wallet, search and identity tool uses its intended REST p
     ['daski_contact_order_support', { orderHandle: 'handle', request: { requestId: 'support-1', message: 'Please investigate' } }, '/orders/handle/actions/support/challenge'],
     ['daski_confirm_delivery', { orderHandle: 'handle' }, '/orders/handle/actions/confirmation/challenge'],
     ['daski_revoke_delivery_confirmation', { orderHandle: 'handle' }, '/orders/handle/actions/revoke-confirmation/challenge'],
+    ['daski_get_order_deliverables', { orderHandle: 'handle' }, '/orders/handle/actions/artifact/challenge'],
     ['daski_get_my_reputation', { payer }, '/wallet/reputation'],
     ['daski_list_assets', { payer }, '/wallet/assets'],
     ['daski_use_asset', { payer, providerAgentId: '42', actionId: 'renew', providerAssetId: '00000000-0000-4000-8000-000000000001', input: {} }, '/wallet/assets/action'],
@@ -311,6 +312,52 @@ test('MCP client admission trusts only the address Cloudflare names behind the e
   assert.equal(resolveNetworkConfig({ MCP_TRUST_PROXY: '1' }).edgeSecret, null);
 });
 
+
+test('order deliverables isolate the artifact and give each owner action its daski_use_asset arguments', async t => {
+  const task = { id: 'task-1', status: { state: 'TASK_STATE_COMPLETED' }, artifacts: [{ artifactId: 'account', parts: [
+    { kind: 'data', data: { keyId: 'key_0001', keyPrefix: 'ak_0001' } }] }] };
+  const keyItem = { kind: 'owner-action', providerAgentId: '8327', actionId: 'get-api-key', assetType: 'api-account',
+    providerAssetId: '00000000-0000-4000-8000-00000000a5e7', input: { keyId: 'key_0001' }, label: 'API key' };
+  let answer = { orderHandle: 'handle', orderState: 'FULFILLED', fulfillmentState: 'completed', result: task,
+    deliverables: [{ kind: 'artifact' }, keyItem] };
+  const { tool, calls } = fixture(t, ({ path }) => path.endsWith('/challenge')
+    ? json({ action: 'artifact', signRequest: { gateway: 'https://gateway.example' } }) : json(answer));
+  // The challenge is the artifact read's own: one signature serves both tools.
+  const challenge = await tool('daski_get_order_deliverables', { orderHandle: 'handle' });
+  assert.equal(challenge.structuredContent.authorizationType, 'OrderActionAuthorizationV1');
+  assert.equal(calls.at(-1).path, '/orders/handle/actions/artifact/challenge');
+
+  const read = await tool('daski_get_order_deliverables', { orderHandle: 'handle', readCapability: 'c'.repeat(80) });
+  assert.notEqual(read.isError, true);
+  assert.equal(calls.at(-1).path, '/orders/handle/actions/artifact');
+  assert.equal(calls.at(-1).init.headers.get('authorization'), 'DaskiReadCap ' + 'c'.repeat(80));
+  const body = read.structuredContent;
+  assert.equal(body.result, undefined, 'the provider task is never readable outside untrustedResult');
+  assert.deepEqual(JSON.parse(Buffer.from(body.untrustedResult.content, 'base64')), task);
+  assert.deepEqual(body.deliverables, [{ kind: 'artifact' }, { ...keyItem, useAsset: { providerAgentId: '8327', actionId: 'get-api-key',
+    providerAssetId: '00000000-0000-4000-8000-00000000a5e7', input: { keyId: 'key_0001' } } }]);
+  assert.match(body.next, /for each of the 1 owner-action deliverables, call daski_use_asset with its useAsset arguments plus payer/);
+  // daski_get_order_artifact keeps its own answer for older clients: deliverables as the gateway sent them.
+  const artifact = await tool('daski_get_order_artifact', { orderHandle: 'handle', readCapability: 'c'.repeat(80) });
+  assert.deepEqual(artifact.structuredContent.deliverables, [{ kind: 'artifact' }, keyItem]);
+  assert.equal(artifact.structuredContent.next, undefined);
+
+  // A gateway that lists nothing leaves the artifact as the whole order.
+  answer = { orderHandle: 'handle', orderState: 'FULFILLED', result: task };
+  const older = await tool('daski_get_order_deliverables', { orderHandle: 'handle', readCapability: 'c'.repeat(80) });
+  assert.deepEqual(older.structuredContent.deliverables, [{ kind: 'artifact' }]);
+  assert.match(older.structuredContent.next, /^The artifact in untrustedResult is everything this order delivered\./);
+});
+
+test('order deliverables for an order still being delivered return the gateway refusal unchanged', async t => {
+  const refusal = { code: 'ARTIFACT_NOT_AVAILABLE', message: 'The order is paid and still being delivered; it has no artifact yet',
+    phase: 'dispatch', retryable: true, requiresNewSignature: false, paymentMayHaveSettled: false, deliveryState: 'delivering' };
+  const { tool } = fixture(t, () => json({ error: refusal }, 409));
+  const result = await tool('daski_get_order_deliverables', { orderHandle: 'handle', readCapability: 'c'.repeat(80) });
+  assert.equal(result.isError, true);
+  assert.equal(result.structuredContent.code, 'ARTIFACT_NOT_AVAILABLE');
+  assert.equal(result.structuredContent.deliveryState, 'delivering');
+});
 
 test('entity download URL survives the MCP envelope without being fetched or rewritten', async t => {
   const result = { documentId: 'fixture-document', title: 'Bylaws', type: 'bylaws', refreshAction: 'download-entity-document',
@@ -589,7 +636,7 @@ test('a client that accepts only JSON gets one JSON answer instead of 406; one t
     assert.equal(response.headers.get('access-control-allow-origin'), '*');
     const value = await response.json();
     assert.equal(value.id, 1);
-    assert.match(value.result.instructions, /A purchase is done only when its result is in hand\. Some results come from an asset action after the order is FULFILLED, such as an inference API key from daski_use_asset; save a secret to a file, never into chat\./);
+    assert.match(value.result.instructions, /After FULFILLED, get the order’s deliverables: call daski_get_order_deliverables, then daski_use_asset for each owner action it lists/);
   }
   const listed = await (await post('application/json', { jsonrpc: '2.0', id: 2, method: 'tools/list' })).json();
   assert.deepEqual(listed.result.tools.map(tool => tool.name).sort(), contract.tools.map(tool => tool.name));

@@ -26,13 +26,13 @@ Show the quoted service, provider, request, price, network, payer, and terms. Af
 
 ## When the purchase is done
 
-Payment does not finish a purchase: it is done only when its result is in hand. Track the order with [orders.md]({{SITE_URL}}/skills/orders.md) until it completes, then collect the result. Some outcomes deliver the result through an asset action after the order is `FULFILLED`; an inference API key, for example, comes from the provider's `get-inference-key` action. With buyer CLI 0.5.15 or later, `daski order status` names that step in `next`, and this command takes it, writing the result to a file only the user can read and printing the file's path:
+Payment does not finish a purchase: it is done only when what it delivered is in hand. Track the order with [orders.md]({{SITE_URL}}/skills/orders.md) until it is `FULFILLED`, then get the order's deliverables. Some orders deliver everything in their artifact; others deliver the rest through the provider's owner actions, such as an inference API key from `get-inference-key`. With buyer CLI 0.5.16 or later, `daski order status` names this step in `next`, and one command gets everything, writing each item to a file only the user can read and printing a manifest with each file's path:
 
 ```bash
-daski asset action --order <handle> --action <actionId> --json
+daski order deliverables <handle> --json
 ```
 
-Through MCP, or with an older CLI, find the asset with `daski_list_assets`, then call `daski_use_asset`. See [results behind an asset action]({{SITE_URL}}/skills/orders.md#results-behind-an-asset-action) for both routes. Keep a secret result such as an API key in a file, never in chat.
+Through MCP, or with an older CLI, call `daski_get_order_deliverables`, then `daski_use_asset` for each owner action it lists. See [getting what you bought]({{SITE_URL}}/skills/orders.md#getting-what-you-bought) for both routes. Keep a secret result such as an API key in a file, never in chat.
 
 ## Free skills
 
