@@ -23,7 +23,9 @@ export interface McpErrorPayload {
   docs?: string;
   correlationId?: string;
   // SALES_PAUSED: the gateway operator's reason, the pause's start and end
-  // (ISO 8601, UTC), and the seconds until the end.
+  // (ISO 8601, UTC), and the seconds until the end. PAYMENT_PENDING_RECONCILIATION
+  // after a settle the gateway could not confirm: `until`, when it expects to
+  // know the payment's outcome.
   reason?: string | null;
   since?: string | null;
   until?: string | null;
