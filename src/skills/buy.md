@@ -87,7 +87,7 @@ Use the response's `retryable`, `requiresNewSignature`, `paymentMayHaveSettled`,
 | CONFIRMATION_REVIEWS_PAUSED | Wait for maintenance to finish, then resume the saved submission. Do not create another signature. |
 | PAYMENT_IDENTIFIER_UNKNOWN | Compare the submitted identifier with the one the challenge issued. Follow the gateway's no-settlement response to correct the submission. |
 | PAYMENT_IDENTIFIER_CONFLICT | Reconcile the original payment identifier and recover its order. |
-| Timeout / PAYMENT_PENDING_RECONCILIATION / paymentMayHaveSettled: true | Run daski order reconcile with the recorded identifier. |
+| Timeout / PAYMENT_PENDING_RECONCILIATION / paymentMayHaveSettled: true | Do not sign again. Run daski order reconcile with the recorded intentId (payment identifier); when the answer names `until`, the time the gateway expects to know the outcome, run it after that, and again later if the payment is still pending. Buy again only once it shows NOT_SETTLED. |
 | WALLET_AUTHORIZATION_INVALID | Repeat the order command to obtain fresh read access or action authorization. |
 | ARTIFACT_NOT_AVAILABLE | The order is neither completed nor recovered. Read its status; fetch the artifact once it completes. |
 | ORDER_ACTION_UNSUPPORTED | The provider does not offer this order action; some serve only status and artifact reads. Nothing changed. Do not retry; read the order status. |
