@@ -2,7 +2,7 @@
 
 ## Recommended CLI flow
 
-Complete intake using `daski_get_outcome_requirements` and the user's supplied facts, then save the request as JSON.
+Complete intake with the requirements read and the user's supplied facts: `daski requirements --provider <id> --outcome <id> --request <file.json> --json` (buyer CLI 0.5.18 or later), or `daski_get_outcome_requirements` through MCP. Its `requiredFields` carry the values only the provider knows, such as a server's `planId` or the inference terms version to accept (`acceptTerms`): use them, never guess; the CLI puts them into `nextRequest`. Repeat until the request is complete (the CLI's `complete: true`), then save the request as JSON. An error on `_`, such as `sales_paused`, is not the request's to fix: try again later.
 
 When an outcome asks for an email address, explain this to the user before submitting it for a quote or purchase:
 

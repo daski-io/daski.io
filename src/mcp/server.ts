@@ -55,7 +55,7 @@ export function createWebsiteMcp(config: NetworkConfig, readGuide: ReadGuide, re
         `This MCP server is the agent interface. Transactions and authorization execute at ${config.gatewayUrl}.`,
         ...(config.id === 'mainnet' ? [testnetInstruction(config)] : []),
         'Run daski doctor and reuse a healthy signer. The Circle agent wallet is the default; local keys belong only on the user’s durable machine.',
-        'Discover conditional intake with daski_get_outcome_requirements. Reuse supplied facts and collect missing information together.',
+        'Discover conditional intake with daski_get_outcome_requirements (CLI: daski requirements). Take the values only the provider knows, such as a planId or the terms version to accept, from its requiredFields; never guess them. Reuse supplied facts and collect missing information together.',
         'Use the gateway-pinned CLI’s daski buy flow for quotation, approval, payment, and tracking. Expert clients use daski_get_payment_challenge and the identical paid daski_buy_outcome request.',
         'A successful paid retry creates and dispatches exactly one order. After uncertain payment, reconcile the original identifier before requesting another signature.',
         'Order reads require a readCapability or payer authorization. Mutations require a fresh action authorization bound to the gateway.',
