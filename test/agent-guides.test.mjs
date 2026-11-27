@@ -115,7 +115,7 @@ test('mainnet entry guides route an agent asked for the testnet, and keep the ne
   assert.match(route, /load https:\/\/sandbox\.daski\.io\/skills\/setup\.md in full and follow it instead of this guide/);
   assert.match(route, /Use the testnet only when the user asked for it, and never use one network for the other\./);
   // The route comes before the network check, which still stops on any other network.
-  assert.ok(setup.indexOf(route) < setup.indexOf('If either document is unavailable or the network differs, stop and report it; do not substitute another network.'));
+  assert.ok(setup.indexOf(route) < setup.indexOf('If the document is unavailable or the network differs, stop and report it; do not substitute another network.'));
   assert.match(setup, /The generated mainnet profile is disabled until the user chooses that network; do not silently switch profiles or enable mainnet\./);
 
   const skill = renderGuide('SKILL.md', templates, mainnet).content;
@@ -305,4 +305,13 @@ test('with nobody to do the Circle sign-in, the testnet guide asks for a local k
   assert.match(mainnet, /On the mainnet, if the user cannot do the Circle email sign-in now, stop and tell them/);
   assert.match(mainnet, /Do not switch to another signer on your own/);
   assert.doesNotMatch(mainnet, /ask whether to use a local key/);
+});
+
+test('the chain check reads mcp.json, and intake names the CLI requirements command and provider values', () => {
+  const setup = renderGuide('setup.md', templates, config).content;
+  assert.match(setup, /verify its `confirmationSigning.chainId` is 84532 before configuring a purchase; `daski doctor --json` checks the same/);
+  assert.doesNotMatch(setup, /Fetch `[^`]*daski-chain\.json` and verify/);
+  const buy = renderGuide('buy.md', templates, config).content;
+  assert.match(buy, /daski requirements --provider <id> --outcome <id> --request <file\.json> --json` \(buyer CLI 0\.5\.18 or later\)/);
+  assert.match(buy, /values only the provider knows, such as a server's `planId` or the inference terms version to accept/);
 });
