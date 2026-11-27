@@ -26,7 +26,7 @@ The default is the Circle agent wallet, on every kind of host. The user owns it 
 
 {{NO_SIGN_IN}}
 
-Use another signer only when the user asks for one:
+Otherwise, use another signer only when the user asks for one:
 
 - A local key, only on the user's own durable machine. It cannot be recovered if that machine or its key store is lost.
 - Another wallet from the table in [wallets.md]({{SITE_URL}}/skills/wallets.md), which also says which wallets cannot buy on Daski and why.
