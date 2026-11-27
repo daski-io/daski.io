@@ -534,6 +534,25 @@ test('the gateway SALES_PAUSED refusal keeps its own message, phase and next act
   assert.deepEqual([local.code, local.phase, local.reason, local.since, local.until], [quote.code, quote.phase, quote.reason, quote.since, quote.until]);
 });
 
+test('a payment the gateway could not confirm keeps until and passes Retry-After on as retryAfterSeconds', async t => {
+  const until = new Date(Date.now() + 5 * 60_000).toISOString();
+  const pending = { code: 'PAYMENT_PENDING_RECONCILIATION', message: 'Settlement was submitted but its outcome is not yet confirmed',
+    phase: 'facilitator_settle', retryable: true, requiresNewSignature: false, paymentMayHaveSettled: true, until,
+    docs: 'https://gateway.example/skills/buy.md#errors', correlationId: '00000000-0000-4000-8000-0000000005b1' };
+  const action = 'Do not sign again. This payment\'s outcome is expected by `until`.';
+  const { tool, calls } = fixture(t, () => json({ error: pending }, 409, { 'retry-after': '300', 'daski-next-action': action }));
+  const answer = await tool('daski_buy_outcome', quoteArgs, { 'x402/payment': signedPayment });
+  assert.equal(answer.isError, true);
+  assert.deepEqual(answer.structuredContent, { ...pending, retryAfterSeconds: 300, next_action: action });
+  assert.equal(calls.filter(call => call.path.endsWith('/purchase')).length, 1, 'the paid purchase is sent once');
+
+  // Without Retry-After nothing is invented.
+  const { tool: plain } = fixture(t, () => json({ error: pending }, 409));
+  const without = (await plain('daski_buy_outcome', quoteArgs, { 'x402/payment': signedPayment })).structuredContent;
+  assert.equal('retryAfterSeconds' in without, false);
+  assert.equal(without.until, until);
+});
+
 test('a SALES_PAUSED refusal without the gateway layout falls back to safe pause fields', async t => {
   const until = new Date(Date.now() + 5 * 60_000).toISOString();
   const { tool } = fixture(t, ({ path }) => path === '/wallet/assets/action'

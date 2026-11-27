@@ -25,7 +25,8 @@ export interface McpErrorPayload {
   // SALES_PAUSED: the gateway operator's reason, the pause's start and end
   // (ISO 8601, UTC), and the seconds until the end. PAYMENT_PENDING_RECONCILIATION
   // after a settle the gateway could not confirm: `until`, when it expects to
-  // know the payment's outcome.
+  // know the payment's outcome, with retryAfterSeconds from the gateway's
+  // Retry-After.
   reason?: string | null;
   since?: string | null;
   until?: string | null;
