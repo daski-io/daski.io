@@ -294,3 +294,15 @@ test(`the guides name buyer CLI ${DELIVERABLES_CLI}'s deliverables command, and 
     }
   }
 });
+
+test('with nobody to do the Circle sign-in, the testnet guide asks for a local key and the mainnet guide stops', () => {
+  const testnet = renderGuide('setup.md', templates, resolveNetworkConfig({ DASKI_NETWORK: 'testnet' })).content;
+  const mainnet = renderGuide('setup.md', templates,
+    resolveNetworkConfig({ DASKI_NETWORK: 'mainnet', GATEWAY_URL: 'https://gateway.daski.io' })).content;
+  assert.match(testnet, /On this testnet, if the user cannot do the Circle email sign-in now, ask whether to use a local key/);
+  assert.match(testnet, /only after they say yes and confirm this is their own machine/);
+  assert.doesNotMatch(testnet, /On the mainnet, if the user cannot do the Circle email sign-in/);
+  assert.match(mainnet, /On the mainnet, if the user cannot do the Circle email sign-in now, stop and tell them/);
+  assert.match(mainnet, /Do not switch to another signer on your own/);
+  assert.doesNotMatch(mainnet, /ask whether to use a local key/);
+});

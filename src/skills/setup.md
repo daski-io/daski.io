@@ -24,7 +24,9 @@ Use doctor's `stateDirectory`, `configFile`, signer, and self-test results. Thes
 
 The default is the Circle agent wallet, on every kind of host. The user owns it through their email, no key sits on the agent's machine, and it signs Daski purchases and order authorizations. Delivery reviews use a separate wallet transaction flow described in [orders.md]({{SITE_URL}}/skills/orders.md). Use it whenever `payerAccounts.types` in `{{GATEWAY_URL}}/.well-known/mcp.json` includes `contract`.
 
-Use another signer only when the user asks for one:
+{{NO_SIGN_IN}}
+
+Otherwise, use another signer only when the user asks for one:
 
 - A local key, only on the user's own durable machine. It cannot be recovered if that machine or its key store is lost.
 - Another wallet from the table in [wallets.md]({{SITE_URL}}/skills/wallets.md), which also says which wallets cannot buy on Daski and why.

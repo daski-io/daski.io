@@ -28,6 +28,15 @@ export function renderGuide(file: GuideFile, templates: GuideTemplates, config: 
     TESTNET_GATEWAY_URL: testnet.gatewayUrl,
     TESTNET_CHAIN_ID: String(testnet.chainId),
     TESTNET_CHAIN_NAME: testnet.chainName,
+    // What to do when nobody can do the Circle email sign-in now. A testnet
+    // key holds only test funds, so the agent may ask to use one; on the
+    // mainnet it stops (owner, 2026-11-27).
+    NO_SIGN_IN: config.chainId === 84532
+      ? 'On this testnet, if the user cannot do the Circle email sign-in now, ask whether to use a local key ' +
+        'instead: it holds only test funds. Use it only after they say yes and confirm this is their own machine ' +
+        '(see Local key below).'
+      : 'On the mainnet, if the user cannot do the Circle email sign-in now, stop and tell them: the purchase ' +
+        'waits for their sign-in or for a signer they choose. Do not switch to another signer on your own.',
   };
   const sections = templates[file].replace(MAINNET_BLOCK, (_, block: string) => config.id === 'mainnet' ? block : '');
   if (/\{\{[#\/]/.test(sections)) throw new Error(`Unbalanced guide section in ${file}`);
