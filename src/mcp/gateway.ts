@@ -121,13 +121,14 @@ export class GatewayClient {
         const error = (data.error ?? data) as Record<string, unknown>;
         if (typeof error.code !== 'string' || typeof error.message !== 'string') throw new Error('Invalid gateway error');
         if (error.code === 'SALES_PAUSED') throw new GatewayError(salesPausedRefusal(error, response.headers, !!options.payment));
-        // A settlement the gateway could not confirm: its Retry-After is when the
-        // payment's outcome is expected (`until`), so pass it on in seconds.
-        const pendingWait = error.code === 'PAYMENT_PENDING_RECONCILIATION'
-          ? retryAfter(response.headers.get('retry-after'), Date.now()) : null;
+        // The gateway's own wait (a settlement it could not confirm: the sooner of
+        // `until` and an hour; a signer or payment admission briefly unavailable),
+        // in seconds: MCP clients cannot see the Retry-After header that next
+        // actions such as "Wait for Retry-After" refer to.
+        const gatewayWait = retryAfter(response.headers.get('retry-after'), Date.now());
         throw new GatewayError({ ...error, code: error.code, message: error.message,
           ...(response.headers.get('daski-next-action') ? { next_action: response.headers.get('daski-next-action')! } : {}),
-          ...(pendingWait === null ? {} : { retryAfterSeconds: pendingWait }),
+          ...(gatewayWait === null ? {} : { retryAfterSeconds: gatewayWait }),
           retryable: typeof error.retryable === 'boolean' ? error.retryable : response.status >= 500 || response.status === 429 ||
             ['ASSET_ACTION_REJECTED', 'ASSET_DESTRUCTIVE_DELAY_ACTIVE'].includes(error.code),
         });

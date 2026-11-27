@@ -546,6 +546,14 @@ test('a payment the gateway could not confirm keeps until and passes Retry-After
   assert.deepEqual(answer.structuredContent, { ...pending, retryAfterSeconds: 300, next_action: action });
   assert.equal(calls.filter(call => call.path.endsWith('/purchase')).length, 1, 'the paid purchase is sent once');
 
+  // Any other gateway wait reaches the client too: its next action says "Wait for Retry-After".
+  const admission = { code: 'PAYMENT_ADMISSION_UNAVAILABLE', message: 'The gateway could not admit this payment right now',
+    phase: 'payment_admission', retryable: true, requiresNewSignature: false, paymentMayHaveSettled: false,
+    docs: 'https://gateway.example/skills/buy.md#errors', correlationId: '00000000-0000-4000-8000-0000000005b2' };
+  const { tool: busy } = fixture(t, () => json({ error: admission }, 503, { 'retry-after': '2' }));
+  const refused = (await busy('daski_buy_outcome', quoteArgs, { 'x402/payment': signedPayment })).structuredContent;
+  assert.equal(refused.retryAfterSeconds, 2);
+
   // Without Retry-After nothing is invented.
   const { tool: plain } = fixture(t, () => json({ error: pending }, 409));
   const without = (await plain('daski_buy_outcome', quoteArgs, { 'x402/payment': signedPayment })).structuredContent;
